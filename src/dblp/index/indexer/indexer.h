@@ -3,11 +3,12 @@
 
 #include <QString>
 #include <QXmlContentHandler>
-#include <dblp/index/term/index_term.h>
+#include "dblp/index/models/term/index_term.h"
+#include "dblp/xml/models/entities/xml_entities.h"
 #include "commons/logger/logger.h"
-#include "dblp/parse/handler/dblp_xml_parse_handler.h"
+#include "dblp/xml/handler/xml_parse_handler.h"
 
-class Indexer : public DblpXmlParseHandler
+class Indexer : public XmlParseHandler
 {
 public:
 	Indexer(QString &indexPath, QString &baseName);
@@ -25,7 +26,7 @@ public:
 	void onMasterThesis(DblpMasterThesis &master, qint64 pos);
 
 private:
-	Logger L = Logger::forClass("Indexer");
+	static Logger L;
 
 	// Folder that will contain the indexes
 	QString mOutputPath;
@@ -48,6 +49,12 @@ private:
 	QFile mPostingListFile;
 	QDataStream mPostingListStream;
 
+	// File that contains the original position of the elements in the dblp.xml
+	// file. Each position is 32 and refers to the element id equals to the order
+	// in which occur in the file.
+	QFile mElementsPosFile;
+	QDataStream mElementsPosStream;
+
 	// File that contains the vocabulary, which is a succession of zero terminated
 	// term and the number of occurences in the posting list for each combination
 	// of element and field
@@ -59,7 +66,7 @@ private:
 	// Associated terms to "index term entity"
 	// TODO: probably qmap should be replaced with qhash for performance
 	// reason even if the latter doesn't keep the terms order
-	QMap<QString, IndexTerm *> mIndexTerms;
+	QHash<QString, IndexTerm> mIndexTerms;
 
 	struct {
 		// Current element/key id
@@ -77,16 +84,17 @@ private:
 		qint64 readBufferSize = 0;
 	} mCurrent;
 
-	void addFields(void (*termAdder)(IndexTerm *, IndexPost),
+	void addFields(void (*termAdder)(IndexTerm &, const IndexPost &),
 				   QList<QString> &fieldsContent);
-	void addField(void (*termAdder)(IndexTerm *, IndexPost),
+	void addField(void (*termAdder)(IndexTerm &, const IndexPost &),
 				  const QString &fieldContent, quint32 fieldNumber = 0);
 
-	void addTerm(void (*termAdder)(IndexTerm *, IndexPost),
+	void addTerm(void (*termAdder)(IndexTerm &, const IndexPost &),
 				 const QString &term, quint32 fieldNumber, quint32 termPosition);
 
-	void writeElement(QString &key, qint64 pos);
-	void writeKey(QString &key, qint64 pos);
+	void writeElement(const QString &key, qint64 pos);
+	void writeKey(const QString &key);
+	void writeElementPosition(qint64 pos);
 
 	void createPostingListAndVocabulary();
 	void writeVocabularyTermMetas(QString term);

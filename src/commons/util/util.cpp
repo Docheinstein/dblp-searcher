@@ -2,24 +2,41 @@
 #include "commons/const/const.h"
 
 #include <QTextDocument>
+#include <QTime>
 
 #define KB 1024
 #define MB 1048576l
 
+#define MS_IN_SEC 1000
+#define MS_IN_MIN 60000
+
+#include "dblp/xml/models/types/xml_types.h"
+
 namespace Util {
 	namespace Dblp {
-		bool isElement(const QString &elementName) {
-			return	elementName == Const::Dblp::Elements::ARTICLE ||
-					elementName == Const::Dblp::Elements::INCOLLECTION ||
-					elementName == Const::Dblp::Elements::BOOK ||
-					elementName == Const::Dblp::Elements::INPROCEEDINGS ||
-					elementName == Const::Dblp::Elements::PROCEEDINGS ||
-					elementName == Const::Dblp::Elements::PHDTHESIS ||
-					elementName == Const::Dblp::Elements::MASTERTHESIS;
+		namespace Xml {
+			bool isElement(const QString &elementName) {
+				return	elementName == *XmlElementType::ARTICLE ||
+						elementName == *XmlElementType::INCOLLECTION ||
+						elementName == *XmlElementType::BOOK ||
+						elementName == *XmlElementType::INPROCEEDINGS ||
+						elementName == *XmlElementType::PROCEEDINGS ||
+						elementName == *XmlElementType::PHDTHESIS ||
+						elementName == *XmlElementType::MASTERTHESIS;
+			}
 		}
-//		bool isField(const QString &elementName) {
-//			return !isElement(elementName);
-		//		}
+
+		namespace Query {
+			QString queryPartSearch(const QString &element, const QString &field) {
+				// Returns <publication>:
+				// Or <publication>.<field>:
+				if (field.isNull() || field.isEmpty())
+					return element + Const::Dblp::Query::QUERY_PART_SEARCH_END_MARK;
+
+				return element + Const::Dblp::Query::ELEMENT_FIELD_DIVISOR +
+						field + Const::Dblp::Query::QUERY_PART_SEARCH_END_MARK;
+			}
+		}
 	}
 
 	namespace File {
@@ -56,7 +73,7 @@ namespace Util {
 		}
 	}
 
-	namespace Indexing {
+	namespace String {
 		QString sanitizeTerm(const QString &term) {
 			// For now, apply the following filters
 			// 1) To lower case
@@ -70,4 +87,9 @@ namespace Util {
 					.replace(QRegExp("[\\[\\]\\\\%&@#°*+\\-/|(),;.:_^]"), "");
 		}
 	}
+
+	QString Time::humanTime(int ms) {
+		return QTime(0, 0, 0).addMSecs(ms).toString("m'm' s's'");
+	}
+
 }

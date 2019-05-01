@@ -2,12 +2,14 @@
 #include <QApplication>
 #include <QDebug>
 #include <QTextDocument>
-#include "dblp/index/indexer/indexer.h"
-#include "dblp/parse/parser/dblp_xml_parser.h"
-#include <dblp/index/handler/handler.h>
-#include "commons/shared/shared.h"
 #include <Qt>
+#include "dblp/index/indexer/indexer.h"
+#include "dblp/xml/parser/xml_parser.h"
+#include "dblp/index/handler/index_handler.h"
+#include "commons/shared/shared.h"
 #include "commons/util/util.h"
+#include "dblp/query/parser/query_parser.h"
+#include <dblp/xml/models/types/xml_types.h>
 
 struct ADT {
 	QString another;
@@ -15,6 +17,55 @@ struct ADT {
 		QList<QString> something;
 	} model;
 };
+
+void printAdt(const ADT &adt) {
+	qDebug() << "another: " << adt.another;
+	foreach (QString smth, adt.model.something) {
+		qDebug() << "- something: " << smth;
+	}
+}
+
+QHash<QString, ADT> hh;
+QHash<QString, quint32> h;
+
+void put() {
+//	h.insertMulti("pippo", 3);
+//	h.insertMulti("pippo", 4);
+//	h.insertMulti("pippo", 4);
+//	h.insertMulti("pippo", 2);
+//	h.insertMulti("pippo", 6);
+//	h.insertMulti("pippo", 41);
+//	h.insertMulti("pippo", 7);
+	ADT a1 {"pippo_another", {{"pippo_something_1", "pippo_something_2"}}};
+	ADT a2 {"pluto_another", {}};
+	hh.insert("pippo", a1);
+	hh.insert("pluto", a2);
+
+	auto it = hh.find("pluto");
+
+	if (it != hh.end()) {
+		it->model.something.append("pluto_something_1");
+	}
+}
+
+void retr() {
+//	QList<quint32> pippos = h.values("pippo");
+//	for (auto it = pippos.begin(); it != pippos.end(); it++) {
+//		qDebug() << "Scanning value: " << *it;
+
+//	}
+//	auto it = h.find("pippo");
+//	while (it != h.end() && it.key() == "pippo") {
+//		qDebug() << "Scanning value: " << it.value();
+//		it++;
+//	}
+
+	for (auto it = hh.begin(); it != hh.end(); it++) {
+		printAdt(*it);
+	}
+
+	exit(-1);
+}
 
 void write() {
 	QFile file("/home/stefano/Documents/vix");
@@ -81,22 +132,98 @@ void enc() {
 
 void delpunct() {
 	QString astring = "  There \\ [noreturn]] is; 2^15 a house % & in - new orleans, Ehy / || there. \" I am the man \" (of the world!) ";
-	QString escaped = Util::Indexing::sanitizeTerm(astring);
+	QString escaped = Util::String::sanitizeTerm(astring);
 
 	qDebug() << "astring: " << astring;
 	qDebug() << "escaped: " << escaped;
-	qDebug() << "pAppagallo: " << Util::Indexing::sanitizeTerm("pAppagallo,");
+	qDebug() << "pAppagallo: " << Util::String::sanitizeTerm("pAppagallo,");
 	exit(0);
 }
 
+void tim() {
+	qDebug() << "A time: " << Util::Time::humanTime(239100);
+	exit(0);
+}
+
+void plread() {
+//	QFile plfile;
+//	QDataStream plstream;
+//	plfile.setFileName("/home/stefano/Develop/Qt/DblpSearcher/res/index/prod.plix");
+//	plstream.setDevice(plfile);
+//	plfile.open(QFile::ReadOnly);
+
+}
+enum Value
+{
+  Apple,
+  Pear,
+  Banana,
+  Strawberry
+};
+
+class Fruit
+{
+public:
+
+
+  bool IsYellow() const { return value == Banana; }
+
+  Fruit(Value aFruit) : value(aFruit) { }
+
+  bool operator==(Fruit a) { return value == a.value; }
+  bool operator!=(Fruit a) { return value != a.value; }
+
+private:
+  Value value;
+};
+
+void type() {
+	qDebug() << "Art: " << XmlElementType::ARTICLE->string();
+	qDebug() << "Bk: " << XmlElementType::BOOK->string();
+	qDebug() << "Bk: " << *XmlElementType::BOOK;
+	exit(-1);
+}
+
+void freeit() {
+	int * intptr = new int();
+	int * anotherptr = intptr;
+
+	*intptr = 5;
+	anotherptr = intptr;
+
+	qDebug() << "v1: " << *intptr;
+	qDebug() << "v2: " << *anotherptr;
+
+	delete intptr;
+//	delete anotherptr;
+
+	qDebug() << "v1: " << *intptr;
+	qDebug() << "v2: " << *anotherptr;
+
+	exit(-1);
+}
+
+QString q1 =
+R"#(VLDB publication: "lorenzo miniero " "publication.year: 2019 inproc: "computer science" venue: Conf venue.title: "VLDP Hello" there arte)#";
+QString q2 = R"#(There is a cat "very fast" above the " great table")#";
+QString q3 = R"#(There is a cat "very fast"above the " great table)#";
+
+
 int main(int argc, char *argv[])
 {
+//	freeit();
+//	type();
 //	enc();
 //	write();
 //	read();
 //	qDebug() << Shared::Index::Config::VOCABULARY_REF_COUNT_THRESHOLD;
 //	exit(0);
 //	delpunct();
+//	tim();
+//	plread();
+
+//	put();
+//	retr();
 
 	if (argc < 3) {
 		qCritical() << "Please provide valid parameters." << endl
@@ -112,18 +239,36 @@ int main(int argc, char *argv[])
 			QString baseIndexName =argv[4];
 
 			Indexer indexer(indexPath, baseIndexName);
-			DblpXmlParser parser(dblpXmlPath, indexer);
+			XmlParser parser(dblpXmlPath, indexer);
 			parser.parse();
 			return 0;
 		}
 		else if (mode == "--search") {
-			QString indexPath(argv[2]);
-			QString baseIndexName = argv[3];
+			if (1) {
+//				QueryParser::fromString(q1);
+//				QueryParser::fromString(q2);
+				QueryParser::fromString(q3);
+//				QueryParser::fromString(q4);
+			} else {
+				QString indexPath(argv[2]);
+				QString baseIndexName = argv[3];
 
-			IndexHandler handler(indexPath, baseIndexName);
-			handler.load();
+				IndexHandler handler(indexPath, baseIndexName);
+				handler.load();
 
-			handler.debug_findArticlesOfAuthor("miniero");
+				QSet<quint32> elements;
+	//			handler.findElements({"stefano", "stefano"}, ArticleAuthor, elements);
+	//			handler.findElements({"stefano", "lumacone", "dottore", "stefano", "stefano"}, ArticleAuthor, elements);
+	//			handler.findElements({"jana", "eggink"}, ArticleAuthor, elements);
+				handler.findElements("Lorenzo J.", ArticleAuthor, elements);
+
+				foreach (quint32 element, elements) {
+					qDebug() << "Matched element id: " << element;
+				}
+			}
+
+
+//			handler.debug_findArticlesOfAuthor("lorenzo");
 			return 0;
 		}
 		else {

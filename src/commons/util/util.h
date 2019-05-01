@@ -7,8 +7,13 @@
 
 namespace Util {
 	namespace Dblp {
-		bool isElement(const QString &elementName);
-//		bool isField(const QString &elementName);
+		namespace Xml {
+			bool isElement(const QString &elementName);
+		}
+
+		namespace Query {
+			QString queryPartSearch(const QString &element, const QString &field = "");
+		}
 	}
 
 	namespace File {
@@ -16,12 +21,17 @@ namespace Util {
 		QString humanSize(const QFile &file);
 	}
 
+	namespace Time {
+		QString humanTime(int ms);
+	}
+
 	namespace Html {
 		QString entityToString(const QString &entity);
 		QString entityNameToString(const QString &entityName);
 	}
 
-	namespace Indexing {
+
+	namespace String {
 		QString sanitizeTerm(const QString &term);
 	}
 }

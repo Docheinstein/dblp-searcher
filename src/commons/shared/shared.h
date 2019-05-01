@@ -2,6 +2,7 @@
 #define SHARED_H
 
 #include <QString>
+#include <limits>
 
 namespace Shared {
 	namespace Index {
@@ -9,6 +10,7 @@ namespace Shared {
 			const QString KEYS = ".kix";
 			const QString POSTING_LIST = ".plix";
 			const QString VOCABULARY = ".vix";
+			const QString ELEMENTS_POS = ".epix";
 		}
 		namespace PostingList {
 			const quint32 ELEMENT_ID_BITS = 23u;
@@ -31,6 +33,13 @@ namespace Shared {
 			const quint32 REF_EXTENDEND_BITS = 31;
 			const quint32 REF_EXTENDED_THRESHOLD = 1u << REF_EXTENDEND_BITS;
 			const quint32 REF_EXTENDED_FLAG = 1u << REF_EXTENDEND_BITS;
+		}
+
+		namespace ElementsPosition {
+			const qint64 ELEMENT_POS_BITS = 32;
+			const qint64 ELEMENT_POS_BYTES = ELEMENT_POS_BITS / 8;
+			const qint64 ELEMENT_POS_THRESHOLD = 1l << ELEMENT_POS_BITS;
+
 		}
 
 		namespace Config {
