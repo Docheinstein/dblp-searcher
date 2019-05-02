@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 		else if (mode == "--search") {
-			if (1) {
+			if (0) {
 //				QueryParser::fromString(q1);
 //				QueryParser::fromString(q2);
 				QueryParser::fromString(q3);
@@ -255,15 +255,24 @@ int main(int argc, char *argv[])
 
 				IndexHandler handler(indexPath, baseIndexName);
 				handler.load();
+//				exit(-2);
+				QString q1 = "Stefano";
+				QString q2 = "Enrico";
 
-				QSet<quint32> elements;
-	//			handler.findElements({"stefano", "stefano"}, ArticleAuthor, elements);
-	//			handler.findElements({"stefano", "lumacone", "dottore", "stefano", "stefano"}, ArticleAuthor, elements);
-	//			handler.findElements({"jana", "eggink"}, ArticleAuthor, elements);
-				handler.findElements("Lorenzo J.", ArticleAuthor, elements);
+				QSet<ElementFieldMatch> matches1;
+				QSet<ElementFieldMatch> matches2;
 
-				foreach (quint32 element, elements) {
-					qDebug() << "Matched element id: " << element;
+				handler.findElements(q1, ArticleAuthor, matches1);
+				handler.findElements(q2, ArticleAuthor, matches2);
+
+				foreach (ElementFieldMatch match, matches1) {
+					qDebug() << "Matched element (" << q1 << ") id: " << match.elementId
+							 << " (tf: " << match.termCount << ")";
+				}
+
+				foreach (ElementFieldMatch match, matches2) {
+					qDebug() << "Matched element (" << q2 << ") id: " << match.elementId
+							 << " (tf: " << match.termCount << ")";
 				}
 			}
 

@@ -22,8 +22,6 @@ public:
 	// <bok.a> <bok.t> <bok.y> <bok.p>
 	// <pro.t> <pro.y> <pro.p> <pro.b>
 
-	// TODO: all the fields are quint32, but should be loaded with the control...
-
 	struct {
 		IndexTermRefPostMeta author;
 		IndexTermRefPostMeta title;

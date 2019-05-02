@@ -4,9 +4,9 @@
 #include <QtGlobal>
 
 struct IndexPost {
-	quint32 elementId;			// Id associated to the element (that refers to a single key)
+	quint32 elementId;		// Id associated to the element (that refers to a single key)
 
-	quint32 fieldNumber;		// Starting from 0, number of the field between
+	quint32 fieldNumber;	// Starting from 0, number of the field between
 							// the fields with the same name in the element.
 							// e.g. for distinguish between <author> tags
 

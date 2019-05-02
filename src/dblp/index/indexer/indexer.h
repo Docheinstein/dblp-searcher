@@ -64,9 +64,10 @@ private:
 	QDataStream mVocabularyStream;
 
 	// Associated terms to "index term entity"
-	// TODO: probably qmap should be replaced with qhash for performance
-	// reason even if the latter doesn't keep the terms order
-	QHash<QString, IndexTerm> mIndexTerms;
+	// An hash would be sufficient, btw using a map is helpful for compute
+	// additional stuff on the posting list using the terms alphabetical
+	// order (such as compute the iefs of the terms)
+	QMap<QString, IndexTerm> mIndexTerms;
 
 	struct {
 		// Current element/key id

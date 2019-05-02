@@ -1,16 +1,18 @@
 #include <QHash>
+#include <math.h>
 #include "index_handler.h"
 #include "commons/shared/shared.h"
 #include "commons/util/util.h"
+#include "commons/const/const.h"
 
 Logger IndexHandler::L = Logger::forClass("IndexHandler");
 
 // --- Hashing purpose
 
-struct ElementField {
+typedef struct ElementField {
 	quint32 element;
 	quint32 fieldNumber;
-};
+} ElementField;
 
 
 inline bool operator==(const ElementField &ef1, const ElementField &ef2)
@@ -34,6 +36,17 @@ inline bool operator==(const IndexPost &ip1, const IndexPost &ip2)
 inline uint qHash(const IndexPost &ip, uint seed)
 {
 	return qHash(ip.elementId, seed) ^ ip.fieldNumber << ip.inFieldTermPosition;
+}
+
+inline bool operator==(const ElementFieldMatch &efm1, const ElementFieldMatch &efm2)
+{
+	return efm1.elementId == efm2.elementId &&
+			efm1.termCount == efm2.termCount;
+}
+
+inline uint qHash(const ElementFieldMatch &efm, uint seed)
+{
+	return qHash(efm.elementId, seed) ^ efm.termCount;
 }
 
 // ---
@@ -112,28 +125,34 @@ void IndexHandler::load()
 
 	loadKeys();
 	loadVocabulary();
+	computeIefs();
 
 	debug_printKeys();
 	debug_printVocabulary();
+	debug_printIefs();
 }
 
-bool IndexHandler::findElements(const QString &phrase, IndexElementFieldType field,
-								QSet<quint32> &elements)
+bool IndexHandler::findElements(const QString &phrase,
+								IndexElementFieldType field,
+								QSet<ElementFieldMatch> &matches)
 {
 	// If the phrase is actually a space separeted list of words, split those
 	// and use them as tokens for findElements();
 
 	// Moreover, sanitize each term (lowercase, no punctuation, (trimmed))
-	QStringList tokens = phrase.split(QString::SplitBehavior::SkipEmptyParts);
+	QStringList tokens = phrase.split(
+				Const::Dblp::Query::TOKENS_SPLITTER,
+				QString::SplitBehavior::SkipEmptyParts);
 	for (auto it = tokens.begin(); it < tokens.end(); it++) {
 		*it = Util::String::sanitizeTerm(*it);
 	}
 
-	return findElements(tokens, field, elements);
+	return findElements(tokens, field, matches);
 }
 
-bool IndexHandler::findElements(const QStringList &tokens, IndexElementFieldType field,
-								QSet<quint32> &elements) {
+bool IndexHandler::findElements(const QStringList &tokens,
+								IndexElementFieldType field,
+								QSet<ElementFieldMatch> &matches) {
 	/*
 	 * Retrieves the elements that matches the phrase.
 	 * This is done by doing:
@@ -149,13 +168,13 @@ bool IndexHandler::findElements(const QStringList &tokens, IndexElementFieldType
 
 	// Maps a field (element+field) to a term-positions
 	QHash<
-			// elementId + fieldNumber
+			// elementId + fieldNumber (the field type is implicit and is only one)
 			ElementField,
 			QHash<
 				// Term
 				QString,
 				// Term positions in element/field
-				QSet<quint32>
+				QSet<quint32> // tf_t
 			>
 	> categorizedTerms;
 
@@ -195,8 +214,8 @@ bool IndexHandler::findElements(const QStringList &tokens, IndexElementFieldType
 			// Check if this term is already present for this element/field
 
 			if (!termsPositions.contains(term)) {
-				vv("Inserting " << term << " for the first time for ef "
-				   << ef.element << ", " << ef.fieldNumber);
+				vv("Inserting " << term << " for the first time for element: "
+				   << ef.element << ", field number: " << ef.fieldNumber);
 				// Push a new positions list, empty for now
 				termsPositions.insert(term, {});
 			}
@@ -228,7 +247,7 @@ bool IndexHandler::findElements(const QStringList &tokens, IndexElementFieldType
 		// Potentially we have a match, but first check for consecutiveness
 		// of the phrase terms within the element/field
 
-		// TODO: start from the term with the smallest position list
+		// TODO: start from the term with the smallest position list size
 
 		// Take the first positions list (in the future: the smallest one)
 		auto ps0It = termsPositions.find(tokens.at(0));
@@ -239,6 +258,12 @@ bool IndexHandler::findElements(const QStringList &tokens, IndexElementFieldType
 		}
 
 		QSet<quint32> ps0 = ps0It.value();
+
+		// How many times the phrase (or the word) matches within the element/field
+		// This is useful just for figure out the tf and perform ranking over
+		// the elements, otherwise it won't be needed since if the elemenet/field
+		// contains the phrase it would be enough to present it as a match
+		quint8 phrasalMatchesCount = 0;
 
 		foreach (quint32 ps0_pos, ps0) {
 			vv("ps0_pos: " << ps0_pos);
@@ -267,6 +292,8 @@ bool IndexHandler::findElements(const QStringList &tokens, IndexElementFieldType
 					abort = true; // go asap to the next ef
 					break;
 				}
+
+				// The term exists, check the position
 
 				QSet<quint32> psx = psxIt.value();
 
@@ -314,21 +341,65 @@ bool IndexHandler::findElements(const QStringList &tokens, IndexElementFieldType
 			if (ti == tokens.size()) {
 				// We have seen every phrase's term and we are here; it means
 				// that all terms's positions were ok for this p0_pos
+
+				// At this point we are sure the ef.element is a match, but we
+				// do not push it right now, instead do it later after figuring
+				// out how many times the phrase matches within this element/field
+
+				// Just increase the matches count.
 				ii("Found a phrasal match!");
-				elements.insert(ef.element);
+				phrasalMatchesCount ++;
 			}
+		}
+
+		// We can present the element as a match if phrasalMatchesCount
+		// is greater than 0
+
+		if (phrasalMatchesCount > 0) {
+			// The match count of the phrase is phrasalMatchesCount, but we
+			// instead want the number of matches referred to the words, to
+			// we have to multiply it by the number of tokens (since all the
+			// words should have matched)
+			quint8 tf = static_cast<quint8>(phrasalMatchesCount * tokens.size());
+			vv("Inserting match with tf: " << tf);
+			matches.insert({ef.element, tf});
 		}
 	}
 
-	ii("# matchings: " << elements.size());
+	ii("# matchings: " << matches.size());
 
 	return true;
 }
 
-bool IndexHandler::findPosts(const QString &term, IndexElementFieldType field,
-							QSet<IndexPost> &posts)
+// NOT SUPPORTED ANYMORE
+// Search on more fields at once
+//bool IndexHandler::findPosts(const QString &term,
+//							 IndexElementFieldTypes fields,
+//							 QSet<IndexPost> &posts)
+//{
+//	ii("Finding posts for " << term << "in fields : " << fields;);
+
+//	bool found = false;
+//	// For each possibile field inside fields, test whether the flag
+//	// in fields is set; if so extend the search to this field to
+//	for (int f = IndexElementFieldTypeStart;
+//		 f <= IndexElementFieldTypeEnd;
+//		 f = f << 1) {
+
+//		IndexElementFieldType fieldFlag = static_cast<IndexElementFieldType>(f);
+//		if (fields.testFlag(fieldFlag))
+//			found |= findPosts(term, fieldFlag, posts);
+//		// else:  do not search within this field
+//	}
+
+//	return found;
+//}
+
+bool IndexHandler::findPosts(const QString &term,
+							 IndexElementFieldType field,
+							 QSet<IndexPost> &posts)
 {
-	ii("Finding posts for " << term);
+	vv("Finding posts for " << term << " in field : " << field;);
 
 	auto refIt = mVocabulary.find(term);
 
@@ -339,10 +410,14 @@ bool IndexHandler::findPosts(const QString &term, IndexElementFieldType field,
 
 	IndexTermRef &ref = refIt.value();
 
-	ii("Term: " << term <<
-	   " | Field: " << field <<
-	   " | pos: " << ref.postingListPosition);
+	findPosts(term, ref, field, posts);
 
+	return true;
+}
+
+void IndexHandler::findPosts(const QString &term, IndexTermRef &ref,
+							 IndexElementFieldType field, QSet<IndexPost> &posts)
+{
 	// Calculate the field relative position within the ref based on the field
 	IndexTermRefPostMeta *refPost;
 
@@ -412,6 +487,9 @@ bool IndexHandler::findPosts(const QString &term, IndexElementFieldType field,
 	case BookYear:
 		refPost = &ref.book.year;
 		break;
+	case BookPublisher:
+		refPost = &ref.book.publisher;
+		break;
 
 	case ProceedingsTitle:
 		refPost = &ref.proceedings.title;
@@ -425,9 +503,15 @@ bool IndexHandler::findPosts(const QString &term, IndexElementFieldType field,
 	case ProceedingsBooktitle:
 		refPost = &ref.proceedings.booktitle;
 		break;
+	default:
+		refPost = nullptr;
 	}
 
-	ii("Found " << refPost->count << " posts for the term '" << term << "'");
+	Q_ASSERT_X(refPost != nullptr, "index_handling",
+			   QString(QString("Unexpected IndexElementFieldType found: " +
+					QString::number(field))).toStdString().c_str());
+
+	dd("Found " << refPost->count << " posts for field " << field << " and term '" << term << "'");
 
 	for (quint32 i = 0; i < refPost->count; i++) {
 		// Figure out the position of the posts in the posting list (of the first one)
@@ -450,10 +534,10 @@ bool IndexHandler::findPosts(const QString &term, IndexElementFieldType field,
 		quint32 fieldNumber = P32 & (~0u >> (32 - PostingListConf::FIELD_NUM_BITS));
 		quint32 inFieldPos = P8;
 
-		ii("- element id = " << elementId);
-		ii("- field num = " << fieldNumber);
-		ii("- in field pos = " << inFieldPos);
-		ii("- associated key = " << mKeys.at(static_cast<int>(elementId)).key);
+		vv("- element id = " << elementId);
+		vv("- field num = " << fieldNumber);
+		vv("- in field pos = " << inFieldPos);
+		vv("- associated key = " << mKeys.at(static_cast<int>(elementId)).key);
 
 		// Push the post
 		posts.insert(IndexPost {
@@ -473,9 +557,10 @@ bool IndexHandler::findPosts(const QString &term, IndexElementFieldType field,
 #endif
 
 	}
-
-	return true;
 }
+
+
+
 
 void IndexHandler::debug_findArticlesOfAuthor(const QString &author)
 {
@@ -506,6 +591,40 @@ void IndexHandler::loadVocabulary()
 {
 	dd("Loading vocabulary file index");
 
+	// Read the count of posts for each term's field
+	// An unit of offset means 5 bytes in the posting list file
+	auto loadIndexTermReference =
+			[this](IndexTermRefPostMeta &post, quint32 offset) -> quint32 {
+		// First of all read 16 bits, than if the first bit is = 1
+		// it means that this IndexTermRefPostMeta needs 32 bits for represent
+		// the count of posts for this term's field
+		quint16 shrinkedCount;
+		mVocabularyStream >> shrinkedCount;
+
+		if ((shrinkedCount & VocabularyConf::REF_SHRINKED_FLAG) == 0) {
+			// The post meta refers to no more than 2^15 posts per field
+			post.count = shrinkedCount;
+		} else {
+			vv("-- readed a post meta that needs more than 15 bits");
+
+			quint16 countExtension;
+			mVocabularyStream >> countExtension;
+
+			post.count =
+				// Take the shrinkedCount as first bits and countExtension
+				// as lasts, than remove the leftermost bit which is just
+				// a marker for denote that more than 15 bits are needed,
+				// but actually doesn't count for the int value
+				// Not removing it leads to have always a surplus of 2^31
+				((static_cast<quint32>(shrinkedCount) << VocabularyConf::REF_SHRINKED_BITS) |
+				static_cast<quint32>(countExtension))
+					& ~VocabularyConf::REF_EXTENDED_FLAG;
+		}
+
+		post.offset = offset;
+		return post.count;
+	};
+
 	while (!mVocabularyStream.atEnd()) {
 		// Read term
 		char *term;
@@ -521,41 +640,6 @@ void IndexHandler::loadVocabulary()
 		quint32 incrementalOffset = 0;
 
 		vv("-- starting position in posting list: " << ref.postingListPosition);
-
-		// Read the count of posts for each term's field
-		// An unit of offset means 5 bytes in the posting list file
-
-		auto loadIndexTermReference =
-				[this](IndexTermRefPostMeta &post, quint32 offset) -> quint32 {
-			// First of all read 16 bits, than if the first bit is = 1
-			// it means that this IndexTermRefPostMeta needs 32 bits for represent
-			// the count of posts for this term's field
-			quint16 shrinkedCount;
-			mVocabularyStream >> shrinkedCount;
-
-			if ((shrinkedCount & VocabularyConf::REF_SHRINKED_FLAG) == 0) {
-				// The post meta refers to no more than 2^15 posts per field
-				post.count = shrinkedCount;
-			} else {
-				vv("-- readed a post meta that needs more than 15 bits");
-
-				quint16 countExtension;
-				mVocabularyStream >> countExtension;
-
-				post.count =
-					// Take the shrinkedCount as first bits and countExtension
-					// as lasts, than remove the leftermost bit which is just
-					// a marker for denote that more than 15 bits are needed,
-					// but actually doesn't count for the int value
-					// Not removing it leads to have always a surplus of 2^31
-					((static_cast<quint32>(shrinkedCount) << VocabularyConf::REF_SHRINKED_BITS) |
-					static_cast<quint32>(countExtension))
-						& ~VocabularyConf::REF_EXTENDED_FLAG;
-			}
-
-			post.offset = offset;
-			return post.count;
-		};
 
 		// <art.a> <art.t> <art.y>
 		// <inc.a> <inc.t> <inc.y> <inc.b>
@@ -603,6 +687,83 @@ void IndexHandler::loadVocabulary()
 	}
 }
 
+void IndexHandler::computeIefs()
+{
+	ii("Computing inverse element frequencies...");
+	// Compute the inverse element frequency which is defined as
+	// ief_t = log10( |E| / ef_t)
+	// Whereas ef_t is the element frequnecy, thus the numbers of elements
+	// that contains t (must be < |E|)
+	// E := number of elements ( = |mKeys| )
+
+	// Thus what we have to do is:
+	// Foreach term inside the the vocabulary do:
+	// Find the post lists for the term, scan each post and put the element id
+	// in set; at the end of the post list, the size of the set contains
+	// the number of elements that contain the term.
+
+	for (auto it = mVocabulary.begin(); it != mVocabulary.end(); it++) {
+		QString term = it.key();
+		IndexTermRef &ref = it.value();
+
+		vv("Computing ief of " << term);
+
+		// We have to invoke loadPosts() for each possible field
+
+		QSet<quint32> elementsWithTerm;
+
+		for (int f = IndexElementFieldTypeStart;
+			 f <= IndexElementFieldTypeEnd;
+			 f = f << 1) {
+			IndexElementFieldType type = static_cast<IndexElementFieldType>(f);
+
+			// Take the posts that contains this term within this field
+			QSet<IndexPost> posts;
+			findPosts(term, ref, type, posts);
+
+			// At this point posts contains the posts of the term within the field,
+			// which may contain duplicate element id if an element.field contains
+			// the same term more than once.
+			// For this reason, we have to scan the posts and create another
+			// set from that avoids elements duplicates
+
+			foreach (IndexPost post, posts) {
+				// Just push the element id, we don't care were it actually
+				// is present nor the in field position
+				elementsWithTerm.insert(post.elementId);
+			}
+		}
+
+		const double E = mKeys.size();
+		const double ef_t = elementsWithTerm.size();
+
+		Q_ASSERT_X(ef_t > 0, "index_handling",
+			QString(
+				QString("Element frequency must be greater than 0 since the term is in the vocabulary: ") +
+				QString(term)
+			).toStdString().c_str());
+
+		Q_ASSERT_X(ef_t <= E, "index_handling",
+			QString(
+				QString("Element frequency must be not greater than the number of elements (") +
+				QString::number(ef_t) + " > " + QString::number(E) + ")"
+			).toStdString().c_str());
+
+		// At this point elementsWithTerm contains only the elements ids
+		// in which the term occurs; the size of it is actually the ef_t
+		float ief_t = static_cast<float>(log10(E / ef_t));
+
+		vv("E" << " = " << E);
+		vv("ef(" << term << ")" << " = " << ef_t);
+		vv("ief(" << term << ")" << " = " << ief_t);
+
+		// Finally put the ief_t inside the hash table
+		mIefs.insert(term, ief_t);
+	}
+
+	dd("Iefs computing finished");
+}
+
 void IndexHandler::debug_printKeys()
 {
 	dd("Loaded keys are: ");
@@ -620,3 +781,28 @@ void IndexHandler::debug_printVocabulary()
 //		IndexTermReference ref = it.value();
 	}
 }
+
+void IndexHandler::debug_printIefs()
+{
+	const int E = mKeys.size();
+
+	dd("Computed iefs are: " << "( |E| = " << E << " )");
+
+	// For print the iefs sorted, put those inside a map (which automatically
+	// order by key)
+
+	QMap<float, QString> sortedIefs;
+
+	for (auto it = mIefs.begin(); it != mIefs.end(); it++) {
+		sortedIefs.insertMulti(it.value(), it.key());
+	}
+
+	for (auto it = sortedIefs.begin(); it != sortedIefs.end(); it++) {
+		const float ief = it.key();
+		float ef = static_cast<float>(E / pow(10, ief)); // bonus; recompute ef with the inverse formula
+		dd("-- ief(" << it.value() << ") = " << ief << " | ef ~= " << ef);
+
+	}
+}
+
+
