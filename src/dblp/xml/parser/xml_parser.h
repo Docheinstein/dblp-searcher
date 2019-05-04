@@ -13,7 +13,7 @@ class XmlParseHandler;
 class XmlParser : QXmlDefaultHandler
 {
 public:
-	XmlParser(QString &dblpXmlPath,
+	XmlParser(const QString &dblpXmlPath,
 				  XmlParseHandler &parseHandler);
 	bool parse();
 

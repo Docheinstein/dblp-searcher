@@ -1,5 +1,5 @@
-#ifndef INDEX_ELEMENT_FIELD_TYPE_H
-#define INDEX_ELEMENT_FIELD_TYPE_H
+#ifndef ELEMENT_FIELD_TYPE_H
+#define ELEMENT_FIELD_TYPE_H
 
 #include <QFlags>
 
@@ -45,12 +45,12 @@
 // - publisher
 // - booktitle
 
-enum IndexElementFieldType {
-	IndexElementFieldTypeStart = 1,
+enum class ElementFieldType {
+	_Start = 1,
 
 	// Article
 
-	ArticleAuthor = IndexElementFieldTypeStart,
+	ArticleAuthor = _Start,
 	ArticleTitle = ArticleAuthor << 1,
 	ArticleYear = ArticleTitle << 1,
 
@@ -111,14 +111,18 @@ enum IndexElementFieldType {
 	Proceedings = ProceedingsTitle | ProceedingsYear |
 				  ProceedingsPublisher | ProceedingsBooktitle,
 
-	// All
-	All = Article | Incollection | Inproceedings | Phdthesis | Masterthesis |
-		  Book | Proceedings,
+	_End = ProceedingsBooktitle,
 
-	IndexElementFieldTypeEnd = ProceedingsBooktitle
+	// Extra
+
+	Publication = Article | Incollection | Inproceedings |
+				  Phdthesis | Masterthesis,
+	Venue = Book | Proceedings,
+
+	All = Publication | Venue,
 };
 
-Q_DECLARE_FLAGS(IndexElementFieldTypes, IndexElementFieldType);
-Q_DECLARE_OPERATORS_FOR_FLAGS(IndexElementFieldTypes);
+Q_DECLARE_FLAGS(ElementFieldTypes, ElementFieldType);
+Q_DECLARE_OPERATORS_FOR_FLAGS(ElementFieldTypes);
 
-#endif // INDEX_ELEMENT_FIELD_TYPE_H
+#endif // ELEMENT_FIELD_TYPE_H

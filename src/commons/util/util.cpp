@@ -30,7 +30,7 @@ namespace Util {
 			QString queryPartSearch(const QString &element, const QString &field) {
 				// Returns <publication>:
 				// Or <publication>.<field>:
-				if (field.isNull() || field.isEmpty())
+				if (field.isEmpty())
 					return element + Const::Dblp::Query::QUERY_PART_SEARCH_END_MARK;
 
 				return element + Const::Dblp::Query::ELEMENT_FIELD_DIVISOR +

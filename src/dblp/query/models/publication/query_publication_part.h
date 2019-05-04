@@ -10,12 +10,16 @@ public:
 	QueryPublicationPart(QueryPublicationElementCase element,
 						 QueryPublicationFieldCase field = nullptr);
 
-	QueryPublicationElementType *element();
-	QueryPublicationFieldType *field();
+	ElementFieldTypes elementFieldTypes() override;
+	QueryElementType *element() override;
+	QueryFieldType *field() override;
 
 	operator QString() override;
 
 protected:
+	void computeTypes();
+
+	ElementFieldTypes mTypes;
 	QueryPublicationElementType *mElement;
 	QueryPublicationFieldType *mField;
 };

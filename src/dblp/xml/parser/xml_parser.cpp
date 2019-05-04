@@ -12,8 +12,8 @@ namespace DblpXml = Const::Dblp::Xml;
 
 Logger XmlParser::L = Logger::forClass("QueryParser");
 
-XmlParser::XmlParser(QString &dblpXmlPath,
-							 XmlParseHandler &parseHandler)
+XmlParser::XmlParser(const QString &dblpXmlPath,
+					XmlParseHandler &parseHandler)
 {
 //	mInputPath = QString(dblpXmlPath);
 	mInputFile.setFileName(dblpXmlPath);

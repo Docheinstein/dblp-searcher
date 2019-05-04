@@ -11,12 +11,16 @@ public:
 			QueryVenueElementCase element,
 			QueryVenueFieldCase field = nullptr);
 
-	QueryVenueElementType *element(); // always VENUE
-	QueryVenueFieldType *field();
+	ElementFieldTypes elementFieldTypes() override;
+	QueryElementType *element() override;
+	QueryFieldType *field() override;
 
 	operator QString() override;
 
 protected:
+	void computeTypes();
+
+	ElementFieldTypes mTypes;
 	QueryVenueElementType *mElement; // always VENUE
 	QueryVenueFieldType *mField;
 };

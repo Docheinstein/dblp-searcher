@@ -3,8 +3,8 @@
 
 void QueryBasePart::addToken(const QString &token)
 {
-	// Sanitize the token
-	mTokens.append(token);
+	// Sanitize the token before append it
+	mTokens.append(Util::String::sanitizeTerm(token));
 }
 
 

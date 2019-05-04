@@ -41,12 +41,12 @@ inline uint qHash(const IndexPost &ip, uint seed)
 inline bool operator==(const ElementFieldMatch &efm1, const ElementFieldMatch &efm2)
 {
 	return efm1.elementId == efm2.elementId &&
-			efm1.termCount == efm2.termCount;
+			efm1.matchCount == efm2.matchCount;
 }
 
 inline uint qHash(const ElementFieldMatch &efm, uint seed)
 {
-	return qHash(efm.elementId, seed) ^ efm.termCount;
+	return qHash(efm.elementId, seed) ^ efm.matchCount;
 }
 
 // ---
@@ -55,6 +55,17 @@ IndexHandler::IndexHandler(QString &indexPath, QString &baseName)
 {
 	mIndexPath = indexPath;
 	mBaseIndexName = baseName;
+	load();
+}
+
+const QList<IndexKey> IndexHandler::keys() const
+{
+	return mKeys;
+}
+
+const QMap<QString, IndexTermRef> IndexHandler::vocabulary() const
+{
+	return mVocabulary;
 }
 
 void IndexHandler::load()
@@ -125,34 +136,62 @@ void IndexHandler::load()
 
 	loadKeys();
 	loadVocabulary();
-	computeIefs();
 
 	debug_printKeys();
 	debug_printVocabulary();
-	debug_printIefs();
 }
 
 bool IndexHandler::findElements(const QString &phrase,
-								IndexElementFieldType field,
+								ElementFieldTypes fields,
 								QSet<ElementFieldMatch> &matches)
 {
+
 	// If the phrase is actually a space separeted list of words, split those
 	// and use them as tokens for findElements();
-
-	// Moreover, sanitize each term (lowercase, no punctuation, (trimmed))
 	QStringList tokens = phrase.split(
 				Const::Dblp::Query::TOKENS_SPLITTER,
 				QString::SplitBehavior::SkipEmptyParts);
-	for (auto it = tokens.begin(); it < tokens.end(); it++) {
-		*it = Util::String::sanitizeTerm(*it);
-	}
 
-	return findElements(tokens, field, matches);
+	return findElements(tokens, fields, matches);
 }
 
+
 bool IndexHandler::findElements(const QStringList &tokens,
-								IndexElementFieldType field,
+								ElementFieldTypes fields,
 								QSet<ElementFieldMatch> &matches) {
+	QStringList sanitizedTokens;
+	// Moreover, sanitize each term (lowercase, no punctuation, (trimmed))
+	for (auto it = tokens.begin(); it < tokens.end(); it++) {
+		sanitizedTokens.append(Util::String::sanitizeTerm(*it));
+	}
+
+	// Do a findElements() for each type inside fields
+	//	ii("Finding posts for " << term << "in fields : " << fields;);
+
+	bool somethingFound = false;
+
+	// For each possibile field inside fields, test whether the flag
+	// in fields is set; if so extend the search to this field to
+	for (int f = static_cast<int>(ElementFieldType::_Start);
+		 f <= static_cast<int>(ElementFieldType::_End);
+		 f = f << 1) {
+
+		ElementFieldType fieldFlag = static_cast<ElementFieldType>(f);
+		if (!fields.testFlag(fieldFlag))
+			continue; // do not search within this field
+
+		somethingFound |= findElementsSingleType(tokens, fieldFlag, matches);
+	}
+
+	return somethingFound;
+
+}
+
+bool IndexHandler::findElementsSingleType(const QStringList &tokens,
+										  ElementFieldType field,
+										  QSet<ElementFieldMatch> &matches)
+{
+
 	/*
 	 * Retrieves the elements that matches the phrase.
 	 * This is done by doing:
@@ -374,7 +413,7 @@ bool IndexHandler::findElements(const QStringList &tokens,
 // NOT SUPPORTED ANYMORE
 // Search on more fields at once
 //bool IndexHandler::findPosts(const QString &term,
-//							 IndexElementFieldTypes fields,
+//							 ElementFieldTypes fields,
 //							 QSet<IndexPost> &posts)
 //{
 //	ii("Finding posts for " << term << "in fields : " << fields;);
@@ -382,11 +421,11 @@ bool IndexHandler::findElements(const QStringList &tokens,
 //	bool found = false;
 //	// For each possibile field inside fields, test whether the flag
 //	// in fields is set; if so extend the search to this field to
-//	for (int f = IndexElementFieldTypeStart;
-//		 f <= IndexElementFieldTypeEnd;
+//	for (int f = ElementFieldTypeStart;
+//		 f <= ElementFieldTypeEnd;
 //		 f = f << 1) {
 
-//		IndexElementFieldType fieldFlag = static_cast<IndexElementFieldType>(f);
+//		ElementFieldType fieldFlag = static_cast<ElementFieldType>(f);
 //		if (fields.testFlag(fieldFlag))
 //			found |= findPosts(term, fieldFlag, posts);
 //		// else:  do not search within this field
@@ -396,10 +435,10 @@ bool IndexHandler::findElements(const QStringList &tokens,
 //}
 
 bool IndexHandler::findPosts(const QString &term,
-							 IndexElementFieldType field,
+							 ElementFieldType field,
 							 QSet<IndexPost> &posts)
 {
-	vv("Finding posts for " << term << " in field : " << field;);
+	vv("Finding posts for " << term << " in field : " << static_cast<int>(field));
 
 	auto refIt = mVocabulary.find(term);
 
@@ -415,92 +454,92 @@ bool IndexHandler::findPosts(const QString &term,
 	return true;
 }
 
-void IndexHandler::findPosts(const QString &term, IndexTermRef &ref,
-							 IndexElementFieldType field, QSet<IndexPost> &posts)
+void IndexHandler::findPosts(const QString &term, const IndexTermRef &ref,
+							 ElementFieldType field, QSet<IndexPost> &posts)
 {
 	// Calculate the field relative position within the ref based on the field
-	IndexTermRefPostMeta *refPost;
+	const IndexTermRefPostMeta *refPost;
 
 	switch (field) {
-	case ArticleAuthor:
+	case ElementFieldType::ArticleAuthor:
 		refPost = &ref.article.author;
 		break;
-	case ArticleTitle:
+	case ElementFieldType::ArticleTitle:
 		refPost = &ref.article.title;
 		break;
-	case ArticleYear:
+	case ElementFieldType::ArticleYear:
 		refPost = &ref.article.year;
 		break;
 
-	case IncollectionAuthor:
+	case ElementFieldType::IncollectionAuthor:
 		refPost = &ref.incollection.author;
 		break;
-	case IncollectionTitle:
+	case ElementFieldType::IncollectionTitle:
 		refPost = &ref.incollection.title;
 		break;
-	case IncollectionYear:
+	case ElementFieldType::IncollectionYear:
 		refPost = &ref.incollection.year;
 		break;
-	case IncollectionBooktitle:
+	case ElementFieldType::IncollectionBooktitle:
 		refPost = &ref.incollection.booktitle;
 		break;
 
-	case InproceedingsAuthor:
+	case ElementFieldType::InproceedingsAuthor:
 		refPost = &ref.inproceedings.author;
 		break;
-	case InproceedingsTitle:
+	case ElementFieldType::InproceedingsTitle:
 		refPost = &ref.inproceedings.title;
 		break;
-	case InproceedingsYear:
+	case ElementFieldType::InproceedingsYear:
 		refPost = &ref.inproceedings.year;
 		break;
-	case InproceedingsBooktitle:
+	case ElementFieldType::InproceedingsBooktitle:
 		refPost = &ref.inproceedings.booktitle;
 		break;
 
-	case PhdthesisAuthor:
+	case ElementFieldType::PhdthesisAuthor:
 		refPost = &ref.phdthesis.author;
 		break;
-	case PhdthesisTitle:
+	case ElementFieldType::PhdthesisTitle:
 		refPost = &ref.phdthesis.title;
 		break;
-	case PhdthesisYear:
+	case ElementFieldType::PhdthesisYear:
 		refPost = &ref.phdthesis.year;
 		break;
 
-	case MasterthesisAuthor:
+	case ElementFieldType::MasterthesisAuthor:
 		refPost = &ref.masterthesis.author;
 		break;
-	case MasterthesisTitle:
+	case ElementFieldType::MasterthesisTitle:
 		refPost = &ref.masterthesis.title;
 		break;
-	case MasterthesisYear:
+	case ElementFieldType::MasterthesisYear:
 		refPost = &ref.masterthesis.year;
 		break;
 
-	case BookAuthor:
+	case ElementFieldType::BookAuthor:
 		refPost = &ref.book.author;
 		break;
-	case BookTitle:
+	case ElementFieldType::BookTitle:
 		refPost = &ref.book.title;
 		break;
-	case BookYear:
+	case ElementFieldType::BookYear:
 		refPost = &ref.book.year;
 		break;
-	case BookPublisher:
+	case ElementFieldType::BookPublisher:
 		refPost = &ref.book.publisher;
 		break;
 
-	case ProceedingsTitle:
+	case ElementFieldType::ProceedingsTitle:
 		refPost = &ref.proceedings.title;
 		break;
-	case ProceedingsYear:
+	case ElementFieldType::ProceedingsYear:
 		refPost = &ref.proceedings.year;
 		break;
-	case ProceedingsPublisher:
+	case ElementFieldType::ProceedingsPublisher:
 		refPost = &ref.proceedings.publisher;
 		break;
-	case ProceedingsBooktitle:
+	case ElementFieldType::ProceedingsBooktitle:
 		refPost = &ref.proceedings.booktitle;
 		break;
 	default:
@@ -508,10 +547,11 @@ void IndexHandler::findPosts(const QString &term, IndexTermRef &ref,
 	}
 
 	Q_ASSERT_X(refPost != nullptr, "index_handling",
-			   QString(QString("Unexpected IndexElementFieldType found: " +
-					QString::number(field))).toStdString().c_str());
+			   QString(QString("Unexpected ElementFieldType found: " +
+					QString::number(static_cast<int>(field)))).toStdString().c_str());
 
-	dd("Found " << refPost->count << " posts for field " << field << " and term '" << term << "'");
+	dd("Found " << refPost->count << " posts for field " << static_cast<int>(field)
+				<< " and term '" << term << "'");
 
 	for (quint32 i = 0; i < refPost->count; i++) {
 		// Figure out the position of the posts in the posting list (of the first one)
@@ -557,15 +597,6 @@ void IndexHandler::findPosts(const QString &term, IndexTermRef &ref,
 #endif
 
 	}
-}
-
-
-
-
-void IndexHandler::debug_findArticlesOfAuthor(const QString &author)
-{
-	QSet<IndexPost> posts;
-	findPosts(author, ArticleAuthor, posts);
 }
 
 void IndexHandler::loadKeys()
@@ -687,83 +718,6 @@ void IndexHandler::loadVocabulary()
 	}
 }
 
-void IndexHandler::computeIefs()
-{
-	ii("Computing inverse element frequencies...");
-	// Compute the inverse element frequency which is defined as
-	// ief_t = log10( |E| / ef_t)
-	// Whereas ef_t is the element frequnecy, thus the numbers of elements
-	// that contains t (must be < |E|)
-	// E := number of elements ( = |mKeys| )
-
-	// Thus what we have to do is:
-	// Foreach term inside the the vocabulary do:
-	// Find the post lists for the term, scan each post and put the element id
-	// in set; at the end of the post list, the size of the set contains
-	// the number of elements that contain the term.
-
-	for (auto it = mVocabulary.begin(); it != mVocabulary.end(); it++) {
-		QString term = it.key();
-		IndexTermRef &ref = it.value();
-
-		vv("Computing ief of " << term);
-
-		// We have to invoke loadPosts() for each possible field
-
-		QSet<quint32> elementsWithTerm;
-
-		for (int f = IndexElementFieldTypeStart;
-			 f <= IndexElementFieldTypeEnd;
-			 f = f << 1) {
-			IndexElementFieldType type = static_cast<IndexElementFieldType>(f);
-
-			// Take the posts that contains this term within this field
-			QSet<IndexPost> posts;
-			findPosts(term, ref, type, posts);
-
-			// At this point posts contains the posts of the term within the field,
-			// which may contain duplicate element id if an element.field contains
-			// the same term more than once.
-			// For this reason, we have to scan the posts and create another
-			// set from that avoids elements duplicates
-
-			foreach (IndexPost post, posts) {
-				// Just push the element id, we don't care were it actually
-				// is present nor the in field position
-				elementsWithTerm.insert(post.elementId);
-			}
-		}
-
-		const double E = mKeys.size();
-		const double ef_t = elementsWithTerm.size();
-
-		Q_ASSERT_X(ef_t > 0, "index_handling",
-			QString(
-				QString("Element frequency must be greater than 0 since the term is in the vocabulary: ") +
-				QString(term)
-			).toStdString().c_str());
-
-		Q_ASSERT_X(ef_t <= E, "index_handling",
-			QString(
-				QString("Element frequency must be not greater than the number of elements (") +
-				QString::number(ef_t) + " > " + QString::number(E) + ")"
-			).toStdString().c_str());
-
-		// At this point elementsWithTerm contains only the elements ids
-		// in which the term occurs; the size of it is actually the ef_t
-		float ief_t = static_cast<float>(log10(E / ef_t));
-
-		vv("E" << " = " << E);
-		vv("ef(" << term << ")" << " = " << ef_t);
-		vv("ief(" << term << ")" << " = " << ief_t);
-
-		// Finally put the ief_t inside the hash table
-		mIefs.insert(term, ief_t);
-	}
-
-	dd("Iefs computing finished");
-}
-
 void IndexHandler::debug_printKeys()
 {
 	dd("Loaded keys are: ");
@@ -781,28 +735,4 @@ void IndexHandler::debug_printVocabulary()
 //		IndexTermReference ref = it.value();
 	}
 }
-
-void IndexHandler::debug_printIefs()
-{
-	const int E = mKeys.size();
-
-	dd("Computed iefs are: " << "( |E| = " << E << " )");
-
-	// For print the iefs sorted, put those inside a map (which automatically
-	// order by key)
-
-	QMap<float, QString> sortedIefs;
-
-	for (auto it = mIefs.begin(); it != mIefs.end(); it++) {
-		sortedIefs.insertMulti(it.value(), it.key());
-	}
-
-	for (auto it = sortedIefs.begin(); it != sortedIefs.end(); it++) {
-		const float ief = it.key();
-		float ef = static_cast<float>(E / pow(10, ief)); // bonus; recompute ef with the inverse formula
-		dd("-- ief(" << it.value() << ") = " << ief << " | ef ~= " << ef);
-
-	}
-}
-
 

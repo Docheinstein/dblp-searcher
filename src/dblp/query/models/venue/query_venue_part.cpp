@@ -3,17 +3,40 @@
 QueryVenuePart::QueryVenuePart(
 		QueryVenueElementCase element, QueryVenueFieldCase field) :
 	mElement(element), mField(field)
-{}
-
-QueryVenueElementType * QueryVenuePart::element()
 {
-	return mElement;
+	computeTypes();
 }
 
-QueryVenueFieldType * QueryVenuePart::field()
+void QueryVenuePart::computeTypes()
 {
-	return mField;
+	if (mElement == QueryVenueElementType::VENUE) {
+		if (!mField)
+			mTypes = ElementFieldType::Venue;
+
+		else if (mField == QueryVenueFieldType::TITLE)
+			mTypes =
+					ElementFieldType::BookTitle |
+					ElementFieldType::ProceedingsTitle;
+
+		else if (mField == QueryVenueFieldType::PUBLISHER)
+			mTypes =
+					ElementFieldType::BookPublisher |
+					ElementFieldType::ProceedingsPublisher;
+
+		else
+			// We should never come here
+			mTypes = ElementFieldType::Venue;
+	}
+
+	else {
+		// We should never come here
+		mTypes = ElementFieldType::Venue;
+	}
 }
+
+ElementFieldTypes QueryVenuePart::elementFieldTypes() { return mTypes; }
+QueryElementType *QueryVenuePart::element() { return mElement; }
+QueryFieldType *QueryVenuePart::field() { return mField; }
 
 QueryVenuePart::operator QString()
 {

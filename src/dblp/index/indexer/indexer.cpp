@@ -7,7 +7,7 @@
 Logger Indexer::L = Logger::forClass("Indexer");
 
 
-Indexer::Indexer(QString &outputPath, QString &baseName)
+Indexer::Indexer(const QString &outputPath, const QString &baseName)
 {
 	mOutputPath = outputPath;
 	mBaseIndexName = baseName;
@@ -273,7 +273,7 @@ void Indexer::writeElement(const QString &key, qint64 pos)
 
 void Indexer::writeKey(const QString &key)
 {
-	Q_ASSERT_X(!key.isNull() && !key.isEmpty(),
+	Q_ASSERT_X(!key.isEmpty(),
 			 "indexing", "Cannot index an empty key");
 
 	Q_ASSERT_X(mCurrent.elementId < PostingListConf::ELEMENT_ID_THRESHOLD,

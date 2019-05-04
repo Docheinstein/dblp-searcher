@@ -10,14 +10,14 @@
 #include "dblp/index/models/reference/index_term_ref.h"
 #include "commons/logger/logger.h"
 #include "dblp/index/models/post/index_post.h"
-#include "dblp/index/models/fieldtypes/index_element_field_type.h"
+#include "dblp/shared/element_field_type/element_field_type.h"
 
 // Represents a match for findElements(), which contains the element
 // id and the term count. The field and the term are implicit with the
 // findElements() call
 typedef struct ElementFieldMatch {
 	quint32 elementId; // element id
-	quint8 termCount; // how many times the term occurs within this element.field
+	quint8 matchCount; // how many times the term(s) occur(s) within this element.field
 } ElementFieldMatch;
 
 class IndexHandler
@@ -25,17 +25,45 @@ class IndexHandler
 public:
 	IndexHandler(QString &indexPath, QString &baseName);
 
-	void load();
-
+	// Use a phrase, that will be automatically splitted to tokens
 	bool findElements(const QString &phrase,
-					  IndexElementFieldType fields,
+					  ElementFieldTypes fields,
 					  QSet<ElementFieldMatch> &matches);
 
-	void debug_findArticlesOfAuthor(const QStringList &author);
-	void debug_findArticlesOfAuthor(const QString &author);
+	// Use the token list
+	bool findElements(const QStringList &tokens,
+					  ElementFieldTypes fields,
+					  QSet<ElementFieldMatch> &matches);
+
+	// Pass through the vocabulary
+	bool findPosts(const QString &term,
+				   ElementFieldType field,
+				   QSet<IndexPost> &posts);
+
+	// Use the ref already taken from the vocabulary
+	void findPosts(const QString &term,
+				   const IndexTermRef &ref,
+				   ElementFieldType field,
+				   QSet<IndexPost> &posts);
+
+	const QList<IndexKey> keys() const;
+	const QMap<QString, IndexTermRef> vocabulary() const;
 
 private:
 	static Logger L;
+
+	// Use the token list
+	bool findElementsSingleType(
+						const QStringList &tokens,
+						ElementFieldType field,
+						QSet<ElementFieldMatch> &matches);
+	void load();
+
+	void loadKeys();
+	void loadVocabulary();
+
+	void debug_printKeys();
+	void debug_printVocabulary();
 
 	QString mIndexPath;
 	QString mBaseIndexName;
@@ -52,6 +80,7 @@ private:
 	QFile mElementsPosFile;
 	QDataStream mElementsPosStream;
 
+	// Contains all the elements keys
 	QList<IndexKey> mKeys;
 
 	// A QHash would be enough, but since the iefs computation is done
@@ -61,31 +90,6 @@ private:
 	// In this way we can have some hope that the computation of the ief
 	// uses the cache in a decent way while reading the posting list file.
 	QMap<QString, IndexTermRef> mVocabulary;
-	QHash<QString, float> mIefs;	// := inverse element frequency
-									// log10(|E|/ef_t)
-
-	void loadKeys();
-	void loadVocabulary();
-	void computeIefs();
-
-	bool findElements(const QStringList &tokens,
-					  IndexElementFieldType field,
-					  QSet<ElementFieldMatch> &matches);
-
-	// Pass through the vocabulary
-	bool findPosts(const QString &term,
-				   IndexElementFieldType field,
-				   QSet<IndexPost> &posts);
-
-	// Use the ref already taken from the vocabulary
-	void findPosts(const QString &term,
-				   IndexTermRef &ref,
-				   IndexElementFieldType field,
-				   QSet<IndexPost> &posts);
-
-	void debug_printKeys();
-	void debug_printVocabulary();
-	void debug_printIefs();
 };
 
 #endif // INDEX_HANDLER_H

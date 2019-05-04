@@ -11,7 +11,7 @@
 class Indexer : public XmlParseHandler
 {
 public:
-	Indexer(QString &indexPath, QString &baseName);
+	Indexer(const QString &indexPath, const QString &baseName);
 
 	// DblpXmlParseHandler interface
 	void onStart();

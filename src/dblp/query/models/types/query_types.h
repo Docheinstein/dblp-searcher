@@ -3,11 +3,23 @@
 
 #include <commons/adt/type/string_type.h>
 
+// BASE
+
+class QueryElementType : public StringType {
+public:
+	QueryElementType(const char *string);
+};
+
+class QueryFieldType : public StringType {
+public:
+	QueryFieldType(const char *string);
+};
+
 // PUBLICATION
 
-class QueryPublicationElementType : public StringType {
+class QueryPublicationElementType : public QueryElementType {
 public:
-	QueryPublicationElementType(const char *s) : StringType(s) {}
+	QueryPublicationElementType(const char *s) : QueryElementType (s) {}
 
 	static QueryPublicationElementType * PUBLICATION;
 	static QueryPublicationElementType * ARTICLE;
@@ -20,9 +32,9 @@ public:
 typedef QueryPublicationElementType* QueryPublicationElementCase;
 
 
-class QueryPublicationFieldType : public StringType {
+class QueryPublicationFieldType : public QueryFieldType {
 public:
-	QueryPublicationFieldType(const char *s) : StringType(s) {}
+	QueryPublicationFieldType(const char *s) : QueryFieldType(s) {}
 
 	static QueryPublicationFieldType *AUTHOR;
 	static QueryPublicationFieldType *TITLE;
@@ -33,9 +45,9 @@ typedef QueryPublicationFieldType* QueryPublicationFieldCase;
 
 // VENUE
 
-class QueryVenueElementType : public StringType {
+class QueryVenueElementType : public QueryElementType {
 public:
-	QueryVenueElementType(const char *s) : StringType(s) {}
+	QueryVenueElementType(const char *s) : QueryElementType(s) {}
 
 	static QueryVenueElementType *VENUE;
 };
@@ -43,9 +55,9 @@ public:
 typedef QueryVenueElementType* QueryVenueElementCase;
 
 
-class QueryVenueFieldType : public StringType {
+class QueryVenueFieldType : public QueryFieldType {
 public:
-	QueryVenueFieldType(const char *s) : StringType(s) {}
+	QueryVenueFieldType(const char *s) : QueryFieldType(s) {}
 
 	static QueryVenueFieldType *TITLE;
 	static QueryVenueFieldType *PUBLISHER;

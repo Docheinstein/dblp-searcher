@@ -6,6 +6,11 @@ using QPFT = QueryPublicationFieldType;
 using QVET = QueryVenueElementType;
 using QVFT = QueryVenueFieldType;
 
+// BASE
+QueryElementType::QueryElementType(const char *string) : StringType (string) {}
+QueryFieldType::QueryFieldType(const char *string) : StringType (string) {}
+
+
 // PUBLICATION
 
 QPET * QPET::PUBLICATION = new QPET("publication");
@@ -26,3 +31,4 @@ QVET * QVET::VENUE = new QVET("venue");
 
 QVFT * QVFT::TITLE = new QVFT("title");
 QVFT * QVFT::PUBLISHER = new QVFT("publisher");
+

@@ -1,4 +1,4 @@
-#include "query_parser.h"
+#include "query.h"
 #include <commons/const/const.h>
 #include <commons/util/util.h>
 #include <commons/logger/logger.h>
@@ -9,9 +9,14 @@
 namespace QueryConst = Const::Dblp::Query;
 namespace QueryUtil = Util::Dblp::Query;
 
-Logger QueryParser::L = Logger::forClass("QueryParser");
+Logger Query::L = Logger::forClass("Query");
 
-Query QueryParser::fromString(const QString &queryString)
+const QList<QueryBasePart *> Query::parts() const
+{
+	return mQueryParts;
+}
+
+Query::Query(const QString &queryString)
 {
 	dd("Parsing query: '" << queryString << "'");
 
@@ -28,9 +33,6 @@ Query QueryParser::fromString(const QString &queryString)
 	 * the strings inside the quotes as they are, while splitting the others
 	 * by spaces in order to take the single words.
 	 */
-
-	// Query to build
-	Query query;
 
 	// Just wrap a string remind if it was a phrasal or not
 	typedef struct QueryToken {
@@ -99,6 +101,10 @@ Query QueryParser::fromString(const QString &queryString)
 		 * 2) If it is not a phrasal, check if it is a known search pattern.
 		 *	  If it is a known search pattern, then open a new query part and push
 		 *    the previous one to the query
+		 * 2b) In case we have a search pattern but the token has not been
+		 *		readed until the end, push the remaining string as a token
+		 *		for the new query part.
+		 *		e.g. phThesis:Harald => we have to push Harald to the phThesis part
 		 * 3) If it isn't a search pattern, push it as token for the current query
 		 *	  part and go to the next token.
 		 */
@@ -114,6 +120,9 @@ Query QueryParser::fromString(const QString &queryString)
 		// 2) Check for new search pattern
 
 		newQueryPart = newQueryPartFromToken(qtoken.token);
+		// The new query part may already contain a token
+		// (this happens if, for example, the search pattern was attached to
+		// a token of that searc pattern, e.g. phThesis:Harald)
 
 		// If the token is a new query part, push the previous to the
 		// query as query part, otherwise add the token to the current
@@ -131,7 +140,7 @@ Query QueryParser::fromString(const QString &queryString)
 				vv("--> thus pushing previous query part: " << *currentQueryPart);
 
 				// Push the previous query part
-				query.addPart(currentQueryPart);
+				addPart(currentQueryPart);
 
 				// We cannot free it at this point since the query retains
 				// pointers to the query part, we must free those later.
@@ -160,17 +169,15 @@ Query QueryParser::fromString(const QString &queryString)
 	if (currentQueryPart &&
 		currentQueryPart->tokens().size() > 0) {
 		vv("Pushing the last query part " << *currentQueryPart);
-		query.addPart(currentQueryPart);
+		addPart(currentQueryPart);
 	}
 
-	dd("Query has been parsed:" << endl << query);
-
-	return query;
+	dd("Query has been parsed:" << endl << *this);
 }
 
 // If the token is a search pattern, returns true and put into part
 // the new query part
-QueryBasePart * QueryParser::newQueryPartFromToken(const QString &token)
+QueryBasePart * Query::newQueryPartFromToken(const QString &token)
 {
 	QueryBasePart * queryPart = nullptr;
 
@@ -183,7 +190,7 @@ QueryBasePart * QueryParser::newQueryPartFromToken(const QString &token)
 	return nullptr; // not a search pattern
 }
 
-QueryBasePart * QueryParser::newQueryPublicationPartFromToken(const QString &token)
+QueryBasePart * Query::newQueryPublicationPartFromToken(const QString &token)
 {
 	QueryBasePart * part = nullptr;
 
@@ -211,49 +218,43 @@ QueryBasePart * QueryParser::newQueryPublicationPartFromToken(const QString &tok
 			QueryPublicationElementType::MASTERTHESIS)))
 		return part;
 
-	// ...
-
 	return nullptr;
 }
 
-QueryBasePart * QueryParser::newQueryPublicationPartFromToken(const QString &token,
+QueryBasePart * Query::newQueryPublicationPartFromToken(
+		const QString &token,
 		QueryPublicationElementCase pubElement)
 {
-	const char *pubElementStr = pubElement->string();
-
-	if (!token.startsWith(pubElementStr)) {
-		return nullptr; // this token is not the given publication element
-	}
-
 	// At this point we can have
+	// 0 nope) Nothing that starts with "<publication>*"
 	// 1 ok) "<publication>:" => Generic search pattern without field filter
 	// 2 ok) "<publication>." => Search patten with field filter
 	// 3 nope) "<publication><something_else>" => Not a search pattern but just
 	// tokens of the previous search pattern
 
-	if (token == QueryUtil::queryPartSearch(pubElementStr)) {
-		// 1) Search pattern without a field (<publication>:)
-		return new QueryPublicationPart(pubElement);
-	}
-
-	if (!token.startsWith(pubElementStr + QueryConst::ELEMENT_FIELD_DIVISOR)) {
-		return nullptr; // this tokens is not "<publication>:" nor "<publication>."
-	}
-
-	// 2) Probably a search pattern with a field (<publication>.<field>*)
-
 	QueryBasePart * part = nullptr;
 
+	// 1) Search pattern without a field (<publication>:) ?
+
 	if ((part = newQueryPublicationPartFromToken(
-			 token, pubElement, QueryPublicationFieldType::TITLE)))
+			 token, pubElement, nullptr)))
+		return part;
+
+	// 2) Search pattern with a field (<publication>.<field>*) ?
+
+	if ((part = newQueryPublicationPartFromToken(
+			 token, pubElement,
+			 QueryPublicationFieldType::TITLE)))
 		return part;
 
 	if ((part = newQueryPublicationPartFromToken(
-			 token, pubElement, QueryPublicationFieldType::YEAR)))
+			 token, pubElement,
+			 QueryPublicationFieldType::YEAR)))
 		return part;
 
 	if ((part = newQueryPublicationPartFromToken(
-			 token, pubElement, QueryPublicationFieldType::AUTHOR)))
+			 token, pubElement,
+			 QueryPublicationFieldType::AUTHOR)))
 		return part;
 
 	// 3) Nope, not a known search pattern
@@ -261,77 +262,140 @@ QueryBasePart * QueryParser::newQueryPublicationPartFromToken(const QString &tok
 	return nullptr;
 }
 
-QueryBasePart *QueryParser::newQueryPublicationPartFromToken(
+QueryBasePart *Query::newQueryPublicationPartFromToken(
 		const QString &token,
 		QueryPublicationElementCase pubElement,
 		QueryPublicationFieldCase pubField)
 {
-	if (token == QueryUtil::queryPartSearch(
-				pubElement->string(),
-				pubField->string())) {
-		// <publication>.<field>:
-
-		return new QueryPublicationPart(pubElement, pubField);
-	}
-
-	// Not a search pattern of type "<publication>.<field>:"
-
-	return nullptr;
+	return newQueryPartFromToken(token, pubElement, pubField,
+			[](QueryElementType *el, QueryFieldType *fl) -> QueryBasePart *{
+		return new QueryPublicationPart(
+					static_cast<QueryPublicationElementCase>(el),
+					static_cast<QueryPublicationFieldCase>(fl)
+		);
+	});
 }
 
-QueryBasePart *QueryParser::newQueryVenuePartFromToken(const QString &token)
+QueryBasePart *Query::newQueryVenuePartFromToken(const QString &token)
 {
-	const char * venueStr = QueryVenueElementType::VENUE->string();
-	if (!token.startsWith(venueStr)) {
-		return nullptr; // this token is not venue element
-	}
+	// The only allowed venue element is VENUE
+	return newQueryVenuePartFromToken(token, QueryVenueElementType::VENUE);
+}
 
+QueryBasePart *Query::newQueryVenuePartFromToken(
+		const QString &token,
+		QueryVenueElementCase venueElement)
+{
 	// At this point we can have
+	// 0 nope) Nothing that starts with "<venue>*"
 	// 1 ok) "venue:" => Generic search pattern without field filter
 	// 2 ok) "venue." => Search patten with field filter
 	// 3 nope) "venue<something_else>" => Not a search pattern but just
 	// tokens of the previous search pattern
 
-	if (token == QueryUtil::queryPartSearch((venueStr))) {
-		// 1) Search pattern without a field (venue:)
-		return new QueryVenuePart(QueryVenueElementType::VENUE);
-	}
-
-	if (!token.startsWith(venueStr + QueryConst::ELEMENT_FIELD_DIVISOR)) {
-		return nullptr; // this tokens is not "venue:" nor "venue."
-	}
-
-	// 2) Probably a search pattern with a field (venue.<field>*)
-
 	QueryBasePart * part = nullptr;
 
+	// 1) Search pattern without a field (<publication>:) ?
+
 	if ((part = newQueryVenuePartFromToken(
-			 token, QueryVenueElementType::VENUE, QueryVenueFieldType::TITLE)))
+			 token, venueElement, nullptr)))
+		return part;
+
+	// 2) Search pattern with a field (<publication>.<field>*) ?
+
+	if ((part = newQueryVenuePartFromToken(
+			 token, venueElement,
+			 QueryVenueFieldType::TITLE)))
 		return part;
 
 	if ((part = newQueryVenuePartFromToken(
-			 token, QueryVenueElementType::VENUE, QueryVenueFieldType::PUBLISHER)))
+			 token, venueElement,
+			 QueryVenueFieldType::PUBLISHER)))
 		return part;
 
-	// Not a search pattern of type "venue.<field>:"
+	// 3) Nope, not a known search pattern
 
 	return nullptr;
 }
 
-QueryBasePart *QueryParser::newQueryVenuePartFromToken(
+QueryBasePart *Query::newQueryVenuePartFromToken(
 		const QString &token,
 		QueryVenueElementCase venueElement,
 		QueryVenueFieldCase venueField)
 {
-	if (token == QueryUtil::queryPartSearch(
-				venueElement->string(),
-				venueField->string())) {
-		// venue.<field>:
+	return newQueryPartFromToken(token, venueElement, venueField,
+			[](QueryElementType *el, QueryFieldType *fl) -> QueryBasePart *{
+		return new QueryVenuePart(
+					static_cast<QueryVenueElementCase>(el),
+					static_cast<QueryVenueFieldCase>(fl)
+		);
+	});
+}
 
-		return new QueryVenuePart(venueElement, venueField);
+QueryBasePart *Query::newQueryPartFromToken(
+		const QString &token,
+		QueryElementType *element,
+		QueryFieldType *field,
+		QueryBasePart *queryPartCreator(QueryElementType *, QueryFieldType *))
+{
+	QString searchPattern = QueryUtil::queryPartSearch(
+				element->string(),
+				field ? field->string() : "" /* no field */);
+
+	if (!token.startsWith(searchPattern)) {
+		// Search pattern doesn't match
+		// Not a search pattern of type
+		// "<publication>.<field>:" or "<publication/field>:"
+		// It might be that
+		// 1) The token doesn't contain the search pattern
+		// 2) The token doesn't start with the search pattern
+		return nullptr;
 	}
 
-	// Not a search pattern of type "venue.<field>:"
+	// At this point, it means that the token is a search pattern
+	// (it begins with "<publication>.<field>:" or "<publication/field>:")
+	// We have to capture eventual other tokens that occure after the search pattern
 
-	return nullptr;
+	QString remainingToken = token.mid(searchPattern.size());
+
+	// FIXME: eventually we could check the remaining token recursively
+
+	// <publication>.<field>:
+	QueryBasePart *part = queryPartCreator(element, field);
+
+	// Add the remaining token part if it is valid
+	if (!remainingToken.isEmpty()) {
+		vv("Adding remaining token: " << remainingToken);
+		part->addToken(remainingToken);
+	}
+
+	return part;
+}
+
+Query::~Query()
+{
+	// Dealloc query parts
+	qDeleteAll(mQueryParts);
+}
+
+void Query::addPart(QueryBasePart * queryPart)
+{
+	mQueryParts.append(queryPart);
+}
+
+Query::operator QString() const
+{
+	QString s;
+	int i = 0;
+	for (auto it = mQueryParts.begin(); it != mQueryParts.end();) {
+		s += QString::number(i) + ") " + **it;
+
+		it++;
+		i++;
+
+		if (it != mQueryParts.end())
+			 s += "\n";
+	}
+
+	return s;
 }
