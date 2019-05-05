@@ -1,109 +1,224 @@
 #include <QDebug>
-#include <QTextDocument>
-#include <Qt>
-#include <QCoreApplication>
 #include <QGuiApplication>
-#include <QQmlApplicationEngine>
+#include <QQmlEngine>
+#include <QtConcurrentRun>
 #include "dblp/index/indexer/indexer.h"
 #include "dblp/xml/parser/xml_parser.h"
 #include "dblp/index/handler/index_handler.h"
-#include "commons/config/config.h"
-#include "commons/util/util.h"
-
-#include "tests.cpp"
-#include <dblp/query/resolver/query_resolver.h>
-#include <dblp/query/query/query.h>
-#include <dblp/irmodel/impl/ief/ir_model_ief.h>
-#include <QQmlComponent>
+#include "dblp/query/resolver/query_resolver.h"
+#include "dblp/irmodel/impl/ief/ir_model_ief.h"
 #include "gui/splash/splash_window.h"
 #include "gui/main/main_window.h"
-#include <QThread>
-#include <QtConcurrentRun>
-#include "main_gui.h"
+#include "commons/globals/globals.h"
 
-int doIndexing(
-			QString dblpXmlPath,
-			QString indexPath,
-			QString baseIndexName) {
-	Indexer indexer(indexPath, baseIndexName);
-	XmlParser parser(dblpXmlPath, indexer);
+
+static const char * const HELP =
+R"#(NAME
+	dblp-searcher
+
+SYNOPSIS
+	dblp-searcher <MODE> <INDEX_FOLDER_PATH> <INDEX_BASE_NAME> [OPTIONS]...
+
+DESCRIPTION
+	Perform full-text searches over the dblp.xml dump of DBLP.
+	This program can be launched in two different mode:
+	1) Index creation: parses the dblp.xml and creates the index files from it
+	2) Search:	open the GUI for perform searches over the previously created
+				index files
+
+INDEX MODE
+	--index, -I <dblp_file_path> <index_folder_path> <index_base_name>
+		Starts in index creation mode.
+		Requires two additional arguments, the path where to place the index
+		files and the base name to use for the index files.
+		e.g. --index /tmp/dblp.xml /tmp/dblp-index/ indexname
+
+SEARCH MODE
+	--search, -S <index_folder_path> <index_base_name>
+		Starts the GUI in search mode.
+		Requires two additional arguments, the path where to load the index
+		files and the base name of those.
+		e.g. --search /tmp/dblp-index/ indexname
+
+	ARGUMENTS
+		--lazy-ief
+			All the ief of every term in the vocabulary is usually loaded
+			before start the application; this speed up the further queries
+			but may require some time.
+			If you wish to start the application faster, use this option
+			(but queries resolving may be slower).
+
+)#";
+
+enum class Mode {
+	Index,
+	Search
+};
+
+typedef struct Arguments {
+	Mode mode;
+	QString dblpFilePath;
+	QString indexFolderPath;
+	QString baseIndexName;
+	bool lazyIefs;
+
+	int argc;
+	char **argv;
+} Arguments;
+
+[[noreturn]] static void dblpSearcherAbort() {
+	qCritical() << HELP;
+	exit(-1);
+}
+
+static int doIndexing(Arguments args) {
+	Q_ASSERT(args.mode == Mode::Index);
+
+	Indexer indexer(args.indexFolderPath, args.baseIndexName);
+	XmlParser parser(args.dblpFilePath, indexer);
 	parser.parse();
 
 	return 0;
 }
 
-int doSearch(
-			QString indexPath,
-			QString baseIndexName) {
+static int doSearch(Arguments args) {
+	Q_ASSERT(args.mode == Mode::Search);
 
-	IndexHandler handler(indexPath, baseIndexName);
-	IRModelIef irmodel(&handler);
-	QueryResolver resolver(&irmodel);
-//	Query q("Information retrieval phThesis:\"Harald is bad\" venue.title:dog");
-	Query q("Stefano Encyclopedia IPTComm");
+	QGuiApplication guiApp(args.argc, args.argv);
+	QQmlEngine engine;
 
-	QSet<QueryMatch> matches = resolver.resolveQuery(q);
+	// Allocates the windows (splash and main)
 
-	int i = 0;
-	foreach (QueryMatch match, matches) {
-		qDebug() << "Query match (" << ++i << "): Element " << match.elementId;
+	SplashWindow splashWindow(&engine);
+	if (!splashWindow.create()) {
+		qCritical() << "Error occurred while creating SplashWindow";
+		exit(-1);
 	}
 
-//	QString q1 = "Stefano";
-//	QString q2 = "Enrico";
+	MainWindow mainWindow(&engine);
+	if (!mainWindow.create()) {
+		qCritical() << "Error occurred while creating MainWindow";
+		exit(-1);
+	}
 
-//	QSet<ElementFieldMatch> matches1;
-//	QSet<ElementFieldMatch> matches2;
+	splashWindow.setVisible(true);
 
-//	handler.findElements(q1, ArticleAuthor, matches1);
-//	handler.findElements(q2, ArticleAuthor, matches2);
+	// Load async
 
-//	foreach (ElementFieldMatch match, matches1) {
-//		qDebug() << "Matched element (" << q1 << ") id: " << match.elementId
-//				 << " (tf: " << match.termCount << ")";
-//	}
+	QtConcurrent::run([&args, &splashWindow, &mainWindow]() {
 
-//	foreach (ElementFieldMatch match, matches2) {
-//		qDebug() << "Matched element (" << q2 << ") id: " << match.elementId
-//				 << " (tf: " << match.termCount << ")";
-//	}
+		auto splashProgressor = [&splashWindow](double progress) {
+			splashWindow.setProgress(progress);
+		};
 
-	return 0;
+		// INDEX HANDLER
+
+		IndexHandler handler(args.indexFolderPath, args.baseIndexName);
+
+		// Connect to signals for detect progress
+		QObject::connect(&handler, &IndexHandler::keysLoadStarted, [&splashWindow]() {
+			splashWindow.setStatus("Loading index file: keys");
+		});
+		QObject::connect(&handler, &IndexHandler::keysLoadProgress, splashProgressor);
+
+		QObject::connect(&handler, &IndexHandler::vocabularyLoadStarted, [&splashWindow]() {
+			splashWindow.setStatus("Loading index file: vocabulary");
+		});
+		QObject::connect(&handler, &IndexHandler::vocabularyLoadProgress, splashProgressor);
+
+		handler.load();
+
+		// IR MODEL
+
+		IRModelIef irmodel(&handler);
+
+		QObject::connect(&irmodel, &IRModelIef::initStarted, [&splashWindow]() {
+			splashWindow.setStatus("Initializing IR Model");
+		});
+		QObject::connect(&irmodel, &IRModelIef::initProgress, splashProgressor);
+
+		irmodel.init(true);
+
+		// QUERY RESOLVER (gratis)
+		QueryResolver resolver(&irmodel);
+
+		// Load of everything finished, show main window
+
+		splashWindow.setVisible(false);
+		mainWindow.setVisible(true);
+	});
+
+	return guiApp.exec();
 }
 
-void abort() {
-	qCritical() << "Please provide valid parameters." << endl
-				<< "Use with one of the following mode: " << endl
-				<< "--index <dblp.xml> <out_index_path>" << endl
-				<< "--search <in_index_path>" << endl;
-	exit(-1);
+
+static Arguments parseArguments(int argc, char *argv[]) {
+	Arguments args;
+	args.argc = argc;
+	args.argv = argv;
+
+	for (int i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+
+		auto readNextParam = [argc, argv, &i](QString &str, QString failReason) {
+			i++;
+			if (i >= argc) {
+				qCritical() << failReason;
+				dblpSearcherAbort();
+			}
+			str = argv[i];
+		};
+
+		auto readModeParams = [&readNextParam, &args]() {
+			readNextParam(args.indexFolderPath, "Missing mode parameter: index folder path");
+			readNextParam(args.baseIndexName, "Missing mode parameter: index base name");
+		};
+
+		// Mode
+		if (streq(arg, "--index") || streq(arg, "-I")) {
+			args.mode = Mode::Index;
+			readNextParam(args.dblpFilePath, "Missing mode parameter: dblp file path");
+			readModeParams();
+		}
+		else if (streq(arg, "--search") || streq(arg, "-S")) {
+			args.mode = Mode::Search;
+			readModeParams();
+		}
+
+		// Other options
+		// Lazy
+
+		else if (streq(arg, "--lazy-ief")) {
+			args.lazyIefs = true;
+		}
+	}
+
+	return args;
 }
 
 int main(int argc, char *argv[])
 {
-//	QApplication a(argc, argv);
 	if (argc < 2) {
-		abort();
+		dblpSearcherAbort();
 	}
 	try {
-		QString mode(argv[1]);
-		if (mode == "--index") {
-			if (argc < 5)
-				abort();
-			return doIndexing(argv[2], argv[3], argv[4]);
+		// Parse the arguments
+		Arguments args = parseArguments(argc, argv);
+		if (args.mode == Mode::Index) {
+			qInfo() << "Starting in INDEX mode";
+			doIndexing(args);
 		}
-		else if (mode == "--search") {
-			if (argc < 4)
-				abort();
-			return doSearch(argv[2], argv[3]);
+		else if (args.mode == Mode::Search) {
+			qInfo() << "Starting in SEARCH mode";
+			doSearch(args);
 		}
-		else if (mode == "--search-gui")
-			return mainGui(argc, argv, argv[2], argv[3]);
-		else
-			qCritical() << "Unsupported mode: " << mode;
-	} catch (const char * e){
+		else {
+			qWarning() << "Arguments parsing faile; please provide a valid mode.";
+			dblpSearcherAbort();
+		}
+	} catch (const char * e) {
 	  qCritical() << "Exception occured; aborting for the following reason:"
-				  << endl << ">> " << e;
+				  << endl << ">>" << e;
 	  return 0;
 	}
 }

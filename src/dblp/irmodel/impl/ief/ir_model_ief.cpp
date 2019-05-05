@@ -25,6 +25,10 @@ void IRModelIef::init(bool lazy)
 	// at can be done either now or at runtime
 	if (lazy) {
 		dd("Not computing iefs now since lazy initialization has been required");
+
+		// Emit signals any way
+		emit initStarted();
+		emit initEnded();
 		return;
 	}
 
