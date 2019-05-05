@@ -4,6 +4,7 @@
 #include <QString>
 #include <QStringList>
 #include <QFile>
+#include <QUrl>
 
 namespace Util {
 	namespace Dblp {
@@ -33,6 +34,10 @@ namespace Util {
 
 	namespace String {
 		QString sanitizeTerm(const QString &term);
+	}
+
+	namespace Qml {
+		QUrl resourceUrl(const QString &name);
 	}
 }
 

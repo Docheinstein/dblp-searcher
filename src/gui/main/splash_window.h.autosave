@@ -1,0 +1,11 @@
+#ifndef SPLASH_WINDOW_H
+#define SPLASH_WINDOW_H
+
+#include "gui/base/base_window.h"
+
+class SplashWindow : public BaseWindow {
+public:
+	void show()
+};
+
+#endif // SPLASH_WINDOW_H

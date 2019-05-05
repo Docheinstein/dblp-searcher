@@ -1,11 +1,11 @@
 #include "indexer.h"
 #include <QDir>
 
-#include "commons/shared/shared.h"
+#include "commons/config/config.h"
 #include "commons/util/util.h"
+#include "commons/globals/globals.h"
 
 Logger Indexer::L = Logger::forClass("Indexer");
-
 
 Indexer::Indexer(const QString &outputPath, const QString &baseName)
 {
@@ -25,7 +25,7 @@ void Indexer::onStart()
 	// Keys file
 
 	QString keysPath = Util::File::path(
-		{mOutputPath, mBaseIndexName + Shared::Index::Extensions::KEYS});
+		{mOutputPath, mBaseIndexName + Config::Index::Extensions::KEYS});
 	dd("Creating keys index file at: " << keysPath);
 
 	mKeysFile.setFileName(keysPath);
@@ -40,7 +40,7 @@ void Indexer::onStart()
 	// Posting list file
 
 	QString postingListPath = Util::File::path(
-		{mOutputPath, mBaseIndexName + Shared::Index::Extensions::POSTING_LIST});
+		{mOutputPath, mBaseIndexName + Config::Index::Extensions::POSTING_LIST});
 	dd("Creating posting list index file at: " << postingListPath);
 
 	mPostingListFile.setFileName(postingListPath);
@@ -55,7 +55,7 @@ void Indexer::onStart()
 	// Vocabulary file
 
 	QString vocabularyPath = Util::File::path(
-		{mOutputPath, mBaseIndexName + Shared::Index::Extensions::VOCABULARY});
+		{mOutputPath, mBaseIndexName + Config::Index::Extensions::VOCABULARY});
 	dd("Creating vocabulary index file at: " << vocabularyPath);
 
 	mVocabularyFile.setFileName(vocabularyPath);
@@ -70,7 +70,7 @@ void Indexer::onStart()
 	// Elements pos file
 
 	QString elementsPosPath = Util::File::path(
-		{mOutputPath, mBaseIndexName + Shared::Index::Extensions::ELEMENTS_POS});
+		{mOutputPath, mBaseIndexName + Config::Index::Extensions::ELEMENTS_POS});
 	dd("Creating elements pos index file at: " << elementsPosPath);
 
 	mElementsPosFile.setFileName(elementsPosPath);
@@ -315,7 +315,7 @@ void Indexer::writeKey(const QString &key)
 }
 
 void Indexer::writeElementPosition(qint64 pos) {
-	Q_ASSERT_X(pos < Shared::Index::ElementsPosition::ELEMENT_POS_THRESHOLD,
+	Q_ASSERT_X(pos < Config::Index::ElementsPosition::ELEMENT_POS_THRESHOLD,
 			 "indexing", "The original element has a file position above the allowed one");
 
 	quint32 P = static_cast<quint32>(pos);
@@ -375,6 +375,20 @@ void Indexer::createPostingListAndVocabulary()
 	for (auto it = mIndexTerms.begin(); it != mIndexTerms.end(); it++) {
 		QString term = it.key();
 		IndexTerm &termEntity = it.value();
+
+		vv1("Handling term: " << term);
+
+		if (term == "0001") {
+			ii("Writing term" << term);
+			ii("IndexTerm # a.a: " << termEntity.article.author.size());
+			ii("IndexTerm # a.t: " << termEntity.article.title.size());
+			ii("IndexTerm # a.y: " << termEntity.article.year.size());
+
+			ii("Term: " << term.toUtf8());
+			ii("Plix pos" << mPostingListFile.pos());
+			ii("Vix pos" << mVocabularyFile.pos());
+
+		}
 
 //		qint64 postingListStartingPos = mPostingListFile.pos();
 
@@ -481,9 +495,9 @@ void Indexer::writeFieldPosts(QList<IndexPost> &posts)
 
 inline void Indexer::writeVocabularyTermMetas(QString term)
 {
-	vv("writeVocabularyTermMetas for term " << term.toUtf8());
-	vv("writeVocabularyTermMetas for pos " << mPostingListFile.pos());
-	vv("writeVocabularyTermMetas for el " << mCurrent.elementId);
+	vv2("Writing metas to vocabulary for term" << term.toUtf8());
+	vv3(".vix position: " << mVocabularyFile.pos());
+	vv3(".plix position: " << mPostingListFile.pos());
 
 	// First of all, write the term to the vocabulary
 
@@ -507,6 +521,7 @@ inline void Indexer::writeVocabularyTermFieldPostsCount(quint32 count)
 
 	if (count < VocabularyConf::REF_SHRINKED_THRESHOLD) {
 		// 16 bit
+		vv1("Writing count: " << static_cast<quint16>(count));
 		mVocabularyStream << static_cast<quint16>(count);
 	}
 	else {
@@ -527,7 +542,7 @@ inline void Indexer::writeVocabularyTermFieldPostsCount(quint32 count)
 
 inline void Indexer::writePostingListTermPosts(const IndexPost &post)
 {
-	vv("Writing at pos: " << mPostingListFile.pos());
+	vv("Writing post" << mPostingListFile.pos());
 	vv("Writing elementId: " << post.elementId);
 	vv("Writing fieldNum: " << post.fieldNumber);
 	vv("Writing inFieldTermPosition: " << post.inFieldTermPosition);
@@ -548,8 +563,8 @@ inline void Indexer::writePostingListTermPosts(const IndexPost &post)
 
 	quint8 P8 =  static_cast<quint8>(post.inFieldTermPosition);
 
-	vv("Writing P32 to posting list Hex: " << QString::number(P32, 16));
-	vv("Writing P8 to posting list Hex: " << QString::number(P8, 16));
+	vv("Writing P32 to posting list Hex: " << HEX(P32));
+	vv("Writing P8 to posting list Hex: " << HEX(P8));
 
 	mPostingListStream << P32 << P8;
 
@@ -605,6 +620,16 @@ inline void Indexer::addTerm(void (*termAdder)(IndexTerm &, const IndexPost &),
 						  const QString &term, quint32 fieldNumber, quint32 termPosition) {
 	// Sanitize term (lowercase, no punctuation, trim, ...)
 	QString indexTerm = Util::String::sanitizeTerm(term);
+
+	// Skip the term if it is empty (e.g. if it was a punctuation)
+
+	if (indexTerm.isEmpty())
+		return;
+
+//	Q_ASSERT_X(!indexTerm.isEmpty(), "indexing",
+//			   QString(
+//				   QString("Term addition failed; empty term. Was (") + term
+//				   + ")").toStdString().c_str());
 
 	if (!mIndexTerms.contains(indexTerm)) {
 		// Insert a new index term entity, empty for now

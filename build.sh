@@ -1,4 +1,4 @@
 #!/bin/bash
-qmake -project -o DblpSearcher.pri
+qmake -project -nopwd -o DblpSearcher.pri src
 grep -v INCLUDEPATH DblpSearcher.pri > DblpSearcher.pri.new
 mv DblpSearcher.pri.new DblpSearcher.pri

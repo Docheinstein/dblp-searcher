@@ -1,5 +1,5 @@
 #include "index_term_ref.h"
-#include "commons/shared/shared.h"
+#include "commons/config/config.h"
 
 #include <QDebug>
 

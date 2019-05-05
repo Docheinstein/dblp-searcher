@@ -20,10 +20,14 @@ typedef struct ElementFieldMatch {
 	quint8 matchCount; // how many times the term(s) occur(s) within this element.field
 } ElementFieldMatch;
 
-class IndexHandler
+class IndexHandler : public QObject
 {
+	Q_OBJECT
+
 public:
-	IndexHandler(QString &indexPath, QString &baseName);
+	IndexHandler(const QString &indexPath, const QString &baseName);
+
+	void load();
 
 	// Use a phrase, that will be automatically splitted to tokens
 	bool findElements(const QString &phrase,
@@ -49,6 +53,15 @@ public:
 	const QList<IndexKey> keys() const;
 	const QMap<QString, IndexTermRef> vocabulary() const;
 
+signals:
+	void vocabularyLoadStarted();
+	void vocabularyLoadProgress(double progress);
+	void vocabularyLoadEnded();
+
+	void keysLoadStarted();
+	void keysLoadProgress(double progress);
+	void keysLoadEnded();
+
 private:
 	static Logger L;
 
@@ -57,8 +70,10 @@ private:
 						const QStringList &tokens,
 						ElementFieldType field,
 						QSet<ElementFieldMatch> &matches);
-	void load();
+	void init();
 
+	// Exposed so that the call may have a better control over the status
+	// of the loading, if he/she wants
 	void loadKeys();
 	void loadVocabulary();
 

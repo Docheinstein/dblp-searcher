@@ -2,7 +2,7 @@
 #define QUERY_RESOLVER_H
 
 #include <dblp/query/query/query.h>
-#include <dblp/irmodel/ir_model.h>
+#include <dblp/irmodel/base/ir_model.h>
 
 typedef struct QueryMatch {
 	quint32 elementId; // element id

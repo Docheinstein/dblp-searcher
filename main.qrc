@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/qml">
+        <file alias="main.qml">qml/main.qml</file>
+        <file alias="splash.qml">qml/splash.qml</file>
+    </qresource>
+    <qresource prefix="/img">
+        <file alias="search.png">res/images/search.png</file>
+        <file alias="dblp-logo.png">res/images/dblp-logo.png</file>
+        <file alias="splash.png">res/images/splash.png</file>
+    </qresource>
+</RCC>

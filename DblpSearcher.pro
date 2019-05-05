@@ -4,9 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui xml
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT       += core gui xml qml concurrent quickcontrols2
 
 TARGET = XXXX
 TEMPLATE = app
@@ -25,7 +23,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 INCLUDEPATH += \
-    src
+	src
 
 include(DblpSearcher.pri)
 
@@ -33,3 +31,14 @@ include(DblpSearcher.pri)
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+	main.qrc
+
+OTHER_FILES += \
+	qml/main.qml
+	qml/splash.qml
+
+DISTFILES += \
+	qml/main.qml
+	qml/splash.qml

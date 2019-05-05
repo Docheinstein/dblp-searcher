@@ -2,19 +2,20 @@
 
 #include <QDebug>
 
-Logger::Logger(QString tag)
+Logger::Logger(QString tag, bool enabled)
 {
 	mTag = tag;
+	mEnabled = enabled;
 }
 
-Logger Logger::forTag(QString tag)
+Logger Logger::forTag(QString tag, bool enabled)
 {
-	return Logger(tag);
+	return Logger(tag, enabled);
 }
 
-Logger Logger::forClass(QString className)
+Logger Logger::forClass(QString className, bool enabled)
 {
-	return Logger("{" + className + "}");
+	return Logger("{" + className + "}", enabled);
 }
 
 QDebug Logger::verbose()
@@ -40,4 +41,9 @@ QDebug Logger::warn()
 QDebug Logger::error()
 {
 	return qCritical().noquote().nospace() << "[E] " << mTag << " ";
+}
+
+bool Logger::isEnabled()
+{
+	return mEnabled;
 }

@@ -1,9 +1,13 @@
 #include <QHash>
 #include <math.h>
 #include "index_handler.h"
-#include "commons/shared/shared.h"
+#include "commons/config/config.h"
 #include "commons/util/util.h"
 #include "commons/const/const.h"
+#include "commons/globals/globals.h"
+
+// REMOVE ME
+//#include <QThread>
 
 Logger IndexHandler::L = Logger::forClass("IndexHandler");
 
@@ -51,11 +55,11 @@ inline uint qHash(const ElementFieldMatch &efm, uint seed)
 
 // ---
 
-IndexHandler::IndexHandler(QString &indexPath, QString &baseName)
+IndexHandler::IndexHandler(const QString &indexPath, const QString &baseName)
 {
 	mIndexPath = indexPath;
 	mBaseIndexName = baseName;
-	load();
+	init();
 }
 
 const QList<IndexKey> IndexHandler::keys() const
@@ -70,75 +74,9 @@ const QMap<QString, IndexTermRef> IndexHandler::vocabulary() const
 
 void IndexHandler::load()
 {
-	// Open files
-
-	// Keys file
-
-	QString keysPath = Util::File::path(
-		{mIndexPath, mBaseIndexName + Shared::Index::Extensions::KEYS});
-	ii("Loading keys index file at: " << keysPath);
-
-	mKeysFile.setFileName(keysPath);
-
-	if (!mKeysFile.open(QFile::ReadOnly)) {
-		throw	"Cannot read index file. "
-				"Is the path valid? Does the index exists with a standard name?";
-	}
-
-	mKeysStream.setDevice(&mKeysFile);
-
-	// Vocabulary file
-
-	QString vocabularyPath = Util::File::path(
-		{mIndexPath, mBaseIndexName + Shared::Index::Extensions::VOCABULARY});
-	ii("Loading vocabulary index file at: " << vocabularyPath);
-
-	mVocabularyFile.setFileName(vocabularyPath);
-
-	if (!mVocabularyFile.open(QFile::ReadOnly)) {
-		throw	"Cannot read index file. "
-				"Is the path valid? Does the index exists with a standard name?";
-	}
-
-	mVocabularyStream.setDevice(&mVocabularyFile);
-
-	// Posting list file
-
-	QString postingListPath = Util::File::path(
-		{mIndexPath, mBaseIndexName + Shared::Index::Extensions::POSTING_LIST});
-	ii("Loading posting list index file at: " << postingListPath);
-
-	mPostingListFile.setFileName(postingListPath);
-
-	if (!mPostingListFile.open(QFile::ReadOnly)) {
-		throw	"Cannot read index file. "
-				"Is the path valid? Does the index exists with a standard name?";
-	}
-
-	mPostingListStream.setDevice(&mPostingListFile);
-
-	// Elements positions (optional)
-
-	QString elementsPosPath = Util::File::path(
-		{mIndexPath, mBaseIndexName + Shared::Index::Extensions::ELEMENTS_POS});
-	ii("Loading elements pos index file at: " << elementsPosPath);
-
-	mElementsPosFile.setFileName(elementsPosPath);
-
-	if (!mElementsPosFile.open(QFile::ReadOnly)) {
-		throw	"Cannot read index file. "
-				"Is the path valid? Does the index exists with a standard name?";
-	}
-
-	mElementsPosStream.setDevice(&mElementsPosFile);
-
 	// Load runtime stuff
-
 	loadKeys();
 	loadVocabulary();
-
-	debug_printKeys();
-	debug_printVocabulary();
 }
 
 bool IndexHandler::findElements(const QString &phrase,
@@ -387,7 +325,7 @@ bool IndexHandler::findElementsSingleType(const QStringList &tokens,
 
 				// Just increase the matches count.
 				ii("Found a phrasal match!");
-				phrasalMatchesCount ++;
+				phrasalMatchesCount++;
 			}
 		}
 
@@ -395,19 +333,86 @@ bool IndexHandler::findElementsSingleType(const QStringList &tokens,
 		// is greater than 0
 
 		if (phrasalMatchesCount > 0) {
+#if 0
 			// The match count of the phrase is phrasalMatchesCount, but we
 			// instead want the number of matches referred to the words, to
 			// we have to multiply it by the number of tokens (since all the
 			// words should have matched)
 			quint8 tf = static_cast<quint8>(phrasalMatchesCount * tokens.size());
 			vv("Inserting match with tf: " << tf);
-			matches.insert({ef.element, tf});
+#endif
+			// The match count refers to the phrase match count
+			matches.insert({ef.element, phrasalMatchesCount});
 		}
 	}
 
 	ii("# matchings: " << matches.size());
 
 	return true;
+}
+
+void IndexHandler::init()
+{
+	// Open files
+
+	// Keys file
+
+	QString keysPath = Util::File::path(
+		{mIndexPath, mBaseIndexName + Config::Index::Extensions::KEYS});
+	ii("Loading keys index file at: " << keysPath);
+
+	mKeysFile.setFileName(keysPath);
+	if (!mKeysFile.open(QFile::ReadOnly)) {
+		throw	"Cannot read index file. "
+				"Is the path valid? Does the index exists with a standard name?";
+	}
+
+	mKeysStream.setDevice(&mKeysFile);
+
+	// Vocabulary file
+
+	QString vocabularyPath = Util::File::path(
+		{mIndexPath, mBaseIndexName + Config::Index::Extensions::VOCABULARY});
+	ii("Loading vocabulary index file at: " << vocabularyPath);
+
+	mVocabularyFile.setFileName(vocabularyPath);
+
+	if (!mVocabularyFile.open(QFile::ReadOnly)) {
+		throw	"Cannot read index file. "
+				"Is the path valid? Does the index exists with a standard name?";
+	}
+
+	mVocabularyStream.setDevice(&mVocabularyFile);
+
+	// Posting list file
+
+	QString postingListPath = Util::File::path(
+		{mIndexPath, mBaseIndexName + Config::Index::Extensions::POSTING_LIST});
+	ii("Loading posting list index file at: " << postingListPath);
+
+	mPostingListFile.setFileName(postingListPath);
+
+	if (!mPostingListFile.open(QFile::ReadOnly)) {
+		throw	"Cannot read index file. "
+				"Is the path valid? Does the index exists with a standard name?";
+	}
+
+	mPostingListStream.setDevice(&mPostingListFile);
+
+	// Elements positions (optional)
+
+	QString elementsPosPath = Util::File::path(
+		{mIndexPath, mBaseIndexName + Config::Index::Extensions::ELEMENTS_POS});
+	ii("Loading elements pos index file at: " << elementsPosPath);
+
+	mElementsPosFile.setFileName(elementsPosPath);
+
+	if (!mElementsPosFile.open(QFile::ReadOnly)) {
+		throw	"Cannot read index file. "
+				"Is the path valid? Does the index exists with a standard name?";
+	}
+
+	mElementsPosStream.setDevice(&mElementsPosFile);
 }
 
 // NOT SUPPORTED ANYMORE
@@ -438,7 +443,7 @@ bool IndexHandler::findPosts(const QString &term,
 							 ElementFieldType field,
 							 QSet<IndexPost> &posts)
 {
-	vv("Finding posts for " << term << " in field : " << static_cast<int>(field));
+	vv("Finding posts for " << term << " in field : " << elementFieldTypeString(field));
 
 	auto refIt = mVocabulary.find(term);
 
@@ -548,17 +553,18 @@ void IndexHandler::findPosts(const QString &term, const IndexTermRef &ref,
 
 	Q_ASSERT_X(refPost != nullptr, "index_handling",
 			   QString(QString("Unexpected ElementFieldType found: " +
-					QString::number(static_cast<int>(field)))).toStdString().c_str());
+					DEC(static_cast<int>(field)))).toStdString().c_str());
 
-	dd("Found " << refPost->count << " posts for field " << static_cast<int>(field)
-				<< " and term '" << term << "'");
+	dd("Found " << refPost->count << " posts for field "
+	   << elementFieldTypeString(field)
+		<< " and term '" << term << "'");
 
 	for (quint32 i = 0; i < refPost->count; i++) {
 		// Figure out the position of the posts in the posting list (of the first one)
 		qint64 postPos = ref.postingListPosition +
 				(refPost->offset + i) * PostingListConf::POST_BYTES;
 
-		ii(i << "° post pos: " << postPos);
+//		ii(i << "° post pos: " << postPos << " of term(" << term << ")");
 
 		// Go the the figured out position
 		mPostingListFile.seek(postPos);
@@ -602,6 +608,7 @@ void IndexHandler::findPosts(const QString &term, const IndexTermRef &ref,
 void IndexHandler::loadKeys()
 {
 	dd("Loading keys file index");
+	emit keysLoadStarted();
 
 	// The format is
 	// <k0>
@@ -611,32 +618,52 @@ void IndexHandler::loadKeys()
 
 	// The first line contains the initial buffer size
 
+	const qint64 keysFileSize = mKeysFile.size();
 
 	while (!mKeysStream.atEnd()) {
 		QString key = mKeysStream.readLine();
 		mKeys.append({key});
+
+		double progress = static_cast<double>(mKeysFile.pos()) / keysFileSize;
+		vv1("Keys file load progress: " << progress);
+		emit keysLoadProgress(progress);
 	}
+
+	debug_printKeys();
+
+	emit keysLoadEnded();
 }
 
 void IndexHandler::loadVocabulary()
 {
 	dd("Loading vocabulary file index");
+	emit vocabularyLoadStarted();
+
+	const qint64 vocabularyFileSize = mVocabularyFile.size();
 
 	// Read the count of posts for each term's field
 	// An unit of offset means 5 bytes in the posting list file
 	auto loadIndexTermReference =
-			[this](IndexTermRefPostMeta &post, quint32 offset) -> quint32 {
+			[this](IndexTermRefPostMeta &post, quint32 offset, bool verbose = false) -> quint32 {
 		// First of all read 16 bits, than if the first bit is = 1
 		// it means that this IndexTermRefPostMeta needs 32 bits for represent
 		// the count of posts for this term's field
 		quint16 shrinkedCount;
 		mVocabularyStream >> shrinkedCount;
 
+		if (verbose) {
+			ii("Readed from stream: " << shrinkedCount);
+		}
+
 		if ((shrinkedCount & VocabularyConf::REF_SHRINKED_FLAG) == 0) {
 			// The post meta refers to no more than 2^15 posts per field
 			post.count = shrinkedCount;
 		} else {
-			vv("-- readed a post meta that needs more than 15 bits");
+			vv4("readed a post meta that needs more than 15 bits");
+
+			if (verbose) {
+				ii("Extension needed");
+			}
 
 			quint16 countExtension;
 			mVocabularyStream >> countExtension;
@@ -647,8 +674,11 @@ void IndexHandler::loadVocabulary()
 				// a marker for denote that more than 15 bits are needed,
 				// but actually doesn't count for the int value
 				// Not removing it leads to have always a surplus of 2^31
-				((static_cast<quint32>(shrinkedCount) << VocabularyConf::REF_SHRINKED_BITS) |
-				static_cast<quint32>(countExtension))
+				(
+				static_cast<quint32>(shrinkedCount) << (VocabularyConf::REF_SHRINKED_BITS + 1u)
+					|
+				static_cast<quint32>(countExtension)
+				)
 					& ~VocabularyConf::REF_EXTENDED_FLAG;
 		}
 
@@ -656,13 +686,29 @@ void IndexHandler::loadVocabulary()
 		return post.count;
 	};
 
+	int i = 0;
+
 	while (!mVocabularyStream.atEnd()) {
 		// Read term
 		char *term;
 		uint len;
 		mVocabularyStream.readBytes(term, len);
 
-		vv("-- vocabulary term: " << term);
+		if (!term) {
+			ww("Term load failure on iter " << i << "; read len = " << len);
+			ww(".vix pos() :" << mVocabularyFile.pos());
+			continue;
+		}
+
+		Q_ASSERT_X(term, "index_handling",
+				   QString("Found null term while loading vocabulary; iteration = "
+				   + DEC(i) + "; byte read = " + DEC(len)).toStdString().c_str());
+
+		vv1("Loading vocabulary term: " << term);
+
+		if (strcmp("0001", term) == 0) {
+			ii("Loading vocabulary term: " << term);
+		}
 
 		// Read starting position of term's refs in posting list
 
@@ -670,7 +716,11 @@ void IndexHandler::loadVocabulary()
 		mVocabularyStream >> ref.postingListPosition;
 		quint32 incrementalOffset = 0;
 
-		vv("-- starting position in posting list: " << ref.postingListPosition);
+		if (strcmp("0001", term) == 0) {
+			ii("Posting list position" << ref.postingListPosition);
+		}
+
+		vv2("Starting position in posting list: " << ref.postingListPosition);
 
 		// <art.a> <art.t> <art.y>
 		// <inc.a> <inc.t> <inc.y> <inc.b>
@@ -680,7 +730,7 @@ void IndexHandler::loadVocabulary()
 		// <bok.a> <bok.t> <bok.y> <bok.p>
 		// <pro.t> <pro.y> <pro.p> <pro.b>
 
-		incrementalOffset += loadIndexTermReference(ref.article.author, incrementalOffset);
+		incrementalOffset += loadIndexTermReference(ref.article.author, incrementalOffset, strcmp("0001", term) == 0);
 		incrementalOffset += loadIndexTermReference(ref.article.title, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.article.year, incrementalOffset);
 
@@ -712,10 +762,20 @@ void IndexHandler::loadVocabulary()
 		incrementalOffset += loadIndexTermReference(ref.proceedings.publisher, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.proceedings.booktitle, incrementalOffset);
 
-		vv("-- loaded: " << ref);
+		vv2("Loaded: " << ref);
 
 		mVocabulary.insert(QString(term), ref);
+
+		double progress = static_cast<double>(mVocabularyFile.pos()) / vocabularyFileSize;
+		vv1("Vocabulary file load progress: " << progress);
+		emit vocabularyLoadProgress(progress);
+
+		i++;
 	}
+
+	debug_printVocabulary();
+
+	emit vocabularyLoadEnded();
 }
 
 void IndexHandler::debug_printKeys()

@@ -1,10 +1,10 @@
-#ifndef SHARED_H
-#define SHARED_H
+#ifndef CONFIG_H
+#define CONFIG_H
 
 #include <QString>
 #include <limits>
 
-namespace Shared {
+namespace Config {
 	namespace Index {
 		namespace Extensions {
 			const QString KEYS = ".kix";
@@ -75,7 +75,7 @@ namespace Shared {
 	}
 }
 
-namespace PostingListConf = Shared::Index::PostingList;
-namespace VocabularyConf = Shared::Index::Vocabulary;
+namespace PostingListConf = Config::Index::PostingList;
+namespace VocabularyConf = Config::Index::Vocabulary;
 
-#endif // SHARED_H
+#endif // CONFIG_H

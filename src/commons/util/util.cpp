@@ -1,5 +1,7 @@
 #include "util.h"
 #include "commons/const/const.h"
+#include "commons/globals/globals.h"
+#include "dblp/xml/models/types/xml_types.h"
 
 #include <QTextDocument>
 #include <QTime>
@@ -10,7 +12,6 @@
 #define MS_IN_SEC 1000
 #define MS_IN_MIN 60000
 
-#include "dblp/xml/models/types/xml_types.h"
 
 namespace Util {
 	namespace Dblp {
@@ -54,10 +55,10 @@ namespace Util {
 		QString humanSize(const QFile &file) {
 			qint64 sz = file.size();
 			if (sz >= MB)
-				return QString::number(sz / MB) + "MB";
+				return DEC(sz / MB) + "MB";
 			if (sz >= KB)
-				return QString::number(sz / KB) + "KB";
-			return QString::number(sz) + "B";
+				return DEC(sz / KB) + "KB";
+			return DEC(sz) + "B";
 		}
 	}
 
@@ -88,8 +89,15 @@ namespace Util {
 		}
 	}
 
-	QString Time::humanTime(int ms) {
-		return QTime(0, 0, 0).addMSecs(ms).toString("m'm' s's'");
+	namespace Time {
+		QString humanTime(int ms) {
+			return QTime(0, 0, 0).addMSecs(ms).toString("m'm' s's'");
+		}
 	}
 
+	namespace Qml {
+		QUrl resourceUrl(const QString &name) {
+			return QUrl(QString("qrc:/qml/") + name + ".qml");
+		}
+	}
 }

@@ -6,11 +6,11 @@
 #include "commons/util/util.h"
 #include "dblp/xml/models/types/xml_types.h"
 
-#define VERBOSE_XML 1
+#define VERBOSE_XML 0
 
 namespace DblpXml = Const::Dblp::Xml;
 
-Logger XmlParser::L = Logger::forClass("QueryParser");
+Logger XmlParser::L = Logger::forClass("XmlParser");
 
 XmlParser::XmlParser(const QString &dblpXmlPath,
 					XmlParseHandler &parseHandler)

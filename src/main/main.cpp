@@ -1,27 +1,30 @@
-#include "mainwindow.h"
-#include <QApplication>
 #include <QDebug>
 #include <QTextDocument>
 #include <Qt>
+#include <QCoreApplication>
+#include <QGuiApplication>
+#include <QQmlApplicationEngine>
 #include "dblp/index/indexer/indexer.h"
 #include "dblp/xml/parser/xml_parser.h"
 #include "dblp/index/handler/index_handler.h"
-#include "commons/shared/shared.h"
+#include "commons/config/config.h"
 #include "commons/util/util.h"
 
 #include "tests.cpp"
 #include <dblp/query/resolver/query_resolver.h>
 #include <dblp/query/query/query.h>
-#include <dblp/irmodel/ir_model.h>
+#include <dblp/irmodel/impl/ief/ir_model_ief.h>
+#include <QQmlComponent>
+#include "gui/splash/splash_window.h"
+#include "gui/main/main_window.h"
+#include <QThread>
+#include <QtConcurrentRun>
+#include "main_gui.h"
 
 int doIndexing(
 			QString dblpXmlPath,
 			QString indexPath,
 			QString baseIndexName) {
-//	QString dblpXmlPath(argv[2]);
-//	QString indexPath(argv[3]);
-//	QString baseIndexName =argv[4];
-
 	Indexer indexer(indexPath, baseIndexName);
 	XmlParser parser(dblpXmlPath, indexer);
 	parser.parse();
@@ -34,9 +37,10 @@ int doSearch(
 			QString baseIndexName) {
 
 	IndexHandler handler(indexPath, baseIndexName);
-	IRModel irmodel(&handler);
+	IRModelIef irmodel(&handler);
 	QueryResolver resolver(&irmodel);
-	Query q("Information retrieval phThesis:\"Harald is bad\" venue.title:dog");
+//	Query q("Information retrieval phThesis:\"Harald is bad\" venue.title:dog");
+	Query q("Stefano Encyclopedia IPTComm");
 
 	QSet<QueryMatch> matches = resolver.resolveQuery(q);
 
@@ -67,20 +71,34 @@ int doSearch(
 	return 0;
 }
 
+void abort() {
+	qCritical() << "Please provide valid parameters." << endl
+				<< "Use with one of the following mode: " << endl
+				<< "--index <dblp.xml> <out_index_path>" << endl
+				<< "--search <in_index_path>" << endl;
+	exit(-1);
+}
+
 int main(int argc, char *argv[])
 {
-	if (argc < 3) {
-		qCritical() << "Please provide valid parameters." << endl
-					<< "Use with one of the following mode: " << endl
-					<< "--index <dblp.xml> <out_index_path>" << endl
-					<< "--search <in_index_path>" << endl;
+//	QApplication a(argc, argv);
+	if (argc < 2) {
+		abort();
 	}
 	try {
 		QString mode(argv[1]);
-		if (mode == "--index")
+		if (mode == "--index") {
+			if (argc < 5)
+				abort();
 			return doIndexing(argv[2], argv[3], argv[4]);
-		else if (mode == "--search")
+		}
+		else if (mode == "--search") {
+			if (argc < 4)
+				abort();
 			return doSearch(argv[2], argv[3]);
+		}
+		else if (mode == "--search-gui")
+			return mainGui(argc, argv, argv[2], argv[3]);
 		else
 			qCritical() << "Unsupported mode: " << mode;
 	} catch (const char * e){
@@ -88,10 +106,4 @@ int main(int argc, char *argv[])
 				  << endl << ">> " << e;
 	  return 0;
 	}
-
-	QApplication a(argc, argv);
-	MainWindow w;
-	w.show();
-
-	return a.exec();
 }

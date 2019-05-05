@@ -2,6 +2,7 @@
 #include <commons/const/const.h>
 #include <commons/util/util.h>
 #include <commons/logger/logger.h>
+#include "commons/globals/globals.h"
 #include <dblp/query/models/publication/query_publication_part.h>
 #include <dblp/query/models/basic/query_basic_part.h>
 #include <dblp/query/models/venue/query_venue_part.h>
@@ -388,7 +389,7 @@ Query::operator QString() const
 	QString s;
 	int i = 0;
 	for (auto it = mQueryParts.begin(); it != mQueryParts.end();) {
-		s += QString::number(i) + ") " + **it;
+		s += DEC(i) + ") " + **it;
 
 		it++;
 		i++;

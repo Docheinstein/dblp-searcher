@@ -2,6 +2,7 @@
 #define ELEMENT_FIELD_TYPE_H
 
 #include <QFlags>
+#include <QString>
 
 // article
 // - author
@@ -121,6 +122,8 @@ enum class ElementFieldType {
 
 	All = Publication | Venue,
 };
+
+QString elementFieldTypeString(ElementFieldType t);
 
 Q_DECLARE_FLAGS(ElementFieldTypes, ElementFieldType);
 Q_DECLARE_OPERATORS_FOR_FLAGS(ElementFieldTypes);
