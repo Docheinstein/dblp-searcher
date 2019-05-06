@@ -3,10 +3,10 @@
 
 #include <QObject>
 #include "dblp/irmodel/base/ir_model.h"
-#include <commons/logger/logger.h>
 #include <dblp/index/models/reference/index_term_ref.h>
+#include <commons/log/loggable/loggable.h>
 
-class IRModelIef : public QObject, public IRModel {
+class IRModelIef : public QObject, public IRModel, protected Loggable {
 	Q_OBJECT
 
 public:
@@ -25,9 +25,10 @@ signals:
 	void initProgress(double progress);
 	void initEnded();
 
-private:
-	static Logger L;
+protected:
+	LOGGING_OVERRIDE
 
+private:
 	void computeIefs();
 	float computeIef(const QString &term);
 	float computeIef(const QString &term, const IndexTermRef &ref);

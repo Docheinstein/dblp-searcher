@@ -10,7 +10,7 @@
 
 namespace DblpXml = Const::Dblp::Xml;
 
-Logger XmlParser::L = Logger::forClass("XmlParser");
+LOGGING(XmlParser, true)
 
 XmlParser::XmlParser(const QString &dblpXmlPath,
 					XmlParseHandler &parseHandler)

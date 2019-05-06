@@ -6,9 +6,9 @@
 #include <QHash>
 #include <QString>
 #include <QTextStream>
+#include <commons/log/loggable/loggable.h>
 #include "dblp/index/models/key/index_key.h"
 #include "dblp/index/models/reference/index_term_ref.h"
-#include "commons/logger/logger.h"
 #include "dblp/index/models/post/index_post.h"
 #include "dblp/shared/element_field_type/element_field_type.h"
 
@@ -20,7 +20,7 @@ typedef struct ElementFieldMatch {
 	quint8 matchCount; // how many times the term(s) occur(s) within this element.field
 } ElementFieldMatch;
 
-class IndexHandler : public QObject
+class IndexHandler : public QObject, protected Loggable
 {
 	Q_OBJECT
 
@@ -62,9 +62,10 @@ signals:
 	void keysLoadProgress(double progress);
 	void keysLoadEnded();
 
-private:
-	static Logger L;
+protected:
+	LOGGING_OVERRIDE
 
+private:
 	// Use the token list
 	bool findElementsSingleType(
 						const QStringList &tokens,

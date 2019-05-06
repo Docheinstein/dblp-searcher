@@ -3,12 +3,12 @@
 
 #include <QString>
 #include <QXmlContentHandler>
+#include <commons/log/loggable/loggable.h>
 #include "dblp/index/models/term/index_term.h"
 #include "dblp/xml/models/entities/xml_entities.h"
-#include "commons/logger/logger.h"
 #include "dblp/xml/handler/xml_parse_handler.h"
 
-class Indexer : public XmlParseHandler
+class Indexer : public XmlParseHandler, protected Loggable
 {
 public:
 	Indexer(const QString &indexPath, const QString &baseName);
@@ -25,9 +25,10 @@ public:
 	void onPhdThesis(DblpPhdThesis &phd, qint64 pos);
 	void onMasterThesis(DblpMasterThesis &master, qint64 pos);
 
-private:
-	static Logger L;
+protected:
+	LOGGING_OVERRIDE
 
+private:
 	// Folder that will contain the indexes
 	QString mOutputPath;
 

@@ -1,4 +1,4 @@
-#include <QHash>
+#include <QMap>
 #include <math.h>
 #include "index_handler.h"
 #include "commons/config/config.h"
@@ -6,10 +6,7 @@
 #include "commons/const/const.h"
 #include "commons/globals/globals.h"
 
-// REMOVE ME
-//#include <QThread>
-
-Logger IndexHandler::L = Logger::forClass("IndexHandler");
+LOGGING(IndexHandler, true);
 
 // --- Hashing purpose
 
@@ -444,6 +441,8 @@ bool IndexHandler::findPosts(const QString &term,
 							 QSet<IndexPost> &posts)
 {
 	vv("Finding posts for " << term << " in field : " << elementFieldTypeString(field));
+
+	vv1("Contained: " << mVocabulary.contains(term));
 
 	auto refIt = mVocabulary.find(term);
 

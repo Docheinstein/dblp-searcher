@@ -5,21 +5,22 @@
 #include <QXmlContentHandler>
 #include <QList>
 #include <QElapsedTimer>
-#include "commons/logger/logger.h"
+#include <commons/log/loggable/loggable.h>
 #include "dblp/xml/models/entities/xml_entities.h"
 
 class XmlParseHandler;
 
-class XmlParser : QXmlDefaultHandler
+class XmlParser : public QXmlDefaultHandler, protected Loggable
 {
 public:
 	XmlParser(const QString &dblpXmlPath,
 				  XmlParseHandler &parseHandler);
 	bool parse();
 
-private:
-	static Logger L;
+protected:
+	LOGGING_OVERRIDE
 
+private:
 	// Index path
 //	QString mInputPath;
 

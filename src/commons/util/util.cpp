@@ -80,12 +80,14 @@ namespace Util {
 			// 1) To lower case
 			// 2) Trim spaces (simplified is just like trim, but removes internal double spaces)
 			// 3) Remove punctuation
+			// 4) Convert to utf8 ?
 
 			// Replace (at least the most common) punctuation with nothing
 			return term
 					.toLower()
 					.simplified()
-					.replace(QRegExp("[\\[\\]\\\\%&@#°*+\\-/|(),;.:_^]"), "");
+					.replace(QRegExp("[\\[\\]\\\\%&@#°*+\\-/|(),;.:_^]"), "")
+					.toUtf8();
 		}
 	}
 

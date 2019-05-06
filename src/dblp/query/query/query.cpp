@@ -1,7 +1,6 @@
 #include "query.h"
 #include <commons/const/const.h>
 #include <commons/util/util.h>
-#include <commons/logger/logger.h>
 #include "commons/globals/globals.h"
 #include <dblp/query/models/publication/query_publication_part.h>
 #include <dblp/query/models/basic/query_basic_part.h>
@@ -10,7 +9,7 @@
 namespace QueryConst = Const::Dblp::Query;
 namespace QueryUtil = Util::Dblp::Query;
 
-Logger Query::L = Logger::forClass("Query");
+LOGGING(Query, true)
 
 const QList<QueryBasePart *> Query::parts() const
 {
@@ -46,27 +45,44 @@ Query::Query(const QString &queryString)
 	// Retrieve the macro tokens of the query, by splitting by double quotes
 	QStringList macroTokens = queryString.split(
 				Const::Dblp::Query::PHRASAL_MARK,
-				QString::SplitBehavior::SkipEmptyParts);
+				QString::SplitBehavior::KeepEmptyParts);
 
 	// At this point we should have inside macroTokens some pharasal as tokens.
 	// We should have alternatively one non phrasal token and one token
 	// e.g. There "is a cat" inside "my table"
 	//		|_____||_______||_______||________|
 	//		  simp	  phra    simp      phra
+	// Note that in this way we handle also the case in which the last closing double
+	// quote is not present; everything after the last double quote would
+	// be considered a token.
+	// For handle the case in which there is only one token, we have to keep
+	// the empty parts and skip those later, but we have to keep those to figure
+	// out if the position is even/odd
+
 
 	int i = 0;
 	for (auto it = macroTokens.begin(); it != macroTokens.end(); it++, i++) {
-		if (i % 2 == 1) {
+		const QString &macroToken = *it;
+		vv1("Found macro token: " << macroToken);
+		// Skip empty tokens (may occur for single token queries)
+		if (macroToken.isEmpty()) {
+			vv2("Skipping since empty");
+		}
+		// Not empty, check if it's phrasal or simple
+		else if (i % 2 == 1) {
+			vv2("Adding as phrasal");
 			// even macro tokens are phrasals, add those as they are
-			queryTokens.append({*it, true /* phrasal */});
+			queryTokens.append({macroToken, true /* phrasal */});
 		} else {
+			vv2("Splitting by ' ' since not phrasal");
 			// odds macro tokens are not phrasal, split those by spaces
 			// and adds every part as a single token
 			QStringList macroTokenTokens =
-					it->split(Const::Dblp::Query::TOKENS_SPLITTER,
+					macroToken.split(Const::Dblp::Query::TOKENS_SPLITTER,
 							  QString::SplitBehavior::SkipEmptyParts);
 
 			foreach (QString macroTokenToken, macroTokenTokens) {
+				vv3("Adding as simple: " << macroTokenToken);
 				queryTokens.append({macroTokenToken, false /* not phrasal */});
 			}
 		}
@@ -84,7 +100,7 @@ Query::Query(const QString &queryString)
 	QueryBasePart * newQueryPart = nullptr;
 
 	// Safe way to add to currentQueryPart, initializing it if it's null
-	auto addTokenToQueryPart = [](QueryBasePart *&part, const QString &token) {
+	auto addTokenToQueryPart = [this](QueryBasePart *&part, const QString &token) {
 		if (!part) {
 			vv("--> initializing a new basic query part");
 			part = new QueryBasicPart();
@@ -366,7 +382,7 @@ QueryBasePart *Query::newQueryPartFromToken(
 
 	// Add the remaining token part if it is valid
 	if (!remainingToken.isEmpty()) {
-		vv("Adding remaining token: " << remainingToken);
+		_vv("Adding remaining token: " << remainingToken);
 		part->addToken(remainingToken);
 	}
 

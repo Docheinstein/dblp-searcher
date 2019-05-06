@@ -5,7 +5,7 @@
 #include "commons/util/util.h"
 #include "commons/globals/globals.h"
 
-Logger Indexer::L = Logger::forClass("Indexer");
+LOGGING(Indexer, true)
 
 Indexer::Indexer(const QString &outputPath, const QString &baseName)
 {
@@ -501,7 +501,9 @@ inline void Indexer::writeVocabularyTermMetas(QString term)
 
 	// First of all, write the term to the vocabulary
 
-	mVocabularyStream << term.toUtf8();
+	mVocabularyStream << term.toUtf8(); // Probably the call toUtf8 is not needed
+										// since is already done before put terms into
+										// mIndexTerms
 
 	// Then write the starting position of the term in the posting list
 

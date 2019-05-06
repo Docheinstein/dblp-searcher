@@ -4,13 +4,13 @@
 #include <QObject>
 #include <QString>
 
-#include <commons/logger/logger.h>
+#include <commons/log/loggable/loggable.h>
 
 class QQmlEngine;
 class QQmlComponent;
 class QQmlContext;
 
-class GuiComponent : public QObject {
+class GuiComponent : public QObject, Loggable {
 	Q_OBJECT
 
 public:
@@ -34,6 +34,8 @@ protected:
 signals:
 	void componentCreated();
 
+protected:
+	LOGGING_OVERRIDE
 };
 
 #endif // GUI_COMPONENT_H

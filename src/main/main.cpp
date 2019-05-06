@@ -55,16 +55,17 @@ enum class Mode {
 	Search
 };
 
-typedef struct Arguments {
+class Arguments {
+public:
 	Mode mode;
 	QString dblpFilePath;
 	QString indexFolderPath;
 	QString baseIndexName;
-	bool lazyIefs;
+	bool lazyIefs = false;
 
 	int argc;
 	char **argv;
-} Arguments;
+};
 
 [[noreturn]] static void dblpSearcherAbort() {
 	qCritical() << HELP;
@@ -87,6 +88,11 @@ static int doSearch(Arguments args) {
 	QGuiApplication guiApp(args.argc, args.argv);
 	QQmlEngine engine;
 
+	// Declared index stuff outside the QtConcurrent::run() scope
+	IndexHandler *indexHandler;
+	IRModelIef *irmodel;
+	QueryResolver *queryResolver;
+
 	// Allocates the windows (splash and main)
 
 	SplashWindow splashWindow(&engine);
@@ -104,8 +110,8 @@ static int doSearch(Arguments args) {
 	splashWindow.setVisible(true);
 
 	// Load async
-
-	QtConcurrent::run([&args, &splashWindow, &mainWindow]() {
+	QtConcurrent::run([&args, &splashWindow, &mainWindow,
+					  &indexHandler, &irmodel, &queryResolver]() {
 
 		auto splashProgressor = [&splashWindow](double progress) {
 			splashWindow.setProgress(progress);
@@ -113,38 +119,41 @@ static int doSearch(Arguments args) {
 
 		// INDEX HANDLER
 
-		IndexHandler handler(args.indexFolderPath, args.baseIndexName);
+		indexHandler = new IndexHandler(args.indexFolderPath, args.baseIndexName);
 
 		// Connect to signals for detect progress
-		QObject::connect(&handler, &IndexHandler::keysLoadStarted, [&splashWindow]() {
+		QObject::connect(indexHandler, &IndexHandler::keysLoadStarted, [&splashWindow]() {
 			splashWindow.setStatus("Loading index file: keys");
 		});
-		QObject::connect(&handler, &IndexHandler::keysLoadProgress, splashProgressor);
+		QObject::connect(indexHandler, &IndexHandler::keysLoadProgress, splashProgressor);
 
-		QObject::connect(&handler, &IndexHandler::vocabularyLoadStarted, [&splashWindow]() {
+		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadStarted, [&splashWindow]() {
 			splashWindow.setStatus("Loading index file: vocabulary");
 		});
-		QObject::connect(&handler, &IndexHandler::vocabularyLoadProgress, splashProgressor);
+		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadProgress, splashProgressor);
 
-		handler.load();
+		indexHandler->load();
 
 		// IR MODEL
 
-		IRModelIef irmodel(&handler);
+		irmodel = new IRModelIef(indexHandler);
 
-		QObject::connect(&irmodel, &IRModelIef::initStarted, [&splashWindow]() {
+		QObject::connect(irmodel, &IRModelIef::initStarted, [&splashWindow]() {
 			splashWindow.setStatus("Initializing IR Model");
 		});
-		QObject::connect(&irmodel, &IRModelIef::initProgress, splashProgressor);
+		QObject::connect(irmodel, &IRModelIef::initProgress, splashProgressor);
 
-		irmodel.init(true);
+		irmodel->init(args.lazyIefs);
 
 		// QUERY RESOLVER (gratis)
-		QueryResolver resolver(&irmodel);
+		queryResolver = new QueryResolver(irmodel);
 
 		// Load of everything finished, show main window
 
 		splashWindow.setVisible(false);
+
+		// Set the resolver
+		mainWindow.setResolver(queryResolver);
 		mainWindow.setVisible(true);
 	});
 

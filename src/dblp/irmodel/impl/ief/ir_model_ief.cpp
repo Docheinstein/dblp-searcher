@@ -6,10 +6,7 @@
 
 static const float TERM_NOT_FOUND = -1;
 
-// REMOVE ME
-//#include <QThread>
-
-Logger IRModelIef::L = Logger::forClass("IRModel");
+LOGGING(IRModelIef, true)
 
 IRModelIef::~IRModelIef() {}
 

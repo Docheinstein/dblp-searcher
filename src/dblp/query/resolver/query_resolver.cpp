@@ -5,6 +5,8 @@
 #include "commons/const/const.h"
 #include "commons/config/config.h"
 
+LOGGING(QueryResolver, true);
+
 // --- Hashing purpose
 
 inline bool operator==(const QueryMatch &qm1, const QueryMatch &qm2)
@@ -19,7 +21,6 @@ inline uint qHash(const QueryMatch &qm, uint seed)
 
 // ---
 
-Logger QueryResolver::L = Logger::forClass("QueryResolver");
 
 QueryResolver::QueryResolver(IRModel *irmodel)
 {
@@ -218,11 +219,11 @@ QSet<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 	// Obtain the matches from the scoredPubs and scoredVenues
 
 	for (auto it = scoredPubs.begin(); it != scoredPubs.end(); it++) {
-		dd("Publication match (element = " << it.key() << "; score = " << it.value());
+		ii("Publication match (element = " << it.key() << "; score = " << it.value());
 		matches.insert({it.key()});
 	}
 	for (auto it = scoredVenues.begin(); it != scoredVenues.end(); it++) {
-		dd("Venue match (element = " << it.key() << "; score = " << it.value());
+		ii("Venue match (element = " << it.key() << "; score = " << it.value());
 		matches.insert({it.key()});
 	}
 

@@ -35,6 +35,7 @@ ApplicationWindow {
 
             TextField {
                 id: searchBar
+                selectByMouse: true
                 rightPadding: 60
                 background: Rectangle {
                     implicitHeight: 40
@@ -79,7 +80,38 @@ ApplicationWindow {
 
         }
     }
+
+    TextEdit {
+        id: textEdit
+        x: 144
+        y: 154
+        width: 80
+        height: 20
+        text: qsTr("Text Edit")
+        font.pixelSize: 12
+    }
+
+    TextInput {
+        id: textInput
+        x: 149
+        y: 230
+        width: 80
+        height: 20
+        text: qsTr("Text Input")
+        font.pixelSize: 12
+    }
+
+    TextArea {
+        id: textArea
+        x: 161
+        y: 307
+        text: qsTr("Text Area")
+    }
 }
+
+
+
+
 
 
 

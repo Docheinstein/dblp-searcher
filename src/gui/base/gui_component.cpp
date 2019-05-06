@@ -6,8 +6,7 @@
 #include <QEventLoop>
 #include "commons/util/util.h"
 
-
-Logger GuiComponent::L = Logger::forClass("GuiComponent");
+LOGGING(GuiComponent, true)
 
 GuiComponent::~GuiComponent()
 {
@@ -18,7 +17,6 @@ GuiComponent::~GuiComponent()
 GuiComponent::GuiComponent(QQmlEngine *engine)
 {
 	mEngine = engine;
-
 }
 
 bool GuiComponent::create()

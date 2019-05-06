@@ -2,11 +2,11 @@
 #define QUERY_H
 
 #include <QList>
-#include <commons/logger/logger.h>
+#include <commons/log/loggable/loggable.h>
 #include <dblp/query/models/base/query_base_part.h>
 #include "dblp/query/models/types/query_types.h"
 
-class Query {
+class Query : protected Loggable {
 public:
 	~Query();
 	Query(const QString &queryString);
@@ -14,9 +14,10 @@ public:
 
 	const QList<QueryBasePart *> parts() const;
 
-private:
-	static Logger L;
+protected:
+	LOGGING_OVERRIDE
 
+private:
 	static QueryBasePart * newQueryPartFromToken(const QString &token);
 
 	static QueryBasePart * newQueryPublicationPartFromToken(
