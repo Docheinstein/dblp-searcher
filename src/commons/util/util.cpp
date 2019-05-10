@@ -38,6 +38,14 @@ namespace Util {
 						field + Const::Dblp::Query::QUERY_PART_SEARCH_END_MARK;
 			}
 		}
+
+		namespace Index {
+			QString indexFilePath(const QString &indexPath,
+							 const QString &indexBaseName,
+							 const QString &extension) {
+				return Util::File::path({indexPath, indexBaseName + extension});
+			}
+		}
 	}
 
 	namespace File {
@@ -86,8 +94,7 @@ namespace Util {
 			return term
 					.toLower()
 					.simplified()
-					.replace(QRegExp("[\\[\\]\\\\%&@#°*+\\-/|(),;.:_^]"), "")
-					.toUtf8();
+					.replace(QRegExp("[\\[\\]\\\\%&@#°*+\\-/|(),;.:_^]"), "");
 		}
 	}
 

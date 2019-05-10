@@ -15,6 +15,11 @@ namespace Util {
 		namespace Query {
 			QString queryPartSearch(const QString &element, const QString &field = "");
 		}
+
+		namespace Index {
+			QString indexFilePath(const QString &indexPath, const QString &indexBaseName,
+								const QString &extension);
+		}
 	}
 
 	namespace File {

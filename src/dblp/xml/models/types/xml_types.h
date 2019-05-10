@@ -4,6 +4,8 @@
 #include <QString>
 #include <commons/adt/type/string_type.h>
 
+// TODO typedef XmlElementCase
+
 class XmlElementType : public StringType {
 public:
 	XmlElementType(const char *s) : StringType(s) {}

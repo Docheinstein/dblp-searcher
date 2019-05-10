@@ -1,10 +1,5 @@
 #include "splash_window.h"
 
-SplashWindow::SplashWindow(QQmlEngine *engine) : GuiWindow (engine)
-{
-
-}
-
 QString SplashWindow::status()
 {
 	return mStatus;

@@ -4,6 +4,10 @@ import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.1
 
 ApplicationWindow {
+    property string _STATUS_NONE : "none";
+    property string _STATUS_RESOLVING: "resolving";
+    property string _STATUS_RESOLVED: "resolved";
+
     id: mainWindow
     visible: _main.visible
     minimumWidth: 480
@@ -50,19 +54,22 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignLeft | Qt.AlignTop
                 font.pixelSize: 12
                 placeholderText: "Submit a query..."
+                focus: true
+                Keys.onReturnPressed: _main.doSearch(searchBar.text)
 
                 Button {
                     id: searchButton
                     width: 50
-                    spacing: 6
+                    spacing: 5
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 0
                     anchors.top: parent.top
                     anchors.topMargin: 0
                     anchors.right: parent.right
                     anchors.rightMargin: 0
-//                    Layout.fillHeight: true
-//                    Layout.fillWidth: false
+
+                    //                    Layout.fillHeight: true
+                    //                    Layout.fillWidth: false
 
                     icon.source: "qrc:/img/search.png"
                     icon.color: "white"
@@ -79,35 +86,33 @@ ApplicationWindow {
 
 
         }
-    }
 
-    TextEdit {
-        id: textEdit
-        x: 144
-        y: 154
-        width: 80
-        height: 20
-        text: qsTr("Text Edit")
-        font.pixelSize: 12
-    }
+        Pane {
+            id: pane
+            width: 200
+            height: 200
+            Layout.fillHeight: true
+            Layout.fillWidth: true
 
-    TextInput {
-        id: textInput
-        x: 149
-        y: 230
-        width: 80
-        height: 20
-        text: qsTr("Text Input")
-        font.pixelSize: 12
-    }
-
-    TextArea {
-        id: textArea
-        x: 161
-        y: 307
-        text: qsTr("Text Area")
+            BusyIndicator {
+                id: busyIndicator
+                width: 80
+                height: 80
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                visible: _main.status === _STATUS_RESOLVING
+            }
+        }
     }
 }
+
+/*
+constexpr static const char * const STATUS_NONE = "none";
+constexpr static const char * const STATUS_RESOLVING = "resolving";
+constexpr static const char * const STATUS_RESOLVED = "resolved";
+*/
+
+
 
 
 

@@ -12,6 +12,9 @@ public:
 
 	virtual float termScore(const QString &term) = 0;
 	virtual float bonusFactorPerPhraseTerm();
+	virtual float bonusFactorForPublicationMatch();
+	virtual float bonusFactorForVenueMatch();
+	virtual float bonusFactorForPublicationVenueMatch();
 
 	IndexHandler * index();
 

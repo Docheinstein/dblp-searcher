@@ -4,18 +4,18 @@
 #include "dblp/xml/handler/xml_parse_handler.h"
 #include "commons/const/const.h"
 #include "commons/util/util.h"
+#include "commons/globals/globals.h"
 #include "dblp/xml/models/types/xml_types.h"
-
-#define VERBOSE_XML 0
 
 namespace DblpXml = Const::Dblp::Xml;
 
 LOGGING(XmlParser, true)
 
+#define VERBOSE_XML 0
+
 XmlParser::XmlParser(const QString &dblpXmlPath,
 					XmlParseHandler &parseHandler)
 {
-//	mInputPath = QString(dblpXmlPath);
 	mInputFile.setFileName(dblpXmlPath);
 	mHandler = &parseHandler;
 }
@@ -48,11 +48,6 @@ void XmlParser::resetFields() {
 	mCrossref = "";
 }
 
-void XmlParser::setDocumentLocator(QXmlLocator *)
-{
-
-}
-
 bool XmlParser::startDocument()
 {
 	ii("Started XML parsing...");
@@ -64,8 +59,7 @@ bool XmlParser::startDocument()
 bool XmlParser::endDocument()
 {
 	ii("Finished XML parsing");
-	ii("Parse took " <<
-	   Util::Time::humanTime(static_cast<int>(mParseTimer.elapsed())));
+	ii("Parse took " << Util::Time::humanTime(INT(mParseTimer.elapsed())));
 	mHandler->onEnd();
 	return true;
 }
@@ -75,10 +69,11 @@ bool XmlParser::startElement(const QString&,
 							   const QString&,
 							   const QXmlAttributes& atts)
 {
+
 #if VERBOSE_XML
-	vv("<" << localName << ">");
-	vv("	" << atts.length() << " atts");
-	vv("	 pos: " << mInputFile.pos());
+	dd("<" << localName << ">");
+	dd1("# attributes: " << atts.length());
+	dd1("_ pos(): " << mInputFile.pos());
 #endif
 
 	// For root elements, reset the fields
@@ -95,7 +90,7 @@ bool XmlParser::startElement(const QString&,
 
 	// Notify progress
 
-	int perc = static_cast<int>((static_cast<double>(mInputFile.pos()) / mInputFileSize) * 100);
+	int perc = INT((DOUBLE(mInputFile.pos()) / mInputFileSize) * 100);
 
 	if (perc > mLastNotifiedPercentage) {
 		mLastNotifiedPercentage = perc;
@@ -110,7 +105,7 @@ bool XmlParser::endElement(const QString&,
 							 const QString&)
 {
 #if VERBOSE_XML
-	vv("</" << localName << ">");
+	dd("</" << localName << ">");
 #endif
 
 	// Notify the element to the handler if the tag belong to and element
@@ -122,6 +117,7 @@ bool XmlParser::endElement(const QString&,
 		article.authors = mAuthors;
 		article.title = mTitle;
 		article.year = mYear;
+		article.journal = mJournal;
 		mHandler->onArticle(article, mInputFile.pos());
 	}
 	else if (localName == *XmlElementType::INCOLLECTION) {
@@ -131,7 +127,7 @@ bool XmlParser::endElement(const QString&,
 		incollection.title = mTitle;
 		incollection.year = mYear;
 		incollection.booktitle = mBooktitle;
-//		incollection.crossref = mCrossref;
+		incollection.crossref = mCrossref;
 		mHandler->onIncollection(incollection, mInputFile.pos());
 	}
 	else if (localName == *XmlElementType::BOOK) {
@@ -150,7 +146,7 @@ bool XmlParser::endElement(const QString&,
 		inproc.title = mTitle;
 		inproc.year = mYear;
 		inproc.booktitle = mBooktitle;
-//		inproc.crossref = mCrossref;
+		inproc.crossref = mCrossref;
 		mHandler->onInproceedings(inproc, mInputFile.pos());
 	}
 	else if (localName == *XmlElementType::PROCEEDINGS) {
@@ -192,12 +188,14 @@ bool XmlParser::endElement(const QString&,
 		mBooktitle = mLastText;
 	else if (localName == *XmlFieldType::CROSSREF)
 		mCrossref = mLastText;
-
 	else if (localName == *XmlFieldType::JOURNAL) {
 		// This is a special case since a journal entity doesn't exists
 		// in dblm.xml; but we notify a journal only for its name on an article
-		// element
+		// element.
+		// Moreover, memorize the text inside journal so that it will be delivered
+		// with the <article> end too.
 		DblpJournal journal;
+		mJournal = mLastText;
 		journal.name = mLastText;
 		mHandler->onJournal(journal, mInputFile.pos());
 	}
@@ -207,9 +205,8 @@ bool XmlParser::endElement(const QString&,
 
 bool XmlParser::characters(const QString &chars)
 {
-	vv("Got chars");
 #if VERBOSE_XML
-	vv("\t" << chars);
+	dd("Got chars \t " << chars);
 #endif
 
 	// += instead of = since text could be notified
@@ -219,25 +216,13 @@ bool XmlParser::characters(const QString &chars)
 	return true;
 }
 
-bool XmlParser::ignorableWhitespace(const QString &ch)
-{
-//	vv("ignorableWhitespace: " << ch);
-
-	return true;
-}
-
-bool XmlParser::processingInstruction(const QString &target, const QString &data)
-{
-//	vv("processingInstruction: " << target << " | " << data);
-
-	return true;
-}
-
 bool XmlParser::skippedEntity(const QString &name)
 {
 	QString entityString = Util::Html::entityNameToString(name);
-	vv("skippedEntity: " << name);
-	vv("skippedEntity to qstring: " << entityString);
+
+#if VERBOSE_XML
+	dd("Almost skipped entity (adding anyway to current text): " << entityString);
+#endif
 
 	mLastText += entityString;
 

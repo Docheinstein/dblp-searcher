@@ -1,10 +1,5 @@
 #include "gui_window.h"
 
-GuiWindow::GuiWindow(QQmlEngine *engine) : GuiComponent (engine)
-{
-
-}
-
 bool GuiWindow::visible()
 {
 	return mVisible;

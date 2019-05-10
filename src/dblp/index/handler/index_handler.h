@@ -6,6 +6,8 @@
 #include <QHash>
 #include <QString>
 #include <QTextStream>
+#include <commons/file/filestream/data/data_stream_file.h>
+#include <commons/file/filestream/text/text_stream_file.h>
 #include <commons/log/loggable/loggable.h>
 #include "dblp/index/models/key/index_key.h"
 #include "dblp/index/models/reference/index_term_ref.h"
@@ -15,10 +17,20 @@
 // Represents a match for findElements(), which contains the element
 // id and the term count. The field and the term are implicit with the
 // findElements() call
-typedef struct ElementFieldMatch {
-	quint32 elementId; // element id
-	quint8 matchCount; // how many times the term(s) occur(s) within this element.field
-} ElementFieldMatch;
+typedef struct IndexMatch {
+	// (QString token) implicit
+	QStringList matchedTokens;
+	elem_serial elementSerial; // element id
+	ElementFieldType fieldType;	// field type
+	field_num fieldNumber; // field number for the fieldType
+	term_pos matchPosition; // where the tokens matches within
+							// the fieldType + fieldNumber
+							// starting position, in case of phrases
+	operator QString();
+} IndexMatch;
+
+bool operator==(const IndexMatch &efm1, const IndexMatch &efm2);
+uint qHash(const IndexMatch &efm, uint seed);
 
 class IndexHandler : public QObject, protected Loggable
 {
@@ -30,28 +42,33 @@ public:
 	void load();
 
 	// Use a phrase, that will be automatically splitted to tokens
-	bool findElements(const QString &phrase,
-					  ElementFieldTypes fields,
-					  QSet<ElementFieldMatch> &matches);
+	bool findMatches(const QString &phrase,
+					  ElementFieldTypes fieldTypes,
+					  QSet<IndexMatch> &matches);
 
 	// Use the token list
-	bool findElements(const QStringList &tokens,
-					  ElementFieldTypes fields,
-					  QSet<ElementFieldMatch> &matches);
+	bool findMatches(const QStringList &tokens,
+					  ElementFieldTypes fieldTypes,
+					  QSet<IndexMatch> &matches);
 
 	// Pass through the vocabulary
 	bool findPosts(const QString &term,
-				   ElementFieldType field,
+				   ElementFieldType fieldType,
 				   QSet<IndexPost> &posts);
 
 	// Use the ref already taken from the vocabulary
-	void findPosts(const QString &term,
-				   const IndexTermRef &ref,
-				   ElementFieldType field,
+	void findPosts(const QMap<QString, IndexTermRef>::const_iterator vocabularyEntry,
+				   ElementFieldType fieldType,
 				   QSet<IndexPost> &posts);
 
-	const QList<IndexKey> keys() const;
+	const QList<QString> identifiers() const;
+	bool identifier(elem_serial serial, QString &identifier) const;
+
 	const QMap<QString, IndexTermRef> vocabulary() const;
+	bool vocabularyTermRef(const QString &term, IndexTermRef &termRef) const;
+
+	const QHash<elem_serial, elem_serial> crossrefs() const;
+	bool crossref(elem_serial publicationSerial, elem_serial &venueSerial) const;
 
 signals:
 	void vocabularyLoadStarted();
@@ -62,42 +79,59 @@ signals:
 	void keysLoadProgress(double progress);
 	void keysLoadEnded();
 
+	void crossrefsLoadStarted();
+	void crossrefsLoadProgress(double progress);
+	void crossrefsLoadEnded();
+
+//	void articlesJournalsLoadStarted();
+//	void articlesJournalsLoadProgress(double progress);
+//	void articlesJournalsLoadEnded();
+
 protected:
 	LOGGING_OVERRIDE
 
 private:
 	// Use the token list
-	bool findElementsSingleType(
+	bool findMatchesSingleType(
 						const QStringList &tokens,
-						ElementFieldType field,
-						QSet<ElementFieldMatch> &matches);
+						ElementFieldType fieldType,
+						QSet<IndexMatch> &matches);
 	void init();
 
-	// Exposed so that the call may have a better control over the status
-	// of the loading, if he/she wants
-	void loadKeys();
+	void loadIdentifiers();
 	void loadVocabulary();
+	void loadCrossrefs();
+//	void loadPositions();
+	// ...
 
-	void debug_printKeys();
-	void debug_printVocabulary();
+	void printIdentifiers();
+	void printVocabulary();
+	void printCrossrefs();
+
+	// ===================
+	// PATHS
+	// ===================
 
 	QString mIndexPath;
 	QString mBaseIndexName;
 
-	QFile mKeysFile;
-	QTextStream mKeysStream;
+	// ===================
+	// INDEX FILES STREAMS
+	// ===================
 
-	QFile mVocabularyFile;
-	QDataStream mVocabularyStream;
+	TextStreamFile mIdentifiersStream;
+	DataStreamFile mVocabularyStream;
+	DataStreamFile mPostingsStream;
+	DataStreamFile mElementsPositionsStream;
+	DataStreamFile mCrossrefsStream;
 
-	QFile mPostingListFile;
-	QDataStream mPostingListStream;
+	// ===================
+	// DATA STRUCTURES
+	// ===================
 
-	QFile mElementsPosFile;
-	QDataStream mElementsPosStream;
-
-	// Contains all the elements keys
-	QList<IndexKey> mKeys;
+	// Contains all the elements identifiers (with the implicit association
+	// to their serial, which are equals to the in-list position)
+	QList<QString> mIdentifiers;
 
 	// A QHash would be enough, but since the iefs computation is done
 	// scanning the vocabulary, its better if we store the terms in alphabetic
@@ -106,6 +140,10 @@ private:
 	// In this way we can have some hope that the computation of the ief
 	// uses the cache in a decent way while reading the posting list file.
 	QMap<QString, IndexTermRef> mVocabulary;
+
+	// Contains the crossrefs from publications to venues
+	// for inproc => proc, incollection => book, article => journal
+	QHash<elem_serial, elem_serial> mCrossrefs;
 };
 
 #endif // INDEX_HANDLER_H

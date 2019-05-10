@@ -3,8 +3,8 @@
 
 #include <QList>
 #include <commons/log/loggable/loggable.h>
-#include <dblp/query/models/base/query_base_part.h>
-#include "dblp/query/models/types/query_types.h"
+#include <dblp/query/query/models/base/query_base_part.h>
+#include "dblp/query/query/models/types/query_types.h"
 
 class Query : protected Loggable {
 public:

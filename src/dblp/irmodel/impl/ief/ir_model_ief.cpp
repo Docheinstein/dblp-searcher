@@ -61,6 +61,21 @@ float IRModelIef::bonusFactorPerPhraseTerm()
 	return 1.15f;
 }
 
+float IRModelIef::bonusFactorForPublicationMatch()
+{
+	return 1;
+}
+
+float IRModelIef::bonusFactorForVenueMatch()
+{
+	return 1.1f;
+}
+
+float IRModelIef::bonusFactorForPublicationVenueMatch()
+{
+	return 1.3f;
+}
+
 void IRModelIef::computeIefs()
 {
 	ii("Computing inverse element frequencies...");
@@ -94,7 +109,7 @@ void IRModelIef::computeIefs()
 
 //		ii("Computing ief of '" << term << "'");
 
-		float ief = computeIef(term, ref);
+		float ief = computeIef(it);
 
 		// Finally put the ief_t inside the hash table
 		mIefs.insert(term, ief);
@@ -113,20 +128,20 @@ void IRModelIef::computeIefs()
 
 float IRModelIef::computeIef(const QString &term)
 {
-	auto termRef = mIndex->vocabulary().find(term);
+	auto termRefIt = mIndex->vocabulary().constFind(term);
 
 	// Term not present in the vocabulary
-	if (termRef == mIndex->vocabulary().end())
+	if (termRefIt == mIndex->vocabulary().end())
 		return TERM_NOT_FOUND;
 
 	// Really compute the ief
-	return computeIef(term, termRef.value());
+	return computeIef(termRefIt);
 }
 
 
-float IRModelIef::computeIef(const QString &term, const IndexTermRef &ref)
+float IRModelIef::computeIef(const QMap<QString, IndexTermRef>::const_iterator &vocabularyEntry)
 {
-	static const double E = mIndex->keys().size();
+	static const double E = mIndex->identifiers().size();
 
 	// We have to invoke loadPosts() for each possible field
 
@@ -144,7 +159,7 @@ float IRModelIef::computeIef(const QString &term, const IndexTermRef &ref)
 		QSet<IndexPost> posts;
 //		ii("H2");
 
-		mIndex->findPosts(term, ref, type, posts);
+		mIndex->findPosts(vocabularyEntry, type, posts);
 //		ii("H3");
 
 		// At this point posts contains the posts of the term within the field,
@@ -160,7 +175,7 @@ float IRModelIef::computeIef(const QString &term, const IndexTermRef &ref)
 //			ii("Post num: " << i++);
 
 			// Push the element id
-			elementsWithTerm.insert(post.elementId);
+			elementsWithTerm.insert(post.elementSerial);
 		}
 //		ii("H5");
 
@@ -169,17 +184,13 @@ float IRModelIef::computeIef(const QString &term, const IndexTermRef &ref)
 
 	const double ef_t = elementsWithTerm.size();
 
-	Q_ASSERT_X(ef_t > 0, "index_handling",
-		QString(
-			QString("Element frequency must be greater than 0 since the term is in the vocabulary: ") +
-			QString(term)
-		).toStdString().c_str());
+	ASSERT(ef_t > 0, "index_handling",
+		"Element frequency must be greater than 0 since the term is in the vocabulary: ",
+		vocabularyEntry.key());
 
-	Q_ASSERT_X(ef_t <= E, "index_handling",
-		QString(
-			QString("Element frequency must be not greater than the number of elements (") +
-			DEC(ef_t) + " > " + DEC(E) + ")"
-		).toStdString().c_str());
+	ASSERT(ef_t <= E, "index_handling",
+		"Element frequency must be not greater than the number of elements (",
+		DEC(ef_t), " > ", ")");
 
 	// At this point elementsWithTerm contains only the elements ids
 	// in which the term occurs; the size of it is actually the ef_t
@@ -194,7 +205,7 @@ float IRModelIef::computeIef(const QString &term, const IndexTermRef &ref)
 
 void IRModelIef::debug_printIefs()
 {
-	const int E = mIndex->keys().size();
+	const int E = mIndex->identifiers().size();
 
 	dd("Computed iefs are: " << "( |E| = " << E << " )");
 

@@ -2,15 +2,22 @@
 #define INDEX_POST_H
 
 #include <QtGlobal>
+#include "dblp/shared/defs/defs.h"
 
 struct IndexPost {
-	quint32 elementId;		// Id associated to the element (that refers to a single key)
+	elem_serial elementSerial;	// Serial number associated to the element
+								// (that refers to a single identifier)
 
-	quint32 fieldNumber;	// Starting from 0, number of the field between
+	field_num fieldNumber;	// Starting from 0, number of the field between
 							// the fields with the same name in the element.
 							// e.g. for distinguish between <author> tags
 
-	quint32 inFieldTermPosition;	// Position of the term inside the context
+	term_pos inFieldTermPosition;	// Position of the term inside the field
+
+	operator QString() const;
 };
+
+bool operator==(const IndexPost &ip1, const IndexPost &ip2);
+uint qHash(const IndexPost &ip, uint seed);
 
 #endif // INDEX_POST_H

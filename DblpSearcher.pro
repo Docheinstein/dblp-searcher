@@ -35,6 +35,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RESOURCES += \
 	main.qrc
 
+#QML_IMPORT_PATH += $$PWD
+
 OTHER_FILES += \
 	qml/main.qml
 	qml/splash.qml

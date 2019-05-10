@@ -10,8 +10,6 @@ class SplashWindow : public GuiWindow {
 	Q_PROPERTY(double progress READ progress WRITE setProgress NOTIFY progressChanged)
 
 public:
-	SplashWindow(QQmlEngine *engine);
-
 	QString status();
 	void setStatus(const QString &status);
 

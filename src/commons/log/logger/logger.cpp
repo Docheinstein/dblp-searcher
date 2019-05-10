@@ -5,6 +5,12 @@ QDebug Logger::verbose(const char *tag)
 	return qDebug().noquote().nospace() << "[V] {" << tag << "} ";
 }
 
+QDebug Logger::trace(const char *tag)
+{
+	// The tracing is actually possible thanks to the tt() macro
+	return qDebug().noquote().nospace() << "[T] {" << tag << "} ";
+}
+
 QDebug Logger::debug(const char *tag)
 {
 	return qDebug().noquote().nospace() << "[D] {" << tag << "} ";

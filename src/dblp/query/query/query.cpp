@@ -2,9 +2,9 @@
 #include <commons/const/const.h>
 #include <commons/util/util.h>
 #include "commons/globals/globals.h"
-#include <dblp/query/models/publication/query_publication_part.h>
-#include <dblp/query/models/basic/query_basic_part.h>
-#include <dblp/query/models/venue/query_venue_part.h>
+#include <dblp/query/query/models/publication/query_publication_part.h>
+#include <dblp/query/query/models/basic/query_basic_part.h>
+#include <dblp/query/query/models/venue/query_venue_part.h>
 
 namespace QueryConst = Const::Dblp::Query;
 namespace QueryUtil = Util::Dblp::Query;

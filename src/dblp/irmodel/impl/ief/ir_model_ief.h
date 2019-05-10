@@ -17,6 +17,9 @@ public:
 
 	float termScore(const QString &term) override;
 	float bonusFactorPerPhraseTerm() override;
+	float bonusFactorForPublicationMatch() override;
+	float bonusFactorForVenueMatch() override;
+	float bonusFactorForPublicationVenueMatch() override;
 
 	IndexHandler * index();
 
@@ -31,7 +34,7 @@ protected:
 private:
 	void computeIefs();
 	float computeIef(const QString &term);
-	float computeIef(const QString &term, const IndexTermRef &ref);
+	float computeIef(const QMap<QString, IndexTermRef>::const_iterator &vocabularyEntry);
 	void debug_printIefs();
 
 	QHash<QString, float> mIefs;	// := inverse element frequency

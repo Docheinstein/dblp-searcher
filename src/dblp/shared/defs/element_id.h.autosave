@@ -1,0 +1,6 @@
+#ifndef ELEMENT_ID_H
+#define ELEMENT_ID_H
+
+typedef quint32 element_id;
+
+#endif // ELEMENT_ID_H

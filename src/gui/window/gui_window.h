@@ -9,7 +9,6 @@ class GuiWindow : public GuiComponent {
 	Q_PROPERTY(bool visible READ visible WRITE setVisible NOTIFY visibleChanged)
 
 public:
-	GuiWindow(QQmlEngine *engine);
 	bool visible();
 	void setVisible(bool visible);
 

@@ -13,11 +13,52 @@
 	const char * clazz::logTag() const { return LOG_TAG; } \
 	bool clazz::canLog() const { return CAN_LOG; }
 
+#define TRACE	0
+#define DEBUG	0
 #define VERBOSE 0
-#define DEBUG 0
-#define INFO 1
-#define WARN 1
-#define ERROR 1
+#define INFO	1
+#define WARN	1
+#define ERROR	1
+
+#if TRACE
+#define _tt(x) if (CAN_LOG) Logger::trace(LOG_TAG) << \
+	"(" << __FILE__ << ":" << __LINE__ << " @ " << __func__ << ") " x
+#define tt(x) if (canLog()) Logger::trace(logTag()) << \
+	"(" << __FILE__ << ":" << __LINE__ << " @ " << __func__ << ") " x
+#else
+#define _tt(x)
+#define tt(x)
+#endif
+
+#if DEBUG
+#define _dd(x)  if (CAN_LOG) Logger::debug(LOG_TAG) << x
+#define _dd1(x) if (CAN_LOG) Logger::debug(LOG_TAG) << "| " << x
+#define _dd2(x) if (CAN_LOG) Logger::debug(LOG_TAG) << "| | " << x
+#define _dd3(x) if (CAN_LOG) Logger::debug(LOG_TAG) << "| | | " << x
+#define _dd4(x) if (CAN_LOG) Logger::debug(LOG_TAG) << "| | | | " << x
+#define _dd5(x) if (CAN_LOG) Logger::debug(LOG_TAG) << "| | | | | " << x
+
+#define dd(x)  if (canLog()) Logger::debug(logTag()) << x
+#define dd1(x) if (canLog()) Logger::debug(logTag()) << "| " << x
+#define dd2(x) if (canLog()) Logger::debug(logTag()) << "| | " << x
+#define dd3(x) if (canLog()) Logger::debug(logTag()) << "| | | " << x
+#define dd4(x) if (canLog()) Logger::debug(logTag()) << "| | | | " << x
+#define dd5(x) if (canLog()) Logger::debug(logTag()) << "| | | | | " << x
+#else
+#define _dd(x)
+#define _dd1(x)
+#define _dd2(x)
+#define _dd3(x)
+#define _dd4(x)
+#define _dd5(x)
+
+#define dd(x)
+#define dd1(x)
+#define dd2(x)
+#define dd3(x)
+#define dd4(x)
+#define dd5(x)
+#endif
 
 #if VERBOSE
 #define _vv(x)  if (CAN_LOG) Logger::verbose(LOG_TAG) << x
@@ -45,31 +86,6 @@
 #define vv4(x)
 #endif
 
-#if DEBUG
-#define _dd(x)  if (CAN_LOG) Logger::debug(LOG_TAG) << x
-#define _dd1(x) if (CAN_LOG) Logger::debug(LOG_TAG) << "| " << x
-#define _dd2(x) if (CAN_LOG) Logger::debug(LOG_TAG) << "| | " << x
-#define _dd3(x) if (CAN_LOG) Logger::debug(LOG_TAG) << "| | | " << x
-#define _dd4(x) if (CAN_LOG) Logger::debug(LOG_TAG) << "| | | | " << x
-
-#define dd(x)  if (canLog()) Logger::debug(logTag()) << x
-#define dd1(x) if (canLog()) Logger::debug(logTag()) << "| " << x
-#define dd2(x) if (canLog()) Logger::debug(logTag()) << "| | " << x
-#define dd3(x) if (canLog()) Logger::debug(logTag()) << "| | | " << x
-#define dd4(x) if (canLog()) Logger::debug(logTag()) << "| | | | " << x
-#else
-#define _dd(x)
-#define _dd1(x)
-#define _dd2(x)
-#define _dd3(x)
-#define _dd4(x)
-
-#define dd(x)
-#define dd1(x)
-#define dd2(x)
-#define dd3(x)
-#define dd4(x)
-#endif
 
 #if INFO
 #define _ii(x) if (CAN_LOG) Logger::info(LOG_TAG) << x
@@ -101,11 +117,6 @@ protected:
 	virtual ~Loggable();
 	virtual const char * logTag() const = 0;
 	virtual bool canLog() const = 0;
-//	virtual bool isVerboseEnabled();
-//	virtual bool isDebugEnabled();
-//	virtual bool isInfoEnabled();
-//	virtual bool isWarnEnabled();
-//	virtual bool isErrorEnabled();
 };
 
 #endif // LOG_H

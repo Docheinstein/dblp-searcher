@@ -11,6 +11,9 @@ QString elementFieldTypeString(ElementFieldType t) {
 	case ElementFieldType::Article:
 		return "Article";
 
+	case ElementFieldType::Journal:
+		return "Journal";
+
 	case ElementFieldType::IncollectionAuthor:
 		return "IncollectionAuthor";
 	case ElementFieldType::IncollectionTitle:

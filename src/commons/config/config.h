@@ -7,14 +7,16 @@
 namespace Config {
 	namespace Index {
 		namespace Extensions {
-			const QString KEYS = ".kix";
+			const QString IDENTIFIERS = ".idix";
 			const QString POSTING_LIST = ".plix";
 			const QString VOCABULARY = ".vix";
 			const QString ELEMENTS_POS = ".epix";
+			const QString CROSSREFS = ".cix";
+//			const QString ARTICLES_JOURNAL = ".ajix";
 		}
 		namespace PostingList {
-			const quint32 ELEMENT_ID_BITS = 23u;
-			const quint32 ELEMENT_ID_THRESHOLD = 1u << ELEMENT_ID_BITS; // 8388608
+			const quint32 ELEMENT_SERIAL_BITS = 23u;
+			const quint32 ELEMENT_SERIAL_THRESHOLD = 1u << ELEMENT_SERIAL_BITS; // 8388608
 
 			const quint32 FIELD_NUM_BITS = 9u;
 			const quint32 FIELD_NUM_THRESHOLD = 1u << FIELD_NUM_BITS; // 512
@@ -22,7 +24,7 @@ namespace Config {
 			const quint32 IN_FIELD_POS_BITS = 8u;
 			const quint32 IN_FIELD_POS_THRESHOLD = 1u << IN_FIELD_POS_BITS; // 256
 
-			const quint32 POST_BITS = ELEMENT_ID_BITS + FIELD_NUM_BITS + IN_FIELD_POS_BITS;
+			const quint32 POST_BITS = ELEMENT_SERIAL_BITS + FIELD_NUM_BITS + IN_FIELD_POS_BITS;
 			const quint32 POST_BYTES = POST_BITS / 8;
 		}
 		namespace Vocabulary {
@@ -39,7 +41,6 @@ namespace Config {
 			const qint64 ELEMENT_POS_BITS = 32;
 			const qint64 ELEMENT_POS_BYTES = ELEMENT_POS_BITS / 8;
 			const qint64 ELEMENT_POS_THRESHOLD = 1l << ELEMENT_POS_BITS;
-
 		}
 
 		namespace Config {

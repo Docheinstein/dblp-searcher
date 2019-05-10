@@ -8,50 +8,6 @@
 
 LOGGING(IndexHandler, true);
 
-// --- Hashing purpose
-
-typedef struct ElementField {
-	quint32 element;
-	quint32 fieldNumber;
-} ElementField;
-
-
-inline bool operator==(const ElementField &ef1, const ElementField &ef2)
-{
-	return ef1.element == ef2.element &&
-			ef1.fieldNumber == ef2.fieldNumber;
-}
-
-inline uint qHash(const ElementField &ef, uint seed)
-{
-	return qHash(ef.element, seed) ^ ef.fieldNumber;
-}
-
-inline bool operator==(const IndexPost &ip1, const IndexPost &ip2)
-{
-	return ip1.elementId == ip2.elementId &&
-			ip1.fieldNumber == ip2.fieldNumber &&
-			ip1.inFieldTermPosition == ip2.inFieldTermPosition;
-}
-
-inline uint qHash(const IndexPost &ip, uint seed)
-{
-	return qHash(ip.elementId, seed) ^ ip.fieldNumber << ip.inFieldTermPosition;
-}
-
-inline bool operator==(const ElementFieldMatch &efm1, const ElementFieldMatch &efm2)
-{
-	return efm1.elementId == efm2.elementId &&
-			efm1.matchCount == efm2.matchCount;
-}
-
-inline uint qHash(const ElementFieldMatch &efm, uint seed)
-{
-	return qHash(efm.elementId, seed) ^ efm.matchCount;
-}
-
-// ---
-
 IndexHandler::IndexHandler(const QString &indexPath, const QString &baseName)
 {
 	mIndexPath = indexPath;
@@ -59,9 +15,18 @@ IndexHandler::IndexHandler(const QString &indexPath, const QString &baseName)
 	init();
 }
 
-const QList<IndexKey> IndexHandler::keys() const
+const QList<QString> IndexHandler::identifiers() const
 {
-	return mKeys;
+	return mIdentifiers;
+}
+
+bool IndexHandler::identifier(elem_serial serial, QString &identifier) const
+{
+	int ix = INT(serial);
+	if (ix >= mIdentifiers.size())
+		return false;
+	identifier = mIdentifiers.at(ix);
+	return true;
 }
 
 const QMap<QString, IndexTermRef> IndexHandler::vocabulary() const
@@ -69,63 +34,99 @@ const QMap<QString, IndexTermRef> IndexHandler::vocabulary() const
 	return mVocabulary;
 }
 
-void IndexHandler::load()
+bool IndexHandler::vocabularyTermRef(const QString &term, IndexTermRef &termRef) const
 {
-	// Load runtime stuff
-	loadKeys();
-	loadVocabulary();
+	auto termRefIt = mVocabulary.find(term);
+	if (termRefIt == mVocabulary.end())
+		return false;
+	termRef = termRefIt.value();
+	return true;
 }
 
-bool IndexHandler::findElements(const QString &phrase,
-								ElementFieldTypes fields,
-								QSet<ElementFieldMatch> &matches)
+
+
+const QHash<elem_serial, elem_serial> IndexHandler::crossrefs() const
+{
+	return mCrossrefs;
+}
+
+bool IndexHandler::crossref(elem_serial publicationSerial, elem_serial &venueSerial) const
+{
+	auto crossrefIt = mCrossrefs.find(publicationSerial);
+	if (crossrefIt == mCrossrefs.end())
+		return false;
+	venueSerial = crossrefIt.value();
+	return true;
+}
+
+void IndexHandler::load()
+{
+	// Load indexes into runtime data structures
+	loadIdentifiers();
+	loadVocabulary();
+	loadCrossrefs();
+
+	// Print for debug
+	printIdentifiers();
+	printVocabulary();
+	printCrossrefs();
+}
+
+bool IndexHandler::findMatches(const QString &phrase,
+								ElementFieldTypes fieldTypes,
+								QSet<IndexMatch> &matches)
 {
 
-	// If the phrase is actually a space separeted list of words, split those
-	// and use them as tokens for findElements();
+	// If the phrase is actually a space separeted list of words,
+	// split those and use them as tokens for findElements();
 	QStringList tokens = phrase.split(
 				Const::Dblp::Query::TOKENS_SPLITTER,
 				QString::SplitBehavior::SkipEmptyParts);
 
-	return findElements(tokens, fields, matches);
+	return findMatches(tokens, fieldTypes, matches);
 }
 
+typedef struct ElementSerial_FieldNumber {
+	elem_serial elementSerial;
+	field_num fieldNumber;
+} ElementSerial_FieldNumber;
 
-bool IndexHandler::findElements(const QStringList &tokens,
-								ElementFieldTypes fields,
-								QSet<ElementFieldMatch> &matches) {
+bool IndexHandler::findMatches(const QStringList &tokens,
+								ElementFieldTypes fieldTypes,
+								QSet<IndexMatch> &matches) {
 	QStringList sanitizedTokens;
+
 	// Moreover, sanitize each term (lowercase, no punctuation, (trimmed))
 	for (auto it = tokens.begin(); it < tokens.end(); it++) {
 		sanitizedTokens.append(Util::String::sanitizeTerm(*it));
 	}
 
-	// Do a findElements() for each type inside fields
-	//	ii("Finding posts for " << term << "in fields : " << fields;);
-
 	bool somethingFound = false;
 
 	// For each possibile field inside fields, test whether the flag
 	// in fields is set; if so extend the search to this field to
-	for (int f = static_cast<int>(ElementFieldType::_Start);
-		 f <= static_cast<int>(ElementFieldType::_End);
+	for (int f = INT(ElementFieldType::_Start);
+		 f <= INT(ElementFieldType::_End);
 		 f = f << 1) {
 
 		ElementFieldType fieldFlag = static_cast<ElementFieldType>(f);
-		if (!fields.testFlag(fieldFlag))
+		if (!fieldTypes.testFlag(fieldFlag))
 			continue; // do not search within this field
 
-		somethingFound |= findElementsSingleType(tokens, fieldFlag, matches);
+		somethingFound |= findMatchesSingleType(tokens, fieldFlag, matches);
 	}
 
 	return somethingFound;
 
 }
 
-bool IndexHandler::findElementsSingleType(const QStringList &tokens,
-										  ElementFieldType field,
-										  QSet<ElementFieldMatch> &matches)
+
+bool IndexHandler::findMatchesSingleType(const QStringList &tokens,
+										  ElementFieldType fieldType,
+										  QSet<IndexMatch> &matches)
 {
+
+	int matchesSizeBefore = matches.size();
 
 	/*
 	 * Retrieves the elements that matches the phrase.
@@ -138,17 +139,18 @@ bool IndexHandler::findElementsSingleType(const QStringList &tokens,
 	 *   according to the phrase order
 	 */
 
-	ii("Finding elements for " << tokens.join(" "));
+	vv("Finding elements for '" << tokens.join(" ") <<
+	   "' in type " << elementFieldTypeString(fieldType));
 
 	// Maps a field (element+field) to a term-positions
 	QHash<
-			// elementId + fieldNumber (the field type is implicit and is only one)
-			ElementField,
+			// elementSerial + fieldNumber (the field type is implicit and is only one)
+			ElementSerial_FieldNumber,
 			QHash<
 				// Term
 				QString,
 				// Term positions in element/field
-				QSet<quint32> // tf_t
+				QSet<term_pos> // tf_t
 			>
 	> categorizedTerms;
 
@@ -160,17 +162,20 @@ bool IndexHandler::findElementsSingleType(const QStringList &tokens,
 
 		const QString &term = *it;
 
+		vv1("Handling term: " << term);
+
 		QSet<IndexPost> termPosts;
-		if (!findPosts(term, field, termPosts))
+		if (!findPosts(term, fieldType, termPosts))
 			continue; // nothing found
 
 		foreach (IndexPost post, termPosts) {
 			// Check if this field has already been found
-			ElementField ef {post.elementId, post.fieldNumber};
+			ElementSerial_FieldNumber ef {post.elementSerial, post.fieldNumber};
 
 			if (!categorizedTerms.contains(ef)) {
-				vv("Inserting ef " <<ef.element << ", "
-				   << ef.fieldNumber << " for the first time" );
+				vv2("Inserting ef: " <<
+					"{" << ef.elementSerial << ", "<< ef.fieldNumber << "}" <<
+					" for the first time" );
 				// Push a new term to positions map, empty for now
 				categorizedTerms.insert(ef, {});
 			}
@@ -180,16 +185,17 @@ bool IndexHandler::findElementsSingleType(const QStringList &tokens,
 
 			auto termsPosIt = categorizedTerms.find(ef);
 
-			Q_ASSERT_X(termsPosIt != categorizedTerms.end(), "index_handling",
-					   "Elements retrieval failed; is this a programming error?");
+			ASSERT(termsPosIt != categorizedTerms.end(), "index_handling",
+					   "Elements retrieval failed");
 
-			QHash<QString, QSet<quint32>> &termsPositions = termsPosIt.value();
+			QHash<QString, QSet<term_pos>> &termsPositions = termsPosIt.value();
 
 			// Check if this term is already present for this element/field
 
 			if (!termsPositions.contains(term)) {
-				vv("Inserting " << term << " for the first time for element: "
-				   << ef.element << ", field number: " << ef.fieldNumber);
+				vv2("Inserting term '" << term << "' for the first time for ef: "
+					"{" << ef.elementSerial << ", "<< ef.fieldNumber << "}");
+
 				// Push a new positions list, empty for now
 				termsPositions.insert(term, {});
 			}
@@ -198,14 +204,15 @@ bool IndexHandler::findElementsSingleType(const QStringList &tokens,
 
 			auto termPosIt = termsPositions.find(term);
 
-			Q_ASSERT_X(termPosIt != termsPositions.end(), "index_handling",
-					   "Elements retrieval failed; is this a programming error?");
+			ASSERT(termPosIt != termsPositions.end(), "index_handling",
+					   "Elements retrieval failed");
 
 			// Push the position of the term in the post field's for this term
 
-			QSet<quint32> &termPositions = termPosIt.value();
+			QSet<term_pos> &termPositions = termPosIt.value();
 			termPositions.insert(post.inFieldTermPosition);
-			vv("- pushing pos " << post.inFieldTermPosition << " for term " << term);
+			vv2("Pushing term position: " << post.inFieldTermPosition <<
+				" (for term '" << term << "')");
 		}
 	}
 
@@ -215,8 +222,8 @@ bool IndexHandler::findElementsSingleType(const QStringList &tokens,
 	//   according to the phrase order
 
 	for (auto it = categorizedTerms.begin(); it != categorizedTerms.end(); it++) {
-		const ElementField &ef = it.key();
-		const QHash<QString, QSet<quint32>> &termsPositions = it.value();
+		const ElementSerial_FieldNumber &ef = it.key();
+		const QHash<QString, QSet<term_pos>> &termsPositions = it.value();
 
 		// Potentially we have a match, but first check for consecutiveness
 		// of the phrase terms within the element/field
@@ -231,16 +238,16 @@ bool IndexHandler::findElementsSingleType(const QStringList &tokens,
 			continue;  // go asap to the next ef
 		}
 
-		QSet<quint32> ps0 = ps0It.value();
+		QSet<term_pos> ps0 = ps0It.value();
 
 		// How many times the phrase (or the word) matches within the element/field
 		// This is useful just for figure out the tf and perform ranking over
 		// the elements, otherwise it won't be needed since if the elemenet/field
 		// contains the phrase it would be enough to present it as a match
-		quint8 phrasalMatchesCount = 0;
+//		quint8 phrasalMatchesCount = 0;
 
-		foreach (quint32 ps0_pos, ps0) {
-			vv("ps0_pos: " << ps0_pos);
+		foreach (term_pos ps0_pos, ps0) {
+			dd1("ps0_pos: " << ps0_pos);
 
 			// ps0: positions of the first term
 			// ps0_pos: a position of ps0
@@ -255,9 +262,9 @@ bool IndexHandler::findElementsSingleType(const QStringList &tokens,
 			// Avoid the position list for the term for which the position list
 			// has already been taken into ps0
 			for (ti = 1; ti < tokens.size(); ti++) {
-				vv("ti: " << ti);
+				dd2("ti: " << ti);
 
-				quint32 uti = static_cast<quint32>(ti);
+				term_pos uti = UINT8(ti);
 
 				// Check if the current term exist at the right position
 				auto psxIt = termsPositions.find(tokens.at(ti));
@@ -269,46 +276,16 @@ bool IndexHandler::findElementsSingleType(const QStringList &tokens,
 
 				// The term exists, check the position
 
-				QSet<quint32> psx = psxIt.value();
+				QSet<term_pos> psx = psxIt.value();
 
 				if (!psx.contains(ps0_pos + uti)) {
-					vv("No partial match =(");
+					dd2("No partial match =(");
 					break; // goto next p0_pos
 				}
-#if 0
-				bool partialMatch = false;
-				foreach (quint32 psx_pos, psx) {
-					vv("psx0_pos: " << ps0_pos);
-
-					// The right position is the one so that
-					// psx_pos - p0_pos = ti
-
-					if (psx_pos == ps0_pos + uti) {
-						partialMatch = true;
-						vv("Partial match!");
-						break; // Right position found; no reason to go ahead
-					}
-
-					// Furthermore we can quit if we have reach a position
-					// greater then the right one, since the position list is ordered
-					if (psx_pos > ps0_pos + uti)
-						break;
-				}
-
-				// In case we have a partial matching it means that until now
-				// everything match, so go ahead with the next phrase's term check
-				// Otherwise, this p0_pos doesn't give a match, jump to the next
-				// p0_pos
-
-				if (!partialMatch) {
-					vv("No partial match =(");
-					break; // goto next p0_pos
-				}
-#endif
 			}
 
 			if (abort) {
-				vv("Aborted, go to next element/field");
+				dd1("Aborted, go to next element/field");
 				break;
 			}
 
@@ -316,151 +293,105 @@ bool IndexHandler::findElementsSingleType(const QStringList &tokens,
 				// We have seen every phrase's term and we are here; it means
 				// that all terms's positions were ok for this p0_pos
 
-				// At this point we are sure the ef.element is a match, but we
-				// do not push it right now, instead do it later after figuring
-				// out how many times the phrase matches within this element/field
+				// Let's push this match
+				IndexMatch match;
+				match.matchedTokens = tokens;
+				match.elementSerial = ef.elementSerial;
+				match.fieldType = fieldType;
+				match.fieldNumber = ef.fieldNumber;
+				match.matchPosition = ps0_pos;
 
-				// Just increase the matches count.
-				ii("Found a phrasal match!");
-				phrasalMatchesCount++;
+				vv1("Pushing a match: " << match);
+
+				matches.insert(match);
 			}
-		}
-
-		// We can present the element as a match if phrasalMatchesCount
-		// is greater than 0
-
-		if (phrasalMatchesCount > 0) {
-#if 0
-			// The match count of the phrase is phrasalMatchesCount, but we
-			// instead want the number of matches referred to the words, to
-			// we have to multiply it by the number of tokens (since all the
-			// words should have matched)
-			quint8 tf = static_cast<quint8>(phrasalMatchesCount * tokens.size());
-			vv("Inserting match with tf: " << tf);
-#endif
-			// The match count refers to the phrase match count
-			matches.insert({ef.element, phrasalMatchesCount});
 		}
 	}
 
-	ii("# matchings: " << matches.size());
+	if (matches.size() > matchesSizeBefore) {
+		vv1("Found " << matches.size() << " matches");
+	} else {
+#if !VERBOSE
+		dd1("No matches found");
+#endif
+	}
 
 	return true;
 }
 
 void IndexHandler::init()
 {
+
+	static const char * const INDEX_READ_ERROR =
+			"Cannot read index file. "
+			"Is the path valid? Does the index exists with a standard name?";
+
 	// Open files
 
-	// Keys file
-
-	QString keysPath = Util::File::path(
-		{mIndexPath, mBaseIndexName + Config::Index::Extensions::KEYS});
-	ii("Loading keys index file at: " << keysPath);
-
-	mKeysFile.setFileName(keysPath);
-	if (!mKeysFile.open(QFile::ReadOnly)) {
-		throw	"Cannot read index file. "
-				"Is the path valid? Does the index exists with a standard name?";
-	}
-
-	mKeysStream.setDevice(&mKeysFile);
-
-	// Vocabulary file
-
-	QString vocabularyPath = Util::File::path(
-		{mIndexPath, mBaseIndexName + Config::Index::Extensions::VOCABULARY});
-	ii("Loading vocabulary index file at: " << vocabularyPath);
-
-	mVocabularyFile.setFileName(vocabularyPath);
-
-	if (!mVocabularyFile.open(QFile::ReadOnly)) {
-		throw	"Cannot read index file. "
-				"Is the path valid? Does the index exists with a standard name?";
-	}
-
-	mVocabularyStream.setDevice(&mVocabularyFile);
+	// Identifiers file
+	QString identifiersPath = Util::Dblp::Index::indexFilePath(
+			mIndexPath, mBaseIndexName, Config::Index::Extensions::IDENTIFIERS);
+	ii("Loading identifiers index file at: " << identifiersPath);
+	if (!mIdentifiersStream.openRead(identifiersPath))
+		throw INDEX_READ_ERROR;
 
 	// Posting list file
+	QString postingListPath = Util::Dblp::Index::indexFilePath(
+			mIndexPath, mBaseIndexName, Config::Index::Extensions::POSTING_LIST);
+	ii("Opening posting list index file at: " << postingListPath);
+	if (!mPostingsStream.openRead(postingListPath))
+		throw INDEX_READ_ERROR;
 
-	QString postingListPath = Util::File::path(
-		{mIndexPath, mBaseIndexName + Config::Index::Extensions::POSTING_LIST});
-	ii("Loading posting list index file at: " << postingListPath);
+	// Vocabulary file
+	QString vocabularyPath = Util::Dblp::Index::indexFilePath(
+			mIndexPath, mBaseIndexName, Config::Index::Extensions::VOCABULARY);
+	ii("Opening vocabulary index file at: " << vocabularyPath);
+	if (!mVocabularyStream.openRead(vocabularyPath))
+		throw INDEX_READ_ERROR;
 
-	mPostingListFile.setFileName(postingListPath);
+	// Elements positions file
+	QString elementsPosPath = Util::Dblp::Index::indexFilePath(
+			mIndexPath, mBaseIndexName, Config::Index::Extensions::ELEMENTS_POS);
+	ii("Opening elements pos index file at: " << elementsPosPath);
+	if (!mElementsPositionsStream.openRead(elementsPosPath))
+		throw INDEX_READ_ERROR;
 
-	if (!mPostingListFile.open(QFile::ReadOnly)) {
-		throw	"Cannot read index file. "
-				"Is the path valid? Does the index exists with a standard name?";
-	}
+	// Crossrefs file
+	QString crossrefsPath = Util::File::path(
+		{mIndexPath, mBaseIndexName + Config::Index::Extensions::CROSSREFS});
+	ii("Opening crossrefs index file at: " << crossrefsPath);
+	if (!mCrossrefsStream.openRead(crossrefsPath))
+		throw INDEX_READ_ERROR;
 
-	mPostingListStream.setDevice(&mPostingListFile);
-
-	// Elements positions (optional)
-
-	QString elementsPosPath = Util::File::path(
-		{mIndexPath, mBaseIndexName + Config::Index::Extensions::ELEMENTS_POS});
-	ii("Loading elements pos index file at: " << elementsPosPath);
-
-	mElementsPosFile.setFileName(elementsPosPath);
-
-	if (!mElementsPosFile.open(QFile::ReadOnly)) {
-		throw	"Cannot read index file. "
-				"Is the path valid? Does the index exists with a standard name?";
-	}
-
-	mElementsPosStream.setDevice(&mElementsPosFile);
+	ii("Started parsing of XML file...");
 }
-
-// NOT SUPPORTED ANYMORE
-// Search on more fields at once
-//bool IndexHandler::findPosts(const QString &term,
-//							 ElementFieldTypes fields,
-//							 QSet<IndexPost> &posts)
-//{
-//	ii("Finding posts for " << term << "in fields : " << fields;);
-
-//	bool found = false;
-//	// For each possibile field inside fields, test whether the flag
-//	// in fields is set; if so extend the search to this field to
-//	for (int f = ElementFieldTypeStart;
-//		 f <= ElementFieldTypeEnd;
-//		 f = f << 1) {
-
-//		ElementFieldType fieldFlag = static_cast<ElementFieldType>(f);
-//		if (fields.testFlag(fieldFlag))
-//			found |= findPosts(term, fieldFlag, posts);
-//		// else:  do not search within this field
-//	}
-
-//	return found;
-//}
 
 bool IndexHandler::findPosts(const QString &term,
 							 ElementFieldType field,
 							 QSet<IndexPost> &posts)
 {
-	vv("Finding posts for " << term << " in field : " << elementFieldTypeString(field));
-
-	vv1("Contained: " << mVocabulary.contains(term));
+	dd("Finding posts for " << term << " in field : " <<
+	   elementFieldTypeString(field));
 
 	auto refIt = mVocabulary.find(term);
 
 	if (refIt == mVocabulary.end()) {
+		ww("Term '" << term << "' not found in vocabulary");
 		// Term not found in the vocabulary
 		return false;
 	}
 
-	IndexTermRef &ref = refIt.value();
-
-	findPosts(term, ref, field, posts);
+	findPosts(refIt, field, posts);
 
 	return true;
 }
 
-void IndexHandler::findPosts(const QString &term, const IndexTermRef &ref,
+void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator vocabularyEntry,
 							 ElementFieldType field, QSet<IndexPost> &posts)
 {
+	const QString &term = vocabularyEntry.key();
+	const IndexTermRef &ref = vocabularyEntry.value();
+
 	// Calculate the field relative position within the ref based on the field
 	const IndexTermRefPostMeta *refPost;
 
@@ -473,6 +404,10 @@ void IndexHandler::findPosts(const QString &term, const IndexTermRef &ref,
 		break;
 	case ElementFieldType::ArticleYear:
 		refPost = &ref.article.year;
+		break;
+
+	case ElementFieldType::Journal:
+		refPost = &ref.journal.name;
 		break;
 
 	case ElementFieldType::IncollectionAuthor:
@@ -550,47 +485,56 @@ void IndexHandler::findPosts(const QString &term, const IndexTermRef &ref,
 		refPost = nullptr;
 	}
 
-	Q_ASSERT_X(refPost != nullptr, "index_handling",
-			   QString(QString("Unexpected ElementFieldType found: " +
-					DEC(static_cast<int>(field)))).toStdString().c_str());
+	ASSERT(refPost != nullptr, "index_handling",
+		"Unexpected ElementFieldType found: ", elementFieldTypeString(field));
 
-	dd("Found " << refPost->count << " posts for field "
-	   << elementFieldTypeString(field)
-		<< " and term '" << term << "'");
+	if (refPost->count > 0) {
+		vv("Found " << refPost->count << " posts for field "
+		   << elementFieldTypeString(field)
+			<< " and term '" << vocabularyEntry.key() << "'");
+	} else {
+		// Print as debug anyway, if verbose is disabled
+		dd("Found " << refPost->count << " posts for field "
+		   << elementFieldTypeString(field)
+			<< " and term '" << vocabularyEntry.key() << "'");
+	}
+
 
 	for (quint32 i = 0; i < refPost->count; i++) {
 		// Figure out the position of the posts in the posting list (of the first one)
 		qint64 postPos = ref.postingListPosition +
 				(refPost->offset + i) * PostingListConf::POST_BYTES;
 
-//		ii(i << "° post pos: " << postPos << " of term(" << term << ")");
+		dd1(i << "° post pos: " << postPos << " of term (" << term << ")");
 
 		// Go the the figured out position
-		mPostingListFile.seek(postPos);
+		mPostingsStream.file.seek(postPos);
 
 		// Read 5 bytes
 		quint32 P32;
 		quint8 P8;
 
-		mPostingListStream >> P32 >> P8;
+		mPostingsStream.stream >> P32 >> P8;
 
 		// Figure out element id, field nubmer and field pos
-		quint32 elementId = P32 >> PostingListConf::FIELD_NUM_BITS;
-		quint32 fieldNumber = P32 & (~0u >> (32 - PostingListConf::FIELD_NUM_BITS));
-		quint32 inFieldPos = P8;
+		quint32 elementSerial = P32 >> PostingListConf::FIELD_NUM_BITS;
+		field_num fieldNumber = P32 & (~0u >> (32 - PostingListConf::FIELD_NUM_BITS));
+		term_pos inFieldPos = P8;
 
-		vv("- element id = " << elementId);
-		vv("- field num = " << fieldNumber);
-		vv("- in field pos = " << inFieldPos);
-		vv("- associated key = " << mKeys.at(static_cast<int>(elementId)).key);
+		dd2("Element serial		= " << elementSerial);
+		dd2("Field number		= " << fieldNumber);
+		dd2("In field position	= " << inFieldPos);
+		dd2("(Identifier)		= " << mIdentifiers.at(INT(elementSerial)));
 
 		// Push the post
 		posts.insert(IndexPost {
-			 elementId, fieldNumber,  inFieldPos
+			 elementSerial, fieldNumber,  inFieldPos
 		});
+
+		// Position...
 #if 0
 		qint64 elementPos =
-			elementId * Shared::Index::ElementsPosition::ELEMENT_POS_BYTES;
+			elementSerial * Shared::Index::ElementsPosition::ELEMENT_POS_BYTES;
 
 		mElementsPosFile.seek(elementPos);
 
@@ -604,68 +548,62 @@ void IndexHandler::findPosts(const QString &term, const IndexTermRef &ref,
 	}
 }
 
-void IndexHandler::loadKeys()
+
+void IndexHandler::loadIdentifiers()
 {
-	dd("Loading keys file index");
+	// The format is
+	// <identifier_0>
+	// <identifier_1>
+	// ...
+	// <identifier_n>
+
+	vv("Loading identifiers file index");
+
 	emit keysLoadStarted();
 
-	// The format is
-	// <k0>
-	// <k1>
-	// ...
-	// <kn>
+	const qint64 keysFileSize = mIdentifiersStream.fileSize();
 
-	// The first line contains the initial buffer size
+	while (!mIdentifiersStream.stream.atEnd()) {
+		QString key = mIdentifiersStream.stream.readLine();
+		mIdentifiers.append({key});
 
-	const qint64 keysFileSize = mKeysFile.size();
-
-	while (!mKeysStream.atEnd()) {
-		QString key = mKeysStream.readLine();
-		mKeys.append({key});
-
-		double progress = static_cast<double>(mKeysFile.pos()) / keysFileSize;
+		double progress = DOUBLE(mIdentifiersStream.filePosition()) / keysFileSize;
 		vv1("Keys file load progress: " << progress);
 		emit keysLoadProgress(progress);
 	}
 
-	debug_printKeys();
-
 	emit keysLoadEnded();
 }
 
+
 void IndexHandler::loadVocabulary()
 {
-	dd("Loading vocabulary file index");
+	vv("Loading vocabulary file index");
+
 	emit vocabularyLoadStarted();
 
-	const qint64 vocabularyFileSize = mVocabularyFile.size();
+	const qint64 vocabularyFileSize = mVocabularyStream.fileSize();
 
 	// Read the count of posts for each term's field
 	// An unit of offset means 5 bytes in the posting list file
 	auto loadIndexTermReference =
-			[this](IndexTermRefPostMeta &post, quint32 offset, bool verbose = false) -> quint32 {
+			[this](IndexTermRefPostMeta &post, quint32 offset) -> quint32 {
 		// First of all read 16 bits, than if the first bit is = 1
 		// it means that this IndexTermRefPostMeta needs 32 bits for represent
 		// the count of posts for this term's field
 		quint16 shrinkedCount;
-		mVocabularyStream >> shrinkedCount;
+		mVocabularyStream.stream >> shrinkedCount;
 
-		if (verbose) {
-			ii("Readed from stream: " << shrinkedCount);
-		}
+		dd("Readed posts count from stream: " << shrinkedCount);
 
 		if ((shrinkedCount & VocabularyConf::REF_SHRINKED_FLAG) == 0) {
 			// The post meta refers to no more than 2^15 posts per field
 			post.count = shrinkedCount;
 		} else {
-			vv4("readed a post meta that needs more than 15 bits");
-
-			if (verbose) {
-				ii("Extension needed");
-			}
+			vv4("Readed a post meta that needs more than 15 bits");
 
 			quint16 countExtension;
-			mVocabularyStream >> countExtension;
+			mVocabularyStream.stream >> countExtension;
 
 			post.count =
 				// Take the shrinkedCount as first bits and countExtension
@@ -674,9 +612,9 @@ void IndexHandler::loadVocabulary()
 				// but actually doesn't count for the int value
 				// Not removing it leads to have always a surplus of 2^31
 				(
-				static_cast<quint32>(shrinkedCount) << (VocabularyConf::REF_SHRINKED_BITS + 1u)
+				UINT32(shrinkedCount) << (VocabularyConf::REF_SHRINKED_BITS + 1u)
 					|
-				static_cast<quint32>(countExtension)
+				UINT32(countExtension)
 				)
 					& ~VocabularyConf::REF_EXTENDED_FLAG;
 		}
@@ -687,41 +625,31 @@ void IndexHandler::loadVocabulary()
 
 	int i = 0;
 
-	while (!mVocabularyStream.atEnd()) {
+	while (!mVocabularyStream.stream.atEnd()) {
 		// Read term
 		char *term;
 		uint len;
-		mVocabularyStream.readBytes(term, len);
+		mVocabularyStream.stream.readBytes(term, len);
 
 		if (!term) {
-			ww("Term load failure on iter " << i << "; read len = " << len);
-			ww(".vix pos() :" << mVocabularyFile.pos());
+			ww("Term load failure at vocabulary position: " <<
+			   mVocabularyStream.filePosition());
 			continue;
 		}
 
-		Q_ASSERT_X(term, "index_handling",
-				   QString("Found null term while loading vocabulary; iteration = "
-				   + DEC(i) + "; byte read = " + DEC(len)).toStdString().c_str());
-
 		vv1("Loading vocabulary term: " << term);
-
-		if (strcmp("0001", term) == 0) {
-			ii("Loading vocabulary term: " << term);
-		}
 
 		// Read starting position of term's refs in posting list
 
 		IndexTermRef ref;
-		mVocabularyStream >> ref.postingListPosition;
+		mVocabularyStream.stream >> ref.postingListPosition;
 		quint32 incrementalOffset = 0;
 
-		if (strcmp("0001", term) == 0) {
-			ii("Posting list position" << ref.postingListPosition);
-		}
 
 		vv2("Starting position in posting list: " << ref.postingListPosition);
 
 		// <art.a> <art.t> <art.y>
+		// <jou>
 		// <inc.a> <inc.t> <inc.y> <inc.b>
 		// <inp.a> <inp.t> <inp.y> <inp.b>
 		// <phd.a> <phd.t> <phd.y>
@@ -729,9 +657,11 @@ void IndexHandler::loadVocabulary()
 		// <bok.a> <bok.t> <bok.y> <bok.p>
 		// <pro.t> <pro.y> <pro.p> <pro.b>
 
-		incrementalOffset += loadIndexTermReference(ref.article.author, incrementalOffset, strcmp("0001", term) == 0);
+		incrementalOffset += loadIndexTermReference(ref.article.author, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.article.title, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.article.year, incrementalOffset);
+
+		incrementalOffset += loadIndexTermReference(ref.journal.name, incrementalOffset);
 
 		incrementalOffset += loadIndexTermReference(ref.incollection.author, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.incollection.title, incrementalOffset);
@@ -761,37 +691,111 @@ void IndexHandler::loadVocabulary()
 		incrementalOffset += loadIndexTermReference(ref.proceedings.publisher, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.proceedings.booktitle, incrementalOffset);
 
-		vv2("Loaded: " << ref);
+		vv2("Term reference has been loaded into vocabulary: " << ref);
 
 		mVocabulary.insert(QString(term), ref);
 
-		double progress = static_cast<double>(mVocabularyFile.pos()) / vocabularyFileSize;
+		double progress = DOUBLE(mVocabularyStream.filePosition()) / vocabularyFileSize;
 		vv1("Vocabulary file load progress: " << progress);
 		emit vocabularyLoadProgress(progress);
 
 		i++;
 	}
 
-	debug_printVocabulary();
-
 	emit vocabularyLoadEnded();
 }
 
-void IndexHandler::debug_printKeys()
+void IndexHandler::loadCrossrefs()
 {
-	dd("Loaded keys are: ");
-	foreach(IndexKey k, mKeys) {
-		dd("-- " << k.key);
+	vv("Loading crossrefs file index");
+
+	emit crossrefsLoadStarted();
+
+	const qint64 crossrefsFileSize = mCrossrefsStream.fileSize();
+
+	quint32 pubElementSerial;
+	quint32 venueElementSerial;
+
+	while (!mCrossrefsStream.stream.atEnd()) {
+		mCrossrefsStream.stream >> pubElementSerial >> venueElementSerial;
+
+		vv1("Loaded crossref " << pubElementSerial << " => " << venueElementSerial);
+
+		mCrossrefs.insert(pubElementSerial, venueElementSerial);
+
+		double progress = DOUBLE(mCrossrefsStream.filePosition()) / crossrefsFileSize;
+		vv1("Crossrefs file load progress: " << progress);
+		emit crossrefsLoadProgress(progress);
 	}
+
+	emit crossrefsLoadEnded();
 }
 
-void IndexHandler::debug_printVocabulary()
+void IndexHandler::printIdentifiers()
 {
-	dd("Loaded vocabulary is: ");
+	vv("==== IDENTIFIERS ====");
+	elem_serial i = 0;
+	foreach(QString id, mIdentifiers) {
+		vv1("[" << i << "] : " << id);
+		i++;
+	}
+	vv("==== IDENTIFIERS END ====");
+}
+
+void IndexHandler::printVocabulary()
+{
+	vv("==== VOCABULARY ====");
 	for (auto it = mVocabulary.begin(); it != mVocabulary.end(); it++) {
-		dd("-- " << it.key());
-		dd("--" << it.value());
-//		IndexTermReference ref = it.value();
+		vv1("'" << it.key() << "' : " << it.value());
 	}
+	vv("==== VOCABULARY END ====");
 }
 
+void IndexHandler::printCrossrefs()
+{
+	vv("==== CROSSREFS ====");
+	for (auto it = mCrossrefs.begin(); it != mCrossrefs.end(); it++) {
+		vv1(it.key() << " => " << it.value());
+	}
+	vv("==== CROSSREFS END ====");
+}
+
+// --- Hashing purpose
+
+bool operator==(const ElementSerial_FieldNumber &ef1,
+				const ElementSerial_FieldNumber &ef2)
+{
+	return ef1.elementSerial == ef2.elementSerial &&
+			ef1.fieldNumber == ef2.fieldNumber;
+}
+
+uint qHash(const ElementSerial_FieldNumber &ef, uint seed)
+{
+	return qHash(ef.elementSerial, seed) ^ ef.fieldNumber;
+}
+
+bool operator==(const IndexMatch &efm1, const IndexMatch &efm2)
+{
+	return	efm1.elementSerial == efm2.elementSerial &&
+			efm1.fieldType == efm2.fieldType &&
+			efm1.fieldNumber == efm2.fieldNumber &&
+			efm1.matchPosition == efm2.matchPosition
+	;
+}
+
+uint qHash(const IndexMatch &efm, uint seed)
+{
+	return qHash(efm.elementSerial * efm.fieldNumber * efm.matchPosition, seed)
+			^ UINT32(efm.fieldType);
+}
+
+// ---
+
+IndexMatch::operator QString()
+{
+	return
+			"{serial = " + DEC(elementSerial) + "; field = " +
+			elementFieldTypeString(fieldType) + "; field_num = " +
+			DEC(fieldNumber) + "; match_pos = " + DEC(matchPosition) +
+			"; (phrase = '" + matchedTokens.join(" ") + "}";
+}

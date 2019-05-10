@@ -4,60 +4,68 @@
 #include <QList>
 #include "dblp/index/models/post/index_post.h"
 
-typedef QList<IndexPost> Posts;
+typedef QList<IndexPost> IndexPosts;
 
 class IndexTerm {
 public:
-	int debug_refCount = 0;
-
 	struct {
-		Posts author;
-		Posts title;
-		Posts year;
+		IndexPosts author;
+		IndexPosts title;
+		IndexPosts  year;
 	} article;
+
+	// Virtual since journal actually doesn't exists as element within the .xml
+	struct {
+		IndexPosts name;
+	} journal;
 
 	// Journal?
 
 	struct {
-		Posts author;
-		Posts title;
-		Posts year;
-		Posts booktitle;
+		IndexPosts author;
+		IndexPosts title;
+		IndexPosts year;
+		IndexPosts booktitle;
 	} incollection;
 
 	struct {
-		Posts author;
-		Posts title;
-		Posts year;
-		Posts publisher;
+		IndexPosts author;
+		IndexPosts title;
+		IndexPosts year;
+		IndexPosts publisher;
 	} book;
 
 	struct {
-		Posts author;
-		Posts title;
-		Posts year;
-		Posts booktitle;
+		IndexPosts author;
+		IndexPosts title;
+		IndexPosts year;
+		IndexPosts booktitle;
 	} inproceedings;
 
 	struct {
-		Posts author;
-		Posts title;
-		Posts year;
-		Posts publisher;
-		Posts booktitle;
+		IndexPosts author;
+		IndexPosts title;
+		IndexPosts year;
+		IndexPosts publisher;
+		IndexPosts booktitle;
 	} proceedings;
 
 	struct {
-		Posts author;
-		Posts title;
-		Posts year;
+		IndexPosts author;
+		IndexPosts title;
+		IndexPosts year;
 	} phdthesis;
 
 	struct {
-		Posts author;
-		Posts title;
-		Posts year;
+		IndexPosts author;
+		IndexPosts title;
+		IndexPosts year;
 	} masterthesis;
+
+	// STATS/DEBUG
+	struct {
+		quint64 postsCount;
+	} stats;
 };
 
 #endif // INDEX_TERM_H

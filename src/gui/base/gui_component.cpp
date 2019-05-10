@@ -5,6 +5,7 @@
 #include <QQmlContext>
 #include <QEventLoop>
 #include "commons/util/util.h"
+#include "gui/engine/gui_engine.h"
 
 LOGGING(GuiComponent, true)
 
@@ -12,11 +13,6 @@ GuiComponent::~GuiComponent()
 {
 	delete mComponent;
 	delete mContext;
-}
-
-GuiComponent::GuiComponent(QQmlEngine *engine)
-{
-	mEngine = engine;
 }
 
 bool GuiComponent::create()
@@ -27,10 +23,10 @@ bool GuiComponent::create()
 	   "resource: '" << qmlResource << "' | " <<
 	   "name: '" << qmlName() << "'");
 
-	mContext = new QQmlContext(mEngine->rootContext());
+	mContext = new QQmlContext(GuiEngine::instance().engine()->rootContext());
 	mContext->setContextProperty(qmlName(), this);
 
-	mComponent = new QQmlComponent(mEngine, qmlResource);
+	mComponent = new QQmlComponent(GuiEngine::instance().engine(), qmlResource);
 	if (mComponent->isLoading()) {
 		QEventLoop loop;
 

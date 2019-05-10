@@ -15,6 +15,7 @@ public:
 	qint64 postingListPosition;
 
 	// <art.a> <art.t> <art.y>
+	// <jou>
 	// <inc.a> <inc.t> <inc.y> <inc.b>
 	// <inp.a> <inp.t> <inp.y> <inp.b>
 	// <phd.a> <phd.t> <phd.y>
@@ -27,6 +28,10 @@ public:
 		IndexTermRefPostMeta title;
 		IndexTermRefPostMeta year;
 	} article;
+
+	struct {
+		IndexTermRefPostMeta name;
+	} journal;
 
 	struct {
 		IndexTermRefPostMeta author;

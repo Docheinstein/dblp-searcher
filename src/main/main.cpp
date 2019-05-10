@@ -9,8 +9,10 @@
 #include "dblp/irmodel/impl/ief/ir_model_ief.h"
 #include "gui/splash/splash_window.h"
 #include "gui/main/main_window.h"
+#include "gui/engine/gui_engine.h"
 #include "commons/globals/globals.h"
 
+#define QML_REGISTER_BASE "DblpSearcher."
 
 static const char * const HELP =
 R"#(NAME
@@ -72,7 +74,7 @@ public:
 	exit(-1);
 }
 
-static int doIndexing(Arguments args) {
+static int startIndexMode(Arguments args) {
 	Q_ASSERT(args.mode == Mode::Index);
 
 	Indexer indexer(args.indexFolderPath, args.baseIndexName);
@@ -82,11 +84,20 @@ static int doIndexing(Arguments args) {
 	return 0;
 }
 
-static int doSearch(Arguments args) {
+static int startSearchMode(Arguments args) {
 	Q_ASSERT(args.mode == Mode::Search);
 
+	// Gui application (must be before everything else)
 	QGuiApplication guiApp(args.argc, args.argv);
-	QQmlEngine engine;
+
+	// Global qml engine
+	QQmlEngine *engine = new QQmlEngine;
+//	engine->addImportPath("qrc:/");
+//	engine->addImportPath(":/qml");
+	GuiEngine::instance(engine);
+
+	// Custom types registration
+	qmlRegisterType<MainWindow>(QML_REGISTER_BASE "MainWindow", 1, 0, "MainWindow");
 
 	// Declared index stuff outside the QtConcurrent::run() scope
 	IndexHandler *indexHandler;
@@ -95,13 +106,13 @@ static int doSearch(Arguments args) {
 
 	// Allocates the windows (splash and main)
 
-	SplashWindow splashWindow(&engine);
+	SplashWindow splashWindow;
 	if (!splashWindow.create()) {
 		qCritical() << "Error occurred while creating SplashWindow";
 		exit(-1);
 	}
 
-	MainWindow mainWindow(&engine);
+	MainWindow mainWindow;
 	if (!mainWindow.create()) {
 		qCritical() << "Error occurred while creating MainWindow";
 		exit(-1);
@@ -122,15 +133,26 @@ static int doSearch(Arguments args) {
 		indexHandler = new IndexHandler(args.indexFolderPath, args.baseIndexName);
 
 		// Connect to signals for detect progress
+
+		// Keys
 		QObject::connect(indexHandler, &IndexHandler::keysLoadStarted, [&splashWindow]() {
 			splashWindow.setStatus("Loading index file: keys");
 		});
 		QObject::connect(indexHandler, &IndexHandler::keysLoadProgress, splashProgressor);
 
+		// Vocabulary
 		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadStarted, [&splashWindow]() {
 			splashWindow.setStatus("Loading index file: vocabulary");
 		});
 		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadProgress, splashProgressor);
+
+		// Crossrefs & Articles journals
+		// Do both on the same status
+		QObject::connect(indexHandler, &IndexHandler::crossrefsLoadStarted, [&splashWindow]() {
+			splashWindow.setStatus("Loading index file: crossrefs");
+		});
+		QObject::connect(indexHandler, &IndexHandler::crossrefsLoadProgress,
+						 splashProgressor);
 
 		indexHandler->load();
 
@@ -160,11 +182,15 @@ static int doSearch(Arguments args) {
 	return guiApp.exec();
 }
 
+#define LOG_TAG "main"
+#define CAN_LOG true
 
 static Arguments parseArguments(int argc, char *argv[]) {
 	Arguments args;
 	args.argc = argc;
 	args.argv = argv;
+
+	_tt("Ehy there!");
 
 	for (int i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -215,11 +241,11 @@ int main(int argc, char *argv[])
 		Arguments args = parseArguments(argc, argv);
 		if (args.mode == Mode::Index) {
 			qInfo() << "Starting in INDEX mode";
-			doIndexing(args);
+			startIndexMode(args);
 		}
 		else if (args.mode == Mode::Search) {
 			qInfo() << "Starting in SEARCH mode";
-			doSearch(args);
+			startSearchMode(args);
 		}
 		else {
 			qWarning() << "Arguments parsing faile; please provide a valid mode.";

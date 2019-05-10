@@ -57,9 +57,12 @@ enum class ElementFieldType {
 
 	Article = ArticleAuthor | ArticleTitle | ArticleYear,
 
+	// Journal (name)
+	Journal =  ArticleYear << 1,
+
 	// Incollection
 
-	IncollectionAuthor = ArticleYear << 1,
+	IncollectionAuthor = Journal << 1,
 	IncollectionTitle = IncollectionAuthor << 1,
 	IncollectionYear = IncollectionTitle << 1,
 	IncollectionBooktitle = IncollectionYear << 1,
@@ -118,7 +121,8 @@ enum class ElementFieldType {
 
 	Publication = Article | Incollection | Inproceedings |
 				  Phdthesis | Masterthesis,
-	Venue = Book | Proceedings,
+
+	Venue = Book | Proceedings | Journal,
 
 	All = Publication | Venue,
 };

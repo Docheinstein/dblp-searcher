@@ -52,7 +52,6 @@ private:
 	void resetFields();
 
 	// XML SAX content callbacks
-	void setDocumentLocator(QXmlLocator*) override;
 	bool startDocument() override;
 	bool endDocument() override;
 	bool startElement(const QString&, const QString&localName,
@@ -62,9 +61,10 @@ private:
 					const QString& localName,
 					const QString&) override;
 	bool characters(const QString& chars) override;
-	bool ignorableWhitespace(const QString& ch) override;
-	bool processingInstruction(const QString& target, const QString& data) override;
 	bool skippedEntity(const QString& name) override;
+
+	// bool ignorableWhitespace(const QString& ch) override;
+	// bool processingInstruction(const QString& target, const QString& data) override;
 
    // XML SAX error callbacks
    bool error(const QXmlParseException& exception) override;

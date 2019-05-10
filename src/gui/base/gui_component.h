@@ -15,7 +15,6 @@ class GuiComponent : public QObject, Loggable {
 
 public:
 	virtual ~GuiComponent();
-	GuiComponent(QQmlEngine *engine);
 	bool create();
 
 protected:
@@ -25,7 +24,6 @@ protected:
 
 	void createComponent();
 
-	QQmlEngine *mEngine;
 	QQmlContext *mContext;
 	QQmlComponent *mComponent;
 

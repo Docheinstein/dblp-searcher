@@ -13,6 +13,21 @@ float IRModel::bonusFactorPerPhraseTerm()
 	return 1; // no bonus
 }
 
+float IRModel::bonusFactorForPublicationMatch()
+{
+	return 1; // no bonus
+}
+
+float IRModel::bonusFactorForVenueMatch()
+{
+	return 1; // no bonus
+}
+
+float IRModel::bonusFactorForPublicationVenueMatch()
+{
+	return 1; // no bonus
+}
+
 IndexHandler *IRModel::index()
 {
 	return mIndex;

@@ -15,623 +15,377 @@ Indexer::Indexer(const QString &outputPath, const QString &baseName)
 
 void Indexer::onStart()
 {
+	static const char * INDEX_CREATION_ERROR =
+			"Cannot create index file directory. "
+			"Is the path valid? Do you have permissions?";
+
 	// Open files
 
 	if (!QDir::root().mkpath(mOutputPath)) {
-		throw	"Cannot create index file directory. "
-				"Is the path valid? Do you have permissions?";
+		throw INDEX_CREATION_ERROR;
 	}
 
-	// Keys file
-
-	QString keysPath = Util::File::path(
-		{mOutputPath, mBaseIndexName + Config::Index::Extensions::KEYS});
-	dd("Creating keys index file at: " << keysPath);
-
-	mKeysFile.setFileName(keysPath);
-
-	if (!mKeysFile.open(QFile::WriteOnly | QFile::Truncate)) {
-		throw	"Cannot create index file. "
-				"Is the path valid? Do you have permissions?";
-	}
-
-	mKeysStream.setDevice(&mKeysFile);
+	// Identifiers file
+	QString identifiersPath = Util::Dblp::Index::indexFilePath(
+			mOutputPath, mBaseIndexName, Config::Index::Extensions::IDENTIFIERS);
+	ii("Creating identifiers index file at: " << identifiersPath);
+	if (!mIdentifiersStream.openWrite(identifiersPath))
+		throw INDEX_CREATION_ERROR;
 
 	// Posting list file
-
-	QString postingListPath = Util::File::path(
-		{mOutputPath, mBaseIndexName + Config::Index::Extensions::POSTING_LIST});
-	dd("Creating posting list index file at: " << postingListPath);
-
-	mPostingListFile.setFileName(postingListPath);
-
-	if (!mPostingListFile.open(QFile::WriteOnly | QFile::Truncate)) {
-		throw	"Cannot create index file. "
-				"Is the path valid? Do you have permissions?";
-	}
-
-	mPostingListStream.setDevice(&mPostingListFile);
+	QString postingListPath = Util::Dblp::Index::indexFilePath(
+			mOutputPath, mBaseIndexName, Config::Index::Extensions::POSTING_LIST);
+	ii("Creating posting list index file at: " << postingListPath);
+	if (!mPostingsStream.openWrite(postingListPath))
+		throw INDEX_CREATION_ERROR;
 
 	// Vocabulary file
+	QString vocabularyPath = Util::Dblp::Index::indexFilePath(
+			mOutputPath, mBaseIndexName, Config::Index::Extensions::VOCABULARY);
+	ii("Creating vocabulary index file at: " << vocabularyPath);
+	if (!mVocabularyStream.openWrite(vocabularyPath))
+		throw INDEX_CREATION_ERROR;
 
-	QString vocabularyPath = Util::File::path(
-		{mOutputPath, mBaseIndexName + Config::Index::Extensions::VOCABULARY});
-	dd("Creating vocabulary index file at: " << vocabularyPath);
+	// Elements positions file
+	QString elementsPosPath = Util::Dblp::Index::indexFilePath(
+			mOutputPath, mBaseIndexName, Config::Index::Extensions::ELEMENTS_POS);
+	ii("Creating elements pos index file at: " << elementsPosPath);
+	if (!mElementsPositionsStream.openWrite(elementsPosPath))
+		throw INDEX_CREATION_ERROR;
 
-	mVocabularyFile.setFileName(vocabularyPath);
+	// Crossrefs file
+	QString crossrefsPath = Util::File::path(
+		{mOutputPath, mBaseIndexName + Config::Index::Extensions::CROSSREFS});
+	ii("Creating crossrefs index file at: " << crossrefsPath);
+	if (!mCrossrefsStream.openWrite(crossrefsPath))
+		throw INDEX_CREATION_ERROR;
 
-	if (!mVocabularyFile.open(QFile::WriteOnly | QFile::Truncate)) {
-		throw	"Cannot create index file. "
-				"Is the path valid? Do you have permissions?";
-	}
-
-	mVocabularyStream.setDevice(&mVocabularyFile);
-
-	// Elements pos file
-
-	QString elementsPosPath = Util::File::path(
-		{mOutputPath, mBaseIndexName + Config::Index::Extensions::ELEMENTS_POS});
-	dd("Creating elements pos index file at: " << elementsPosPath);
-
-	mElementsPosFile.setFileName(elementsPosPath);
-
-	if (!mElementsPosFile.open(QFile::WriteOnly | QFile::Truncate)) {
-		throw	"Cannot create index file. "
-				"Is the path valid? Do you have permissions?";
-	}
-
-	mElementsPosStream.setDevice(&mElementsPosFile);
+	ii("Started parsing of XML file...");
 }
 
 void Indexer::onEnd()
 {
-	dd("Parse ended");
+	ii("Finished parsing of XML file");
+	ii("Actually writing index files...");
 
-	debug_printIndexTerms();
+//	debug_printIndexTerms();
 
-	dd("Writing posting list and vocabulary");
-	createPostingListAndVocabulary();
+	vv("Writing index files");
 
-	dd("Closing index files");
+	writeIdentifiersFile();
+	writePostingListAndVocabularyFiles();
+	writePositionsFile();
+	writeCrossrefsFile();
 
-	mKeysFile.close();
-	mPostingListFile.close();
-	mVocabularyFile.close();
+	vv("Closing index files");
 
-	debug_printIndexStats();
+	mIdentifiersStream.close();
+	mVocabularyStream.close();
+	mPostingsStream.close();
+	mElementsPositionsStream.close();
+	mCrossrefsStream.close();
+
+	ii("Indexing finished");
+
+	printStats();
 }
 
-void Indexer::onArticle(DblpArticle &article, qint64 pos)
+void Indexer::onArticle(const DblpArticle &article, qint64 pos)
 {
-	dd("onArticle: " << article);
+	vv("Handling article: " << article);
 
-	addFields([](IndexTerm &term, const IndexPost &post)
+	vv1("Adding terms of article.authors");
+	addTermsOfFields([](IndexTerm &term, const IndexPost &post)
 		{ term.article.author.append(post); },
 		article.authors
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of article.title");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.article.title.append(post); },
 		article.title
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of article.year");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.article.year.append(post); },
 		article.year
 	);
-//	addField([](DblpIndexTermEntity *term, DblpIndexTermReference ref)
-//		{ term.article.journal.append(post); },
-//		article.journal
-//	);
 
-	writeElement(article.key, pos);
+	addIdentifier(article.key);
+	addPosition(pos);
+	addCrossref(article.journal);
+	elementHandled();
 }
 
-
-void Indexer::onJournal(DblpJournal &journal, qint64 pos)
+void Indexer::onJournal(const DblpJournal &journal, qint64 pos)
 {
-	dd("onJournal: " << journal.name);
+	vv("Handling journal: " << journal.name);
+
+	// Unluckily we cannot add the journal name as identifier since onJournal
+	// is triggered for each <journal> match inside the articles
+	// Instead we have to:
+	// Check if it has already been added (to mVenueSerialByVenueIdentifier)
+
+	auto journalIdentifierIt = mVenueSerialByVenueIdentifier.find(journal.name);
+
+	if (journalIdentifierIt != mVenueSerialByVenueIdentifier.end()) {
+		dd1("Skipping journal addition since already exists: " << journal.name);
+		// Already added, do not add again
+		return;
+	}
+
+	vv1("Adding journal for the first time: " << journal.name);
+
+	vv1("Adding terms of journal");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
+		{ term.journal.name.append(post); },
+		journal.name
+	);
+
+	// This journal has never been added, add it for the first time as
+	// a new (and unique) identifier
+	addIdentifier(journal.name);
+	addPosition(pos); // probably useless and will be discarded in index handling
+					  // but must be called for aligned the identifiers
+					  // with the positions arrays
+	addVenue(journal.name);
+	elementHandled();
 }
 
-void Indexer::onIncollection(DblpIncollection &incollection, qint64 pos)
+void Indexer::onIncollection(const DblpIncollection &incollection, qint64 pos)
 {
-	dd("onIncollection: " << incollection);
+	vv("Handling incollection: " << incollection);
 
-	addFields([](IndexTerm &term, const IndexPost &post)
+	vv1("Adding terms of incollection.year");
+	addTermsOfFields([](IndexTerm &term, const IndexPost &post)
 		{ term.incollection.author.append(post); },
 		incollection.authors
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of incollection.title");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.incollection.title.append(post); },
 		incollection.title
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of incollection.year");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.incollection.year.append(post); },
 		incollection.year
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of incollection.booktitle");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.incollection.booktitle.append(post); },
 		incollection.booktitle
 	);
 
-	writeElement(incollection.key, pos);
+	addIdentifier(incollection.key);
+	addPosition(pos);
+	addCrossref(incollection.crossref);
+	elementHandled();
 }
 
-void Indexer::onBook(DblpBook &book, qint64 pos)
+void Indexer::onBook(const DblpBook &book, qint64 pos)
 {
-	dd("onBook: " << book);
+	vv("Handling book: " << book);
 
-	addFields([](IndexTerm &term, const IndexPost &post)
+	vv1("Adding terms of book.authors");
+	addTermsOfFields([](IndexTerm &term, const IndexPost &post)
 		{ term.book.author.append(post); },
 		book.authors
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of book.title");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.book.title.append(post); },
 		book.title
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of book.year");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.book.year.append(post); },
 		book.year
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of book.publisher");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.book.publisher.append(post); },
 		book.publisher
 	);
 
-	writeElement(book.key, pos);
+	addIdentifier(book.key);
+	addPosition(pos);
+	addVenue(book.key);
+	elementHandled();
 }
 
-void Indexer::onInproceedings(DblpInproceedings &inproc, qint64 pos)
+void Indexer::onInproceedings(const DblpInproceedings &inproc, qint64 pos)
 {
-	dd("onInproceeding: " << inproc);
+	vv("Handling inproceedings: " << inproc);
 
-	addFields([](IndexTerm &term, const IndexPost &post)
+	vv1("Adding terms of inproc.authors");
+	addTermsOfFields([](IndexTerm &term, const IndexPost &post)
 		{ term.inproceedings.author.append(post); },
 		inproc.authors
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of inproc.title");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.inproceedings.title.append(post); },
 		inproc.title
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of inproc.year");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.inproceedings.year.append(post); },
 		inproc.year
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of inproc.booktitle");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.inproceedings.booktitle.append(post); },
 		inproc.booktitle
 	);
 
-	writeElement(inproc.key, pos);
+	addIdentifier(inproc.key);
+	addPosition(pos);
+	addCrossref(inproc.crossref);
+	elementHandled();
 }
 
-void Indexer::onProceedings(DblpProceedings &proc, qint64 pos)
+void Indexer::onProceedings(const DblpProceedings &proc, qint64 pos)
 {
-	dd("onProceeding: " << proc);
+	vv("Handling proceedings: " << proc);
 
-
-	addField([](IndexTerm &term, const IndexPost &post)
+	vv1("Adding terms of proc.title");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.proceedings.title.append(post); },
 		proc.title
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of proc.year");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.proceedings.year.append(post); },
 		proc.year
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of proc.booktitle");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.proceedings.booktitle.append(post); },
 		proc.booktitle
 	);
 
-	writeElement(proc.key, pos);
+	addIdentifier(proc.key);
+	addPosition(pos);
+	addVenue(proc.key);
+	elementHandled();
 }
 
-void Indexer::onPhdThesis(DblpPhdThesis &phd, qint64 pos)
+void Indexer::onPhdThesis(const DblpPhdThesis &phd, qint64 pos)
 {
-	dd("onPhdThesis: " << phd);
+	vv("Handling phdthesis: " << phd);
 
-	addFields([](IndexTerm &term, const IndexPost &post)
+	vv1("Adding terms of phd.authors");
+	addTermsOfFields([](IndexTerm &term, const IndexPost &post)
 		{ term.phdthesis.author.append(post); },
 		phd.authors
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of phd.title");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.phdthesis.title.append(post); },
 		phd.title
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of phd.year");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.phdthesis.year.append(post); },
 		phd.year
 	);
 
-	writeElement(phd.key, pos);
+	addIdentifier(phd.key);
+	addPosition(pos);
+	elementHandled();
 }
 
-void Indexer::onMasterThesis(DblpMasterThesis &master, qint64 pos)
+void Indexer::onMasterThesis(const DblpMasterThesis &master, qint64 pos)
 {
-	dd("onMasterThesis: " << master);
+	dd("Handling masterthesis: " << master);
 
-	addFields([](IndexTerm &term, const IndexPost &post)
+	vv1("Adding terms of master.authors");
+	addTermsOfFields([](IndexTerm &term, const IndexPost &post)
 		{ term.masterthesis.author.append(post); },
 		master.authors
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of master.title");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.masterthesis.title.append(post); },
 		master.title
 	);
-	addField([](IndexTerm &term, const IndexPost &post)
+
+	vv1("Adding terms of master.year");
+	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.masterthesis.year.append(post); },
 		master.year
 	);
 
-	writeElement(master.key, pos);
-}
-
-void Indexer::writeElement(const QString &key, qint64 pos)
-{
-	writeKey(key);
-	writeElementPosition(pos);
-	mCurrent.elementId++;
-}
-
-void Indexer::writeKey(const QString &key)
-{
-	Q_ASSERT_X(!key.isEmpty(),
-			 "indexing", "Cannot index an empty key");
-
-	Q_ASSERT_X(mCurrent.elementId < PostingListConf::ELEMENT_ID_THRESHOLD,
-			 "indexing", "There are more elements than the index's allowed number");
-
-	vv("Writing key to index: " << key << " for element (" << mCurrent.elementId << ")");
-
-//	if (pos > mCurrent.pos) {
-//		vv("New kix buffer pos: " << pos);
-
-//		qint64 posDiff = pos - mCurrent.pos;
-
-//		vv("New kix buffer pos-diff is: " << posDiff);
-
-//		// Add \n in any case for distinguish the next chunk
-//		mKeysStream << '\n';
-
-//		if (posDiff > mCurrent.readBufferSize) {
-//			// The read buffer size is increased
-//			mCurrent.readBufferSize = posDiff;
-//			vv("New buffer size detected: " << mCurrent.readBufferSize);
-//			// Write another \n, so that the read can distinguish if there is
-//			// a number by checking for one or two \n (plus the key's one)
-//			mKeysStream << '\n' << mCurrent.readBufferSize << '\n';
-//		}
-
-//		mCurrent.pos = pos;
-//	}
-
-//	mKeysStream << key
-//				<< "_elementId=" << mCurrent.elementId
-//				<< "_rbs=" << mCurrent.readBufferSize
-//				<< "_pos=" << mCurrent.pos <<
-//				'\n';
-
-	mKeysStream << key << '\n';
-
-	vv(" - ");
-}
-
-void Indexer::writeElementPosition(qint64 pos) {
-	Q_ASSERT_X(pos < Config::Index::ElementsPosition::ELEMENT_POS_THRESHOLD,
-			 "indexing", "The original element has a file position above the allowed one");
-
-	quint32 P = static_cast<quint32>(pos);
-	mElementsPosStream << P;
-}
-
-// Create a posting list that contains just a succession of
-// <element><field_number><in_field_term_pos> which will be referred by
-// the vocabulary
-
-// The order in which the term's posting list is appended is the following
-
-// article
-// - author
-// - title
-// - year
-// (- journal)
-
-// incollection
-// - author
-// - title
-// - year
-// - booktitle
-
-// inproceedings
-// - author
-// - title
-// - year
-// - booktitle
-
-// phdthesis
-// - author
-// - title
-// - year
-
-// masterthesis
-// - author
-// - title
-// - year
-
-// (journal)
-
-// book
-// - author
-// - title
-// - year
-// - publisher
-
-// proceedings
-// - title
-// - year
-// - publisher
-// - booktitle
-
-void Indexer::createPostingListAndVocabulary()
-{
-	for (auto it = mIndexTerms.begin(); it != mIndexTerms.end(); it++) {
-		QString term = it.key();
-		IndexTerm &termEntity = it.value();
-
-		vv1("Handling term: " << term);
-
-		if (term == "0001") {
-			ii("Writing term" << term);
-			ii("IndexTerm # a.a: " << termEntity.article.author.size());
-			ii("IndexTerm # a.t: " << termEntity.article.title.size());
-			ii("IndexTerm # a.y: " << termEntity.article.year.size());
-
-			ii("Term: " << term.toUtf8());
-			ii("Plix pos" << mPostingListFile.pos());
-			ii("Vix pos" << mVocabularyFile.pos());
-
-		}
-
-//		qint64 postingListStartingPos = mPostingListFile.pos();
-
-		writeVocabularyTermMetas(term);
-
-		// Write the term posts to the posting list,
-		// one for each field of the elements
-
-		// <art.a> <art.t> <art.y>
-		// <inc.a> <inc.t> <inc.y> <inc.b>
-		// <inp.a> <inp.t> <inp.y> <inp.b>
-		// <phd.a> <phd.t> <phd.y>
-		// <mas.a> <mas.t> <mas.y>
-		// <bok.a> <bok.t> <bok.y> <bok.p>
-		// <pro.t> <pro.y> <pro.p> <pro.b>
-
-		// article
-		// - author
-		// - title
-		// - year
-		// (- journal)
-
-		writeFieldPosts(termEntity.article.author);
-		writeFieldPosts(termEntity.article.title);
-		writeFieldPosts(termEntity.article.year);
-
-		// incollection
-		// - author
-		// - title
-		// - year
-		// - booktitle
-
-		writeFieldPosts(termEntity.incollection.author);
-		writeFieldPosts(termEntity.incollection.title);
-		writeFieldPosts(termEntity.incollection.year);
-		writeFieldPosts(termEntity.incollection.booktitle);
-
-		// inproceedings
-		// - author
-		// - title
-		// - year
-		// - booktitle
-
-		writeFieldPosts(termEntity.inproceedings.author);
-		writeFieldPosts(termEntity.inproceedings.title);
-		writeFieldPosts(termEntity.inproceedings.year);
-		writeFieldPosts(termEntity.inproceedings.booktitle);
-
-		// phdthesis
-		// - author
-		// - title
-		// - year
-
-		writeFieldPosts(termEntity.phdthesis.author);
-		writeFieldPosts(termEntity.phdthesis.title);
-		writeFieldPosts(termEntity.phdthesis.year);
-
-		// masterthesis
-		// - author
-		// - title
-		// - year
-
-		writeFieldPosts(termEntity.masterthesis.author);
-		writeFieldPosts(termEntity.masterthesis.title);
-		writeFieldPosts(termEntity.masterthesis.year);
-
-		// book
-		// - author
-		// - title
-		// - year
-		// - publisher
-
-		writeFieldPosts(termEntity.book.author);
-		writeFieldPosts(termEntity.book.title);
-		writeFieldPosts(termEntity.book.year);
-		writeFieldPosts(termEntity.book.publisher);
-
-		// proceedings
-		// - title
-		// - year
-		// - publisher
-		// - booktitle
-
-		writeFieldPosts(termEntity.proceedings.title);
-		writeFieldPosts(termEntity.proceedings.year);
-		writeFieldPosts(termEntity.proceedings.publisher);
-		writeFieldPosts(termEntity.proceedings.booktitle);
-	}
-}
-
-// Returns the bytes written to the posting list
-void Indexer::writeFieldPosts(QList<IndexPost> &posts)
-{
-	// Write the posts to the posting list and append the posts offset
-	// the vocabulary.
-
-	foreach(IndexPost post, posts)
-		writePostingListTermPosts(post);
-
-	// Just write the count of the posts
-
-	writeVocabularyTermFieldPostsCount(static_cast<quint32>(posts.size()));
-}
-
-inline void Indexer::writeVocabularyTermMetas(QString term)
-{
-	vv2("Writing metas to vocabulary for term" << term.toUtf8());
-	vv3(".vix position: " << mVocabularyFile.pos());
-	vv3(".plix position: " << mPostingListFile.pos());
-
-	// First of all, write the term to the vocabulary
-
-	mVocabularyStream << term.toUtf8(); // Probably the call toUtf8 is not needed
-										// since is already done before put terms into
-										// mIndexTerms
-
-	// Then write the starting position of the term in the posting list
-
-	mVocabularyStream << mPostingListFile.pos();
-}
-
-inline void Indexer::writeVocabularyTermFieldPostsCount(quint32 count)
-{
-	// Just append the count post of the field referred to the starting position
-	// in the postining list of the term
-
-	// If the count is below REF_SHRINKED_THRESHOLD (32767 = 2^15 - 1)
-	// then write a quint16 with the first bit at 0, otherwise write a full quint32
-	// with the first bit at 1 (the loader must be aware of the fact that the full
-	// quint32 will have the first bit at 1, which should be removed for take the
-	// right number)
-
-	if (count < VocabularyConf::REF_SHRINKED_THRESHOLD) {
-		// 16 bit
-		vv1("Writing count: " << static_cast<quint16>(count));
-		mVocabularyStream << static_cast<quint16>(count);
-	}
-	else {
-		Q_ASSERT_X(mCurrent.elementId < VocabularyConf::REF_EXTENDED_THRESHOLD,
-				 "indexing", "There are more posts than the index's allowed number");
-
-		// 32 bit, with leftmost bit = 1
-		mVocabularyStream <<
-			(count | VocabularyConf::REF_EXTENDED_FLAG);
-	}
-}
-
-
-// Append in a dummy way, without knowing the context or whatever, the pattern
-// <element><field_number><in_field_term_pos> to the posting list.
-// Actually 5 bytes are needed for store the information
-// For achieve this, push a 32bit uint and then a 8bit uint
-
-inline void Indexer::writePostingListTermPosts(const IndexPost &post)
-{
-	vv("Writing post" << mPostingListFile.pos());
-	vv("Writing elementId: " << post.elementId);
-	vv("Writing fieldNum: " << post.fieldNumber);
-	vv("Writing inFieldTermPosition: " << post.inFieldTermPosition);
-
-	// Asserts
-	Q_ASSERT_X(post.elementId < PostingListConf::ELEMENT_ID_THRESHOLD,
-			 "indexing", "There are more elements than the index's allowed number");
-
-	Q_ASSERT_X(post.fieldNumber < PostingListConf::FIELD_NUM_THRESHOLD,
-			 "indexing", "There are more equals fields per element than the index's allowed number");
-
-	Q_ASSERT_X(post.inFieldTermPosition < PostingListConf::IN_FIELD_POS_THRESHOLD,
-			 "indexing", "There are more terms per field than the index's allowed number");
-
-	quint32 P32 =  static_cast<quint32>(
-			(post.elementId << PostingListConf::FIELD_NUM_BITS) |
-			post.fieldNumber);
-
-	quint8 P8 =  static_cast<quint8>(post.inFieldTermPosition);
-
-	vv("Writing P32 to posting list Hex: " << HEX(P32));
-	vv("Writing P8 to posting list Hex: " << HEX(P8));
-
-	mPostingListStream << P32 << P8;
-
-	vv("New plix buffer pos: " << mPostingListFile.pos());
-
-	debug_mDebugPostsCount++;
-
-	if (post.inFieldTermPosition > debug_mHighestInFieldPos)
-		debug_mHighestInFieldPos = post.inFieldTermPosition;
-
-	if (post.fieldNumber > debug_mHighestFieldNumber)
-		debug_mHighestFieldNumber = post.fieldNumber;
+	addIdentifier(master.key);
+	addPosition(pos);
+	elementHandled();
 }
 
 
 // For each term inside a field among the fields of the dblp entity we
 // have to insert a "post" inside the map (indexed with the term as key)
-// that keep tracks of the current element id, the field number (necessary
+// that keep tracks of the current element serial, the field number (necessary
 // for distinguish multiple field (e.g. <author>), and the position
 // of the term within the field.
-
-inline void Indexer::addFields(void (*termAdder)(IndexTerm &, const IndexPost &),
-							QList<QString> &fieldsContent) {
-
+void Indexer::addTermsOfFields(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),
+							   const QList<QString> &fieldsContent)
+{
 	int fieldsCount = fieldsContent.size();
 
-	Q_ASSERT_X(static_cast<quint32>(fieldsCount) < PostingListConf::FIELD_NUM_THRESHOLD,
-			 "indexing", "Found an element with more fields than the index's allowed number");
+	ASSERT(UINT32(fieldsCount) < PostingListConf::FIELD_NUM_THRESHOLD, "indexing",
+		   "Found an element with more fields than the index's allowed number");
 
 	for (int i = 0; i < fieldsCount; i++) {
 		QString fieldContent = fieldsContent.at(i);
-		vv("- field: " << fieldContent);
-		addField(termAdder, fieldContent, static_cast<quint32>(i));
+		addTermsOfField(indexTermPostAdder, fieldContent, static_cast<field_num>(i));
 	}
 }
 
-inline void Indexer::addField(void (*termAdder)(IndexTerm &, const IndexPost &),
-						   const QString &fieldContent, quint32 fieldNumber) {
+void Indexer::addTermsOfField(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),
+							  const QString &fieldContent, field_num fieldNumber)
+{
+	vv2("Adding field: '" << fieldContent << "' ; field number: " << fieldNumber);
+
 	QStringList terms = fieldContent.split(" ", QString::SplitBehavior::SkipEmptyParts);
 
 	int termsCount = terms.size();
-	Q_ASSERT_X(static_cast<quint32>(termsCount) < PostingListConf::IN_FIELD_POS_THRESHOLD,
+	ASSERT(UINT32(termsCount) < PostingListConf::IN_FIELD_POS_THRESHOLD,
 			 "indexing", "Found a field with more terms than the index's allowed number");
 
 	for (int i = 0; i < termsCount; i++) {
 		QString term = terms.at(i);
-		vv("-- term: " << term);
-		addTerm(termAdder, term, fieldNumber, static_cast<quint32>(i));
+		vv3("Adding term: '" << term << "'");
+		addTerm(indexTermPostAdder, term, fieldNumber, static_cast<term_pos>(i));
 	}
 }
 
-inline void Indexer::addTerm(void (*termAdder)(IndexTerm &, const IndexPost &),
-						  const QString &term, quint32 fieldNumber, quint32 termPosition) {
+void Indexer::addTerm(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),
+					  const QString &term, field_num fieldNumber,
+					  term_pos termPosition)
+{
 	// Sanitize term (lowercase, no punctuation, trim, ...)
 	QString indexTerm = Util::String::sanitizeTerm(term);
 
-	// Skip the term if it is empty (e.g. if it was a punctuation)
-
+	// Skip the term if it is empty
+	// (e.g. if it was a punctuation, and has been sanitized)
 	if (indexTerm.isEmpty())
 		return;
-
-//	Q_ASSERT_X(!indexTerm.isEmpty(), "indexing",
-//			   QString(
-//				   QString("Term addition failed; empty term. Was (") + term
-//				   + ")").toStdString().c_str());
 
 	if (!mIndexTerms.contains(indexTerm)) {
 		// Insert a new index term entity, empty for now
@@ -642,187 +396,366 @@ inline void Indexer::addTerm(void (*termAdder)(IndexTerm &, const IndexPost &),
 	// already contained it, termEntity now contains the
 	// inserted term entity
 
-	auto termIt = mIndexTerms.find(indexTerm);
-
-	Q_ASSERT_X(termIt != mIndexTerms.end(), "indexing",
-			   "Term addition failed; is this a programming error?");
-
-	IndexTerm &termEntity = *termIt;
-
-	vv("--- pushing " <<
-		"(Term = " << indexTerm <<
-	   " | Element  = " << mCurrent.elementId <<
-	   " | Field  = " << fieldNumber <<
-	   " | Pos = " << termPosition << ")"
-	);
+	IndexTerm &termEntity = *mIndexTerms.find(indexTerm);
 
 	IndexPost post;
-	post.elementId = mCurrent.elementId;
+	post.elementSerial = mCurrentSerial;
 	post.fieldNumber = fieldNumber;
 	post.inFieldTermPosition = termPosition;
 
-	if (fieldNumber > 512) {
-		ee("--- VERY HIGH FIELD NUM!! " <<
-			"(Term = " << indexTerm <<
-		   " | Element  = " << mCurrent.elementId <<
-		   " | Field  = " << fieldNumber <<
-		   " | Pos = " << termPosition << ")"
-		);
-		exit(-1);
-	}
+	vv3("Adding post for term '" << indexTerm << "' : " << post);
 
-	termAdder(termEntity, post);
-	termEntity.debug_refCount++;
+	indexTermPostAdder(termEntity, post);
+
+	termEntity.stats.postsCount++;
 }
 
-void Indexer::debug_printIndexTerms()
+void Indexer::addIdentifier(const QString &key)
 {
-	dd("Index terms:");
-	for (auto it = mIndexTerms.begin(); it != mIndexTerms.end(); ++it) {
-		IndexTerm &e = *it;
-		dd("\tTerm: " << it.key() << "( & " << &it.key() << ")");
+	ASSERT(mIdentifiers.size() == INT(mCurrentSerial), "indexing",
+			   "Unaligned position addition; mismatch with current serial");
 
-		dd("\t== article.author ==");
+	dd1("Adding element with serial = " << mIdentifiers.size());
+	mIdentifiers.append(key);
+}
 
-		for (int i = 0; i < e.article.author.size(); i++) {
-			IndexPost post = e.article.author.at(i);
-			dd("\t\t" <<
-			   "(Element = " << post.elementId <<
-			   " | Field = " << post.fieldNumber <<
-			   " | Position = " << post.inFieldTermPosition);
-		}
+void Indexer::addPosition(qint64 pos)
+{
+	ASSERT(mPositions.size() == INT(mCurrentSerial), "indexing",
+			   "Unaligned position addition; mismatch with current serial");
 
-		dd("\t== article.title ==");
+	ASSERT(pos < Config::Index::ElementsPosition::ELEMENT_POS_THRESHOLD,
+			 "indexing", "The original element has a file position above the allowed one");
 
-		for (int i = 0; i < e.article.title.size(); i++) {
-			IndexPost post = e.article.title.at(i);
-			dd("\t\t" <<
-			   "(Element = " << post.elementId <<
-			   " | Field = " << post.fieldNumber <<
-			   " | Position = " << post.inFieldTermPosition);
-		}
+	dd1("Adding dblp.xml pos for serial = " << mPositions.size() << ": " << pos);
 
-		dd("\t== article.year ==");
+	mPositions.append(pos);
+}
 
-		for (int i = 0; i < e.article.year.size(); i++) {
-			IndexPost post = e.article.year.at(i);
-			dd("\t\t" <<
-			   "(Element = " << post.elementId <<
-			   " | Field = " << post.fieldNumber <<
-			   " | Position = " << post.inFieldTermPosition);
-		}
+void Indexer::addCrossref(const QString &externalVenueIdentifier)
+{
+	dd1("Adding crossref: " << mCurrentSerial << " => " << externalVenueIdentifier);
+	mVenueIdentifierByPublicationSerial.insert(mCurrentSerial, externalVenueIdentifier);
+}
 
-		dd("\t== incollection.author ==");
+void Indexer::addVenue(const QString &venueIdentifier)
+{
+	dd1("Adding venue: " << venueIdentifier << " => " << mCurrentSerial);
+	mVenueSerialByVenueIdentifier.insert(venueIdentifier, mCurrentSerial);
+}
 
-		for (int i = 0; i < e.incollection.author.size(); i++) {
-			IndexPost post = e.incollection.author.at(i);
-			dd("\t\t" <<
-			   "(Element = " << post.elementId <<
-			   " | Field = " << post.fieldNumber <<
-			   " | Position = " << post.inFieldTermPosition);
-		}
+void Indexer::elementHandled()
+{
+	// Advance the serial
+	mCurrentSerial++;
+}
 
-		dd("\t== incollection.title ==");
+void Indexer::writeIdentifiersFile()
+{
+	vv1("Writing identifiers index file ("
+		<< mIdentifiers.size() << " elements)");
 
-		for (int i = 0; i < e.incollection.title.size(); i++) {
-			IndexPost post = e.incollection.title.at(i);
-			dd("\t\t" <<
-			   "(Element = " << post.elementId <<
-			   " | Field = " << post.fieldNumber <<
-			   " | Position = " << post.inFieldTermPosition);
-		}
-
-		dd("\t== incollection.year ==");
-
-		for (int i = 0; i < e.incollection.year.size(); i++) {
-			IndexPost post = e.incollection.year.at(i);
-			dd("\t\t" <<
-			   "(Element = " << post.elementId <<
-			   " | Field = " << post.fieldNumber <<
-			   " | Position = " << post.inFieldTermPosition);
-		}
-
-		dd("\t== incollection.booktitle ==");
-
-		for (int i = 0; i < e.incollection.booktitle.size(); i++) {
-			IndexPost post = e.incollection.booktitle.at(i);
-			dd("\t\t" <<
-			   "(Element = " << post.elementId <<
-			   " | Field = " << post.fieldNumber <<
-			   " | Position = " << post.inFieldTermPosition);
-		}
-
-		dd("\t== book.author ==");
-
-		for (int i = 0; i < e.book.author.size(); i++) {
-			IndexPost post = e.book.author.at(i);
-			dd("\t\t" <<
-			   "(Element = " << post.elementId <<
-			   " | Field = " << post.fieldNumber <<
-			   " | Position = " << post.inFieldTermPosition);
-		}
-
-		dd("\t== book.title ==");
-
-		for (int i = 0; i < e.book.title.size(); i++) {
-			IndexPost post = e.book.title.at(i);
-			dd("\t\t" <<
-			   "(Element = " << post.elementId <<
-			   " | Field = " << post.fieldNumber <<
-			   " | Position = " << post.inFieldTermPosition);
-		}
-
-		dd("\t== book.year ==");
-
-		for (int i = 0; i < e.book.year.size(); i++) {
-			IndexPost post = e.book.year.at(i);
-			dd("\t\t" <<
-			   "(Element = " << post.elementId <<
-			   " | Field = " << post.fieldNumber <<
-			   " | Position = " << post.inFieldTermPosition);
-		}
-		dd("\t== book.publisher ==");
-
-		for (int i = 0; i < e.book.publisher.size(); i++) {
-			IndexPost post = e.book.publisher.at(i);
-			dd("\t\t" <<
-			   "(Element = " << post.elementId <<
-			   " | Field = " << post.fieldNumber <<
-			   " | Position = " << post.inFieldTermPosition);
-		}
-
+	elem_serial i = 0;
+	foreach (QString key, mIdentifiers) {
+		vv2("Writing identifier for element = " << i << ": " << key);
+		mIdentifiersStream.stream << key << '\n';
+		i++;
 	}
 }
 
-void Indexer::debug_printIndexStats()
+void Indexer::writePostingListAndVocabularyFiles()
 {
+	vv1("Writing vocabulary and posting list index files ("
+		<< mIndexTerms.size() << " terms)");
+
+	for (auto it = mIndexTerms.begin(); it != mIndexTerms.end(); it++) {
+			const QString &term = it.key();
+			const IndexTerm &termEntity = it.value();
+
+			auto writeField = [this](const IndexPosts &posts) {
+				this->writePosts(posts);
+				this->writeTermFieldPostsCount(UINT32(posts.size()));
+			};
+
+			vv2("Handling term: " << term);
+
+			// Write term and
+			writeTermMetas(term);
+
+			// Write the term posts to the posting list,
+			// one for each field of the elements
+
+			// <art.a> <art.t> <art.y>
+			// <jou>
+			// <inc.a> <inc.t> <inc.y> <inc.b>
+			// <inp.a> <inp.t> <inp.y> <inp.b>
+			// <phd.a> <phd.t> <phd.y>
+			// <mas.a> <mas.t> <mas.y>
+			// <bok.a> <bok.t> <bok.y> <bok.p>
+			// <pro.t> <pro.y> <pro.p> <pro.b>
+
+			vv3("Writing posts for term: " << term);
+
+			// article
+			// - author
+			// - title
+			// - year
+
+			writeField(termEntity.article.author);
+			writeField(termEntity.article.title);
+			writeField(termEntity.article.year);
+
+			// journal
+
+			writeField(termEntity.journal.name);
+
+			// incollection
+			// - author
+			// - title
+			// - year
+			// - booktitle
+
+			writeField(termEntity.incollection.author);
+			writeField(termEntity.incollection.title);
+			writeField(termEntity.incollection.year);
+			writeField(termEntity.incollection.booktitle);
+
+			// inproceedings
+			// - author
+			// - title
+			// - year
+			// - booktitle
+
+			writeField(termEntity.inproceedings.author);
+			writeField(termEntity.inproceedings.title);
+			writeField(termEntity.inproceedings.year);
+			writeField(termEntity.inproceedings.booktitle);
+
+			// phdthesis
+			// - author
+			// - title
+			// - year
+
+			writeField(termEntity.phdthesis.author);
+			writeField(termEntity.phdthesis.title);
+			writeField(termEntity.phdthesis.year);
+
+			// masterthesis
+			// - author
+			// - title
+			// - year
+
+			writeField(termEntity.masterthesis.author);
+			writeField(termEntity.masterthesis.title);
+			writeField(termEntity.masterthesis.year);
+
+			// book
+			// - author
+			// - title
+			// - year
+			// - publisher
+
+			writeField(termEntity.book.author);
+			writeField(termEntity.book.title);
+			writeField(termEntity.book.year);
+			writeField(termEntity.book.publisher);
+
+			// proceedings
+			// - title
+			// - year
+			// - publisher
+			// - booktitle
+
+			writeField(termEntity.proceedings.title);
+			writeField(termEntity.proceedings.year);
+			writeField(termEntity.proceedings.publisher);
+			writeField(termEntity.proceedings.booktitle);
+		}
+}
+
+void Indexer::writeTermMetas(const QString &term)
+{
+	vv3("Writing metas to vocabulary for term: " << term);
+	dd4(".vix position: " << mVocabularyStream.filePosition());
+	dd4(".plix position: " << mPostingsStream.filePosition());
+
+	// First of all, write the term to the vocabulary
+
+	mVocabularyStream.stream << term.toUtf8();
+
+	// Then write the starting position of the term in the posting list
+
+	mVocabularyStream.stream << mPostingsStream.filePosition();
+}
+
+void Indexer::writeTermFieldPostsCount(quint32 count)
+{
+	// Just append the post count of the field referred to the starting position
+	// in the posting list of the term
+
+	// If the count is below REF_SHRINKED_THRESHOLD (32767 = 2^15 - 1)
+	// then write a quint16 with the first bit at 0, otherwise write a full quint32
+	// with the first bit at 1 (the loader must be aware of the fact that the full
+	// quint32 will have the first bit at 1, which should be removed for take the
+	// right number)
+
+	if (count < VocabularyConf::REF_SHRINKED_THRESHOLD) {
+		// 16 bit
+
+		if (count > 0)
+			dd4("Writing posts count: " << UINT16(count));
+
+		mVocabularyStream.stream << UINT16(count);
+	}
+	else {
+		ASSERT(mCurrentSerial < VocabularyConf::REF_EXTENDED_THRESHOLD,
+				 "indexing", "There are more posts than the index's allowed number");
+		// 32 bit, with leftmost bit = 1
+
+		if (count > 0)
+			dd4("Writing posts count: " << count);
+
+		mVocabularyStream.stream <<
+			(count | VocabularyConf::REF_EXTENDED_FLAG);
+	}
+}
+
+void Indexer::writePosts(const IndexPosts &posts)
+{
+	// Write the posts to the posting list
+
+	foreach(IndexPost post, posts) {
+		dd4("Writing post: " << post);
+		writePost(post);
+	}
+
+	// Just write the count of the posts
+
+//	writeVocabularyTermFieldPostsCount(static_cast<quint32>(posts.size()));
+}
+
+void Indexer::writePost(const IndexPost &post)
+{
+	dd4("Writing post: " << post);
+
+	// Asserts
+	ASSERT(post.elementSerial < PostingListConf::ELEMENT_SERIAL_THRESHOLD,
+			 "indexing", "There are more elements than the index's allowed number");
+
+	ASSERT(post.fieldNumber < PostingListConf::FIELD_NUM_THRESHOLD,
+			 "indexing", "There are more equals fields per element than the index's allowed number");
+
+	// Implicit
+//	Q_ASSERT_X(post.inFieldTermPosition < PostingListConf::IN_FIELD_POS_THRESHOLD,
+//			 "indexing", "There are more terms per field than the index's allowed number");
+
+	quint32 P32 =  UINT32(
+			(post.elementSerial << PostingListConf::FIELD_NUM_BITS) |
+			post.fieldNumber
+	);
+
+	quint8 P8 =  UINT8(post.inFieldTermPosition);
+
+	dd5("Writing P32 to posting list Hex: " << HEX(P32));
+	dd5("Writing P8 to posting list Hex: " << HEX(P8));
+
+	mPostingsStream.stream << P32 << P8;
+
+	dd5("New .plix buffer pos: " << mPostingsStream.filePosition());
+
+	// Stats
+
+	mStats.postsCount++;
+
+	if (post.inFieldTermPosition > mStats.highestInFieldPosition)
+		mStats.highestInFieldPosition = post.inFieldTermPosition;
+
+	if (post.fieldNumber > mStats.highestFieldNumber)
+		mStats.highestFieldNumber = post.fieldNumber;
+}
+
+void Indexer::writePositionsFile()
+{
+	vv1("Writing positions index file");
+
+	elem_serial i = 0;
+
+	foreach (qint64 pos, mPositions) {
+		vv2("Writing position for element = " << i << ": " << pos);
+
+		quint32 P = UINT32(pos);
+		mElementsPositionsStream.stream << P;
+
+		i++;
+	}
+}
+
+void Indexer::writeCrossrefsFile()
+{
+	vv1("Writing crossrefs index file");
+
+	// The format is <pub_element_id><venue_element_id>
+	// But we don't have it directly, we have to do a double lookup
+
+	for (auto it = mVenueIdentifierByPublicationSerial.begin();
+		 it != mVenueIdentifierByPublicationSerial.end();
+		 it++) {
+
+		// For each publication element id retrieve the element
+		// id of the venue
+		elem_serial publicationSerial = it.key();
+		const QString &venueIdentifier = it.value();
+
+		auto venueSerialIt = mVenueSerialByVenueIdentifier.find(venueIdentifier);
+
+		if (venueSerialIt == mVenueSerialByVenueIdentifier.end()) {
+			ww("Could not find the element id of the crossreffed venue: " << venueIdentifier);
+			continue; // ignore it...
+		}
+
+		elem_serial venueSerial = venueSerialIt.value();
+
+		vv2("Writing crossref " << publicationSerial << " => " << venueSerial);
+
+		// We have everything, really write these
+		mCrossrefsStream.stream << publicationSerial << venueSerial;
+	}
+}
+
+void Indexer::printStats()
+{
+	ii("========================");
+	ii("==== INDEXING STATS ====");
+	ii("========================");
+
 	// Count
-
-	ii("## Elements: " <<  mCurrent.elementId);
+	ii("## Elements: " <<  mCurrentSerial);
 	ii("## Terms: " << mIndexTerms.size());
-	ii("## Posts: " << debug_mDebugPostsCount);
-	ii("## Highest field num: " << debug_mHighestFieldNumber);
-	ii("## Highest in field pos: " << debug_mHighestInFieldPos);
+	ii("## Posts: " << mStats.postsCount);
+	ii("## Highest field num: " << mStats.highestFieldNumber);
+	ii("## Highest in field pos: " << mStats.highestInFieldPosition);
 
 	// File sizes
 
-	ii("SZ .kix: " << Util::File::humanSize(mKeysFile));
-	ii("SZ .plix: " << Util::File::humanSize(mPostingListFile));
-	ii("SZ .vix: " << Util::File::humanSize(mVocabularyFile));
-	ii("SZ .epix: " << Util::File::humanSize(mElementsPosFile));
+	ii("SZ .idix: " << Util::File::humanSize(mIdentifiersStream.file));
+	ii("SZ .plix: " << Util::File::humanSize(mPostingsStream.file));
+	ii("SZ .vix: " << Util::File::humanSize(mVocabularyStream.file));
+	ii("SZ .epix: " << Util::File::humanSize(mElementsPositionsStream.file));
+	ii("SZ .cix: " << Util::File::humanSize(mCrossrefsStream.file));
 
 	// Other
 
-	QString maxPostsCountStr = "";
-	int maxPostCount = 0;
+	QString maxPostsCountTerm = "";
+	quint64 maxPostCount = 0;
 
 	for (auto it = mIndexTerms.begin(); it != mIndexTerms.end(); it++) {
-		int refCount = it.value().debug_refCount;
-		if (refCount > maxPostCount) {
-			maxPostCount = refCount;
-			maxPostsCountStr = it.key();
+		quint64 postsCount = it.value().stats.postsCount;
+		if (postsCount > maxPostCount) {
+			maxPostCount = postsCount;
+			maxPostsCountTerm = it.key();
 		}
 	}
 
-	ii("MAX refs: " << maxPostsCountStr << " (" << maxPostCount << ")");
+	ii("MAX posts count belongs to " << "term: '" << maxPostsCountTerm << "' " <<
+	   " (" << maxPostCount << ")");
 }

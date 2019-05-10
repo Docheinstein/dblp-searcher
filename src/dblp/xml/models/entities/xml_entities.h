@@ -44,7 +44,7 @@ public:
 class DblpIncollection : public DblpPublication {
 public:
 	QString booktitle;
-//	QString crossref; // -> book
+	QString crossref; // -> book
 };
 
 class DblpBook : public DblpVenue {
@@ -55,7 +55,7 @@ public:
 class DblpInproceedings : public DblpPublication {
 public:
 	QString booktitle;
-//	QString crossref; // -> proceedings
+	QString crossref; // -> proceedings
 };
 
 class DblpProceedings : public DblpVenue {
