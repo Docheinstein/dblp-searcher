@@ -6,6 +6,7 @@
 
 #include <dblp/index/handler/index_handler.h>
 #include "commons/globals/globals.h"
+#include "dblp/shared/element_type/element_type.h"
 
 enum class QueryMatchType {
 	Publication,
@@ -13,36 +14,49 @@ enum class QueryMatchType {
 	PublicationVenue
 };
 
+class QueryMatchComponent {
+public:
+	static const elem_serial NO_ELEMENT = ~static_cast<elem_serial>(0);
+
+	QueryMatchComponent();
+	QueryMatchComponent(const QSet<IndexMatch> &matches);
+
+	elem_serial elementSerial() const;
+	QSet<IndexMatch> matches() const;
+	ElementType elementType() const;
+
+	operator QString() const;
+
+private:
+	void finalize();
+
+	elem_serial mSerial = NO_ELEMENT;
+	QSet<IndexMatch> mMatches;
+	ElementType mType;
+};
+
 class QueryMatch {
 public:
-	static const elem_serial NO_ELEMENT = ~UINT32(0);
-
 	static QueryMatch forPublication(const QSet<IndexMatch> &pubMatches, float score);
 	static QueryMatch forVenue(const QSet<IndexMatch> &venueMatches, float score);
 	static QueryMatch forPublicationVenue(const QSet<IndexMatch> &pubMatches,
 										  const QSet<IndexMatch> &venueMatches,
 										  float score);
 
-	QueryMatchType type() const;
+	QueryMatchType matchType() const;
 	float score() const;
 
-	elem_serial publication() const;
-	const QSet<IndexMatch> publicationMatches() const;
+	QueryMatchComponent publication() const;
+	QueryMatchComponent venue() const;
 
-	elem_serial venue() const;
-	const QSet<IndexMatch> venueMatches() const;
-
-protected:
+private:
 	void finalize();
 
-	QueryMatchType mType;
+	QueryMatchType mMatchType;
 	float mScore = 0;
 
-	elem_serial mPublication = NO_ELEMENT; // automatically figured out from publication matches
-	QSet<IndexMatch> mPublicationMatches;	// optional
-
-	elem_serial mVenue = NO_ELEMENT; // automatically figured out from venue matches
-	QSet<IndexMatch> mVenueMatches;			// optional
+	QueryMatchComponent mPublication;	// optional
+	QueryMatchComponent mVenue;			// optional
 };
 
 

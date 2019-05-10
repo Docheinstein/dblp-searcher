@@ -1,7 +1,9 @@
 #include "query_match.h"
 #include <dblp/index/handler/index_handler.h>
 #include "commons/globals/globals.h"
+#include "dblp/shared/element_type/element_type.h"
 
+#if 0
 QueryMatch QueryMatch::forPublication(const QSet<IndexMatch> &pubMatches, float score)
 {
 	QueryMatch m;
@@ -67,56 +69,187 @@ const QSet<IndexMatch> QueryMatch::venueMatches() const
 
 void QueryMatch::finalize()
 {
-	// Ensure that all the matches within a category (pub matches and venue matches)
-	// have the same elem_serial, and set it
 
-	if (mType == QueryMatchType::Publication ||
-		mType == QueryMatchType::PublicationVenue) {
+}
 
-		ASSERT(mPublicationMatches.size() > 0, "querying",
-			   "QueryMatch has type (Publication || PublicationVenue) "
-			   "but hasn't any publication;");
 
-		foreach (IndexMatch indexMatch, mPublicationMatches) {
-			ASSERT(mPublication == indexMatch.elementSerial	||
-					   mPublication == NO_ELEMENT, "querying",
-					   "The publication index matches for this query match don't "
-					   "have the same element serial");
-			mPublication = indexMatch.elementSerial;
-		}
-	}
 
-	if (mType == QueryMatchType::Venue ||
-		mType == QueryMatchType::PublicationVenue) {
+#endif
 
-		ASSERT(mVenueMatches.size() > 0, "querying",
-			   "QueryMatch has type (Venue || PublicationVenue) "
-			   "but hasn't any venue;");
+QueryMatchComponent::QueryMatchComponent() {}
 
-		foreach (IndexMatch indexMatch, mVenueMatches) {
-			ASSERT(mVenue == indexMatch.elementSerial	||
-					   mVenue == NO_ELEMENT, "querying",
-					   "The venue index matches for this query match don't "
-					   "have the same element serial");
-			mVenue = indexMatch.elementSerial;
-		}
+QueryMatchComponent::QueryMatchComponent(const QSet<IndexMatch> &matches)
+{
+	mMatches = matches;
+	finalize();
+}
+
+elem_serial QueryMatchComponent::elementSerial() const
+{
+	return mSerial;
+}
+
+QSet<IndexMatch> QueryMatchComponent::matches() const
+{
+	return mMatches;
+}
+
+ElementType QueryMatchComponent::elementType() const
+{
+	return mType;
+}
+
+void QueryMatchComponent::finalize()
+{
+	// The constructor takes only some matches, we have to ensure a couple of things
+	// 1) All the matches should have the same element serial
+	// 2) All the matches should belong to the same element type (e.g. Article)
+
+	ASSERT(mMatches.size() > 0, "querying",
+		   "QueryMatchComponent initialized without matches; "
+		   "at least 1 is required");
+
+	// Take those from the first
+	auto matchesIt = mMatches.begin();
+	mSerial = matchesIt->elementSerial;
+	mType = elementTypeFromElementFieldType(matchesIt->fieldType);
+
+	// Ensure that every other matches have the same serial and type
+	matchesIt++;
+
+	for (; matchesIt != mMatches.end(); matchesIt++) {
+		// 1) Serial check
+		ASSERT(	mSerial == matchesIt->elementSerial,
+			   "querying",
+			   "The index matches for this query match component don't "
+			   "have the same element serial (", mSerial, " != ",
+				matchesIt->elementSerial);
+
+		// 2) Element type check
+		ASSERT(mType == elementTypeFromElementFieldType(matchesIt->fieldType),
+			   "querying",
+			   "The index matches for this query match component don't "
+			   "have the same element type (", elementTypeString(mType), " != ",
+			   elementFieldTypeString(matchesIt->fieldType));
 	}
 
 	// OK: every IndexMatch within a category have the same element_serial
+	// and belong to the same element type
 }
+
+QueryMatchComponent::operator QString() const
+{
+	return QString("{serial = ") + DEC(mSerial) + "; type = " +
+			elementTypeString(mType) + "; # matches = " +
+			DEC(mMatches.size()) + "}";
+}
+
+
+QueryMatch QueryMatch::forPublication(const QSet<IndexMatch> &pubMatches, float score)
+{
+	QueryMatch match;
+	match.mPublication = QueryMatchComponent(pubMatches);
+	match.mScore = score;
+	match.mMatchType = QueryMatchType::Publication;
+	match.finalize();
+	return match;
+}
+
+QueryMatch QueryMatch::forVenue(const QSet<IndexMatch> &venueMatches, float score)
+{
+	QueryMatch match;
+	match.mVenue = QueryMatchComponent(venueMatches);
+	match.mScore = score;
+	match.mMatchType = QueryMatchType::Venue;
+	match.finalize();
+	return match;
+}
+
+QueryMatch QueryMatch::forPublicationVenue(const QSet<IndexMatch> &pubMatches,
+										   const QSet<IndexMatch> &venueMatches,
+										   float score)
+{
+	QueryMatch match;
+	match.mPublication = QueryMatchComponent(pubMatches);
+	match.mVenue = QueryMatchComponent(venueMatches);
+	match.mScore = score;
+	match.mMatchType = QueryMatchType::PublicationVenue;
+	match.finalize();
+	return match;
+}
+
+QueryMatchType QueryMatch::matchType() const
+{
+	return mMatchType;
+}
+
+float QueryMatch::score() const
+{
+	return mScore;
+}
+
+QueryMatchComponent QueryMatch::publication() const
+{
+	return mPublication;
+}
+
+QueryMatchComponent QueryMatch::venue() const
+{
+	return mVenue;
+}
+
+void QueryMatch::finalize()
+{
+	// Check the the underlying element type of the components matches
+	// with the matchType
+	if (mMatchType == QueryMatchType::Publication ||
+		mMatchType == QueryMatchType::PublicationVenue) {
+		int pubType = INT(mPublication.elementType());
+		ASSERT((pubType & INT(ElementType::Publication)) == pubType,
+				"querying",
+				"Underlying query match publication component matches "
+				"type do not satisfy declared query match type");
+
+	}
+
+	if (mMatchType == QueryMatchType::Venue ||
+		mMatchType == QueryMatchType::PublicationVenue) {
+		int venueType = INT(mVenue.elementType());
+		ASSERT((venueType & INT(ElementType::Venue)) == venueType,
+				"querying",
+				"Underlying query match venue omponent matches "
+				"type do not satisfy declared query match type");
+	}
+}
+
 
 // --- Hashing purpose
 
 bool operator==(const QueryMatch &qm1, const QueryMatch &qm2)
 {
-	return	qm1.publication() == qm2.publication() &&
-			qm1.venue() == qm2.venue();
+	if (qm1.matchType() != qm2.matchType())
+		return false;
+
+	if (qm1.matchType() == QueryMatchType::Publication ||
+		qm1.matchType() == QueryMatchType::PublicationVenue) {
+		if (qm1.publication().elementSerial() != qm2.publication().elementSerial())
+			return false;
+	}
+
+	if (qm1.matchType() == QueryMatchType::Venue ||
+		qm1.matchType() == QueryMatchType::PublicationVenue) {
+		if (qm1.venue().elementSerial() != qm2.venue().elementSerial())
+			return false;
+	}
+
+	return true;
 }
 
 uint qHash(const QueryMatch &qm, uint seed)
 {
-	uint h1 = qm.publication() ? qHash(qm.publication(), seed) : 0;
-	uint h2 = qm.venue() ? qHash(qm.venue(), seed) : 0;
+	uint h1 = qHash(qm.publication().elementSerial(), seed);
+	uint h2 = qHash(qm.venue().elementSerial(), seed);
+
 
 	return h1 ^ h2;
 }

@@ -27,7 +27,11 @@ bool GuiComponent::create()
 	mContext->setContextProperty(qmlName(), this);
 
 	mComponent = new QQmlComponent(GuiEngine::instance().engine(), qmlResource);
-	if (mComponent->isLoading()) {
+
+	bool createImmediately = true;
+
+	if (!mComponent->isReady()) {
+		dd1("Blocking thread until component creation");
 		QEventLoop loop;
 
 		// Detect when the component has been created
@@ -39,14 +43,19 @@ bool GuiComponent::create()
 		QObject::connect(mComponent, &QQmlComponent::statusChanged,
 						 this, &GuiComponent::createComponent);
 
-		// Double check...
-		if (mComponent->isLoading())
+		// Double check, just in case...
+		if (!mComponent->isReady()) {
+			createImmediately = false;
 			// Wait until the component has been created
 			loop.exec();
+		}
 	}
-	else
+
+	if (createImmediately) {
+		dd1("Creating component immediately");
 		// Create immediately
 		createComponent();
+	}
 
 	return !mComponent->isError();
 }

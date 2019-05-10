@@ -8,7 +8,8 @@
 // - author
 // - title
 // - year
-// (- journal)
+
+// journal
 
 // incollection
 // - author

@@ -172,7 +172,8 @@ static int startSearchMode(Arguments args) {
 
 		// Load of everything finished, show main window
 
-		splashWindow.setVisible(false);
+		qDebug() << ">>> Going to HIDE splash and show main window";
+//		splashWindow.setVisible(false);
 
 		// Set the resolver
 		mainWindow.setResolver(queryResolver);

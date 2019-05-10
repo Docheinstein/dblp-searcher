@@ -51,22 +51,20 @@ void MainWindow::doSearch(const QString &query)
 
 void MainWindow::doSearchReal(const QString &query)
 {
-	QThread::sleep(3);
-
 	QList<QueryMatch> matches = mResolver->resolveQuery(query);
 
 	for (auto it = matches.begin(); it != matches.end(); it++) {
-		QueryMatch queryMatch = *it;
+		const QueryMatch &queryMatch = *it;
 
-		if (queryMatch.type() == QueryMatchType::Publication) {
+		if (queryMatch.matchType() == QueryMatchType::Publication) {
 			ii("Found PUBLICATION match: " << queryMatch.publication() <<
 			   "; score = " << queryMatch.score());
 		}
-		else if (queryMatch.type() == QueryMatchType::Venue) {
+		else if (queryMatch.matchType() == QueryMatchType::Venue) {
 			ii("Found VENUE match: " << queryMatch.venue() <<
 			   "; score = " << queryMatch.score());
 		}
-		else if (queryMatch.type() == QueryMatchType::PublicationVenue) {
+		else if (queryMatch.matchType() == QueryMatchType::PublicationVenue) {
 			ii("Found PUB+VENUE match: " <<
 			   queryMatch.publication() << " => " << queryMatch.venue() <<
 			   "; score = " << queryMatch.score());

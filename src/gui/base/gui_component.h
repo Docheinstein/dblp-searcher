@@ -14,7 +14,7 @@ class GuiComponent : public QObject, Loggable {
 	Q_OBJECT
 
 public:
-	virtual ~GuiComponent();
+	virtual ~GuiComponent() override;
 	bool create();
 
 protected:
