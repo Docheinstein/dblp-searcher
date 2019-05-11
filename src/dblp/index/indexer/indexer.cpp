@@ -15,14 +15,14 @@ Indexer::Indexer(const QString &outputPath, const QString &baseName)
 
 void Indexer::onStart()
 {
-	static const char * INDEX_CREATION_ERROR =
+	static const char * const INDEX_CREATION_ERROR =
 			"Cannot create index file directory. "
 			"Is the path valid? Do you have permissions?";
 
 	// Open files
 
 	if (!QDir::root().mkpath(mOutputPath)) {
-		throw INDEX_CREATION_ERROR;
+		QUIT(INDEX_CREATION_ERROR);
 	}
 
 	// Identifiers file
@@ -30,35 +30,35 @@ void Indexer::onStart()
 			mOutputPath, mBaseIndexName, Config::Index::Extensions::IDENTIFIERS);
 	ii("Creating identifiers index file at: " << identifiersPath);
 	if (!mIdentifiersStream.openWrite(identifiersPath))
-		throw INDEX_CREATION_ERROR;
+		QUIT(INDEX_CREATION_ERROR);
 
 	// Posting list file
 	QString postingListPath = Util::Dblp::Index::indexFilePath(
 			mOutputPath, mBaseIndexName, Config::Index::Extensions::POSTING_LIST);
 	ii("Creating posting list index file at: " << postingListPath);
 	if (!mPostingsStream.openWrite(postingListPath))
-		throw INDEX_CREATION_ERROR;
+		QUIT(INDEX_CREATION_ERROR);
 
 	// Vocabulary file
 	QString vocabularyPath = Util::Dblp::Index::indexFilePath(
 			mOutputPath, mBaseIndexName, Config::Index::Extensions::VOCABULARY);
 	ii("Creating vocabulary index file at: " << vocabularyPath);
 	if (!mVocabularyStream.openWrite(vocabularyPath))
-		throw INDEX_CREATION_ERROR;
+		QUIT(INDEX_CREATION_ERROR);
 
 	// Elements positions file
 	QString elementsPosPath = Util::Dblp::Index::indexFilePath(
 			mOutputPath, mBaseIndexName, Config::Index::Extensions::ELEMENTS_POS);
 	ii("Creating elements pos index file at: " << elementsPosPath);
 	if (!mElementsPositionsStream.openWrite(elementsPosPath))
-		throw INDEX_CREATION_ERROR;
+		QUIT(INDEX_CREATION_ERROR);
 
 	// Crossrefs file
 	QString crossrefsPath = Util::File::path(
 		{mOutputPath, mBaseIndexName + Config::Index::Extensions::CROSSREFS});
 	ii("Creating crossrefs index file at: " << crossrefsPath);
 	if (!mCrossrefsStream.openWrite(crossrefsPath))
-		throw INDEX_CREATION_ERROR;
+		QUIT(INDEX_CREATION_ERROR);
 
 	ii("Started parsing of XML file...");
 }

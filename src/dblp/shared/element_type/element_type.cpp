@@ -69,5 +69,5 @@ ElementType elementTypeFromElementFieldType(ElementFieldType eft)
 
 	// Publication and Venue are not usable
 
-	throw "Illegal ElementFieldType provided to elementTypeFromElementFieldType()";
+	QUIT("Illegal ElementFieldType provided to elementTypeFromElementFieldType()");
 }

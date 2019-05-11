@@ -321,10 +321,9 @@ bool IndexHandler::findMatchesSingleType(const QStringList &tokens,
 
 void IndexHandler::init()
 {
-
 	static const char * const INDEX_READ_ERROR =
 			"Cannot read index file. "
-			"Is the path valid? Does the index exists with a standard name?";
+			"Is the path valid? Does the index files exist with a standard name?";
 
 	// Open files
 
@@ -333,35 +332,35 @@ void IndexHandler::init()
 			mIndexPath, mBaseIndexName, Config::Index::Extensions::IDENTIFIERS);
 	ii("Loading identifiers index file at: " << identifiersPath);
 	if (!mIdentifiersStream.openRead(identifiersPath))
-		throw INDEX_READ_ERROR;
+		QUIT(INDEX_READ_ERROR);
 
 	// Posting list file
 	QString postingListPath = Util::Dblp::Index::indexFilePath(
 			mIndexPath, mBaseIndexName, Config::Index::Extensions::POSTING_LIST);
 	ii("Opening posting list index file at: " << postingListPath);
 	if (!mPostingsStream.openRead(postingListPath))
-		throw INDEX_READ_ERROR;
+		QUIT(INDEX_READ_ERROR);
 
 	// Vocabulary file
 	QString vocabularyPath = Util::Dblp::Index::indexFilePath(
 			mIndexPath, mBaseIndexName, Config::Index::Extensions::VOCABULARY);
 	ii("Opening vocabulary index file at: " << vocabularyPath);
 	if (!mVocabularyStream.openRead(vocabularyPath))
-		throw INDEX_READ_ERROR;
+		QUIT(INDEX_READ_ERROR);
 
 	// Elements positions file
 	QString elementsPosPath = Util::Dblp::Index::indexFilePath(
 			mIndexPath, mBaseIndexName, Config::Index::Extensions::ELEMENTS_POS);
 	ii("Opening elements pos index file at: " << elementsPosPath);
 	if (!mElementsPositionsStream.openRead(elementsPosPath))
-		throw INDEX_READ_ERROR;
+		QUIT(INDEX_READ_ERROR);
 
 	// Crossrefs file
 	QString crossrefsPath = Util::File::path(
 		{mIndexPath, mBaseIndexName + Config::Index::Extensions::CROSSREFS});
 	ii("Opening crossrefs index file at: " << crossrefsPath);
 	if (!mCrossrefsStream.openRead(crossrefsPath))
-		throw INDEX_READ_ERROR;
+		QUIT(INDEX_READ_ERROR);
 
 	ii("Started parsing of XML file...");
 }

@@ -4,6 +4,10 @@
 #include <QString>
 #include <QtGlobal>
 
+// Global helpers
+
+#define QUIT(msg) qFatal("%s\n%s\n%s", "===== ABORTED =====", msg, "===================");
+
 // Handly cast
 
 #define INT(x) static_cast<int>(x)

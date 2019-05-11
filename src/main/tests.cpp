@@ -201,3 +201,46 @@ QString q1 =
 R"#(VLDB publication: "lorenzo miniero " "publication.year: 2019 inproc: "computer science" venue: Conf venue.title: "VLDP Hello" there arte)#";
 QString q2 = R"#(There is a cat "very fast" above the " great table")#";
 QString q3 = R"#(There is a cat "very fast"above the " great table)#";
+
+class Something {
+public:
+	Something(int &smth) {
+		mSomething = smth;
+	}
+
+	void whoAreYou() {
+		qDebug() << "I am: " << mSomething << "(" << &mSomething << ")";
+	}
+
+private:
+	int mSomething;
+};
+
+void assign(Something *&smth, Something *&smth2, int &a) {
+	int b = 5;
+
+	smth = new Something(a);
+	smth->whoAreYou();
+
+	smth2 = new Something(b);
+	smth2->whoAreYou();
+
+}
+
+void localByRef() {
+	Something * smth;
+	Something * smth2;
+
+	if (1 > 0) {
+		int a = 6;
+		assign(smth, smth2, a);
+		smth->whoAreYou();
+		smth2->whoAreYou();
+	}
+
+	smth->whoAreYou();
+	smth2->whoAreYou();
+
+	exit(-1);
+
+}

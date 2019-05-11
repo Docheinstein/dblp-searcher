@@ -15,6 +15,8 @@ public:
 
 	QList<QueryMatch> resolveQuery(const Query &query);
 
+	IRModel *irModel();
+
 protected:
 	LOGGING_OVERRIDE
 

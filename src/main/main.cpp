@@ -2,17 +2,18 @@
 #include <QGuiApplication>
 #include <QQmlEngine>
 #include <QtConcurrentRun>
+#include <gui/ui/window/splash/splash_window.h>
 #include "dblp/index/indexer/indexer.h"
 #include "dblp/xml/parser/xml_parser.h"
 #include "dblp/index/handler/index_handler.h"
 #include "dblp/query/resolver/query_resolver.h"
 #include "dblp/irmodel/impl/ief/ir_model_ief.h"
-#include "gui/splash/splash_window.h"
-#include "gui/main/main_window.h"
+#include "gui/ui/window/main/main_window.h"
 #include "gui/engine/gui_engine.h"
 #include "commons/globals/globals.h"
+#include "main/tests.cpp"
 
-#define QML_REGISTER_BASE "DblpSearcher."
+#define QML_REGISTER_BASE "org.docheinstein."
 
 static const char * const HELP =
 R"#(NAME
@@ -92,6 +93,7 @@ static int startSearchMode(Arguments args) {
 
 	// Global qml engine
 	QQmlEngine *engine = new QQmlEngine;
+//	engine->addImportPath("qml/modules");
 //	engine->addImportPath("qrc:/");
 //	engine->addImportPath(":/qml");
 	GuiEngine::instance(engine);
@@ -173,7 +175,7 @@ static int startSearchMode(Arguments args) {
 		// Load of everything finished, show main window
 
 		qDebug() << ">>> Going to HIDE splash and show main window";
-//		splashWindow.setVisible(false);
+		splashWindow.setVisible(false);
 
 		// Set the resolver
 		mainWindow.setResolver(queryResolver);

@@ -12,6 +12,11 @@ QueryResolver::QueryResolver(IRModel *irmodel)
 	mIrModel = irmodel;
 }
 
+IRModel *QueryResolver::irModel()
+{
+	return mIrModel;
+}
+
 QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 {
 	/*
@@ -93,7 +98,7 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 				ee("Venue flags      : " << searchFields << " ("
 				   << BIN(INT(ElementFieldType::Venue)) << ")");
 
-				throw "Unknown field types (doesn't belong neither to publication nor venue";
+				QUIT("Unknown field types (doesn't belong neither to publication nor venue");
 			}
 
 			if (isPublication) {

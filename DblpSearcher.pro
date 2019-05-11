@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui xml qml concurrent quickcontrols2
+QT       += core gui xml qml quick concurrent quickcontrols2
 
 TARGET = XXXX
 TEMPLATE = app
@@ -27,15 +27,9 @@ INCLUDEPATH += \
 
 include(DblpSearcher.pri)
 
-# Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
-!isEmpty(target.path): INSTALLS += target
-
 RESOURCES += \
 	main.qrc
 
-#QML_IMPORT_PATH += $$PWD
 
 OTHER_FILES += \
 	qml/main.qml
@@ -44,3 +38,15 @@ OTHER_FILES += \
 DISTFILES += \
 	qml/main.qml
 	qml/splash.qml
+
+#QML_IMPORT_PATH += \
+#	$$PWD/qml/modules
+
+#QML_DESIGNER_IMPORT_PATH += \
+#	$$PWD/qml/modules
+
+
+# Default rules for deployment.
+qnx: target.path = /tmp/$${TARGET}/bin
+else: unix:!android: target.path = /opt/$${TARGET}/bin
+!isEmpty(target.path): INSTALLS += target

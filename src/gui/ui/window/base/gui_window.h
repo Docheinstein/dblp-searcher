@@ -1,7 +1,7 @@
 #ifndef GUI_WINDOW_H
 #define GUI_WINDOW_H
 
-#include "gui/base/gui_component.h"
+#include "gui/ui/base/gui_component.h"
 
 class GuiWindow : public GuiComponent {
 	Q_OBJECT

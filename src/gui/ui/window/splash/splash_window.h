@@ -1,7 +1,7 @@
 #ifndef SPLASH_WINDOW_H
 #define SPLASH_WINDOW_H
 
-#include <gui/window/gui_window.h>
+#include <gui/ui/window/base/gui_window.h>
 
 class SplashWindow : public GuiWindow {
 	Q_OBJECT

@@ -14,9 +14,9 @@
 	bool clazz::canLog() const { return CAN_LOG; }
 
 #define TRACE	0
-#define DEBUG	1
-#define VERBOSE 1
-#define INFO	1
+#define DEBUG	0
+#define VERBOSE 0
+#define INFO	0
 #define WARN	1
 #define ERROR	1
 
