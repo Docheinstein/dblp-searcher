@@ -75,7 +75,7 @@ void IndexHandler::load()
 
 bool IndexHandler::findMatches(const QString &phrase,
 								ElementFieldTypes fieldTypes,
-							   QSet<IndexMatch>& matches)
+							   QVector<IndexMatch> &matches)
 {
 
 	// If the phrase is actually a space separeted list of words,
@@ -94,7 +94,7 @@ typedef struct ElementSerial_FieldNumber {
 
 bool IndexHandler::findMatches(const QStringList &tokens,
 								ElementFieldTypes fieldTypes,
-								QSet<IndexMatch> &matches) {
+								QVector<IndexMatch> &matches) {
 
 	PROF_FUNC_BEGIN4
 
@@ -132,14 +132,14 @@ bool IndexHandler::findMatches(const QStringList &tokens,
 
 bool IndexHandler::findWordMatches(const QString &token,
 								   ElementFieldType fieldType,
-								   QSet<IndexMatch> &matches) {
+								   QVector<IndexMatch> &matches) {
 	PROF_FUNC_BEGIN5
 
 	// Just retrieve the posts and push to matches
 
 	vv("Finding elements for word '" << token << "'");
 
-	QSet<IndexPost> termPosts;
+	QVector<IndexPost> termPosts;
 
 	if (!findPosts(token, fieldType, termPosts))
 		return false; // nothing found for the term
@@ -153,7 +153,7 @@ bool IndexHandler::findWordMatches(const QString &token,
 		match.fieldType = fieldType;
 		match.fieldNumber = post.fieldNumber;
 		match.matchPosition = post.inFieldTermPosition;
-		matches.insert(match);
+		matches.append(match);
 	}
 
 	PROF_FUNC_END
@@ -163,7 +163,7 @@ bool IndexHandler::findWordMatches(const QString &token,
 
 bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 									 ElementFieldType fieldType,
-									 QSet<IndexMatch> &matches) {
+									 QVector<IndexMatch> &matches) {
 
 	PROF_FUNC_BEGIN5
 
@@ -193,7 +193,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 				// Term
 				QString,
 				// Term positions in element/field
-				QSet<term_pos> // tf_t
+				QVector<term_pos> // tf_t
 			>
 	> categorizedTermsByElementField;
 
@@ -209,7 +209,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 
 		vv1("Handling term: " << term);
 
-		QSet<IndexPost> termPosts;
+		QVector<IndexPost> termPosts;
 		if (!findPosts(term, fieldType, termPosts))
 			continue; // nothing found
 
@@ -233,7 +233,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 			ASSERT(termsPosIt != categorizedTermsByElementField.end(), "index_handling",
 					   "Elements retrieval failed");
 
-			QHash<QString, QSet<term_pos>> &termsPositions = termsPosIt.value();
+			QHash<QString, QVector<term_pos>> &termsPositions = termsPosIt.value();
 
 			// Check if this term is already present for this element/field
 
@@ -254,8 +254,8 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 
 			// Push the position of the term in the post field's for this term
 
-			QSet<term_pos> &termPositions = termPosIt.value();
-			termPositions.insert(post.inFieldTermPosition);
+			QVector<term_pos> &termPositions = termPosIt.value();
+			termPositions.append(post.inFieldTermPosition);
 			vv2("Pushing term position: " << post.inFieldTermPosition <<
 				" (for term '" << term << "')");
 		}
@@ -298,7 +298,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 			it != categorizedTermsByElementField.end(); it++) {
 
 		const ElementSerial_FieldNumber &ef = it.key();
-		const QHash<QString, QSet<term_pos>> &termsPositions = it.value();
+		const QHash<QString, QVector<term_pos>> &termsPositions = it.value();
 
 		// Potentially we have a match, but first check for consecutiveness
 		// of the phrase terms within the element/field
@@ -313,7 +313,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 			continue;  // go asap to the next ef
 		}
 
-		QSet<term_pos> ps0 = ps0It.value();
+		const QVector<term_pos> &ps0 = ps0It.value();
 
 		// How many times the phrase (or the word) matches within the element/field
 		// This is useful just for figure out the tf and perform ranking over
@@ -351,7 +351,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 
 				// The term exists, check the position
 
-				QSet<term_pos> psx = psxIt.value();
+				const QVector<term_pos> &psx = psxIt.value();
 
 				if (!psx.contains(ps0_pos + uti)) {
 					dd2("No partial match =(");
@@ -378,7 +378,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 
 				vv1("Pushing a match: " << match);
 
-				matches.insert(match);
+				matches.append(match);
 			}
 		}
 	}
@@ -444,7 +444,7 @@ void IndexHandler::init()
 
 bool IndexHandler::findPosts(const QString &term,
 							 ElementFieldType field,
-							 QSet<IndexPost> &posts)
+							 QVector<IndexPost> &posts)
 {
 	dd("Finding posts for " << term << " in field : " <<
 	   elementFieldTypeString(field));
@@ -463,7 +463,7 @@ bool IndexHandler::findPosts(const QString &term,
 }
 
 void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator vocabularyEntry,
-							 ElementFieldType field, QSet<IndexPost> &posts)
+							 ElementFieldType field, QVector<IndexPost> &posts)
 {
 	const QString &term = vocabularyEntry.key();
 	const IndexTermRef &ref = vocabularyEntry.value();
@@ -603,7 +603,7 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 		dd2("(Identifier)		= " << mIdentifiers.at(INT(elementSerial)));
 
 		// Push the post
-		posts.insert(IndexPost {
+		posts.append(IndexPost {
 			 elementSerial, fieldNumber,  inFieldPos
 		});
 

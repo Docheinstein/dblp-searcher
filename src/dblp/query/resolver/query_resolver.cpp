@@ -18,7 +18,7 @@ IRModel *QueryResolver::irModel()
 	return mIrModel;
 }
 
-QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
+QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 {
 	PROF_FUNC_BEGIN1
 
@@ -47,7 +47,7 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 	QHash<elem_serial, ScoredIndexMatches> scoredPubs;
 	QHash<elem_serial, ScoredIndexMatches> scoredVenues;
 
-	QList<QueryMatch> matches;
+	QVector<QueryMatch> matches;
 
 	IndexHandler *index = mIrModel->index();
 
@@ -66,8 +66,8 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 		// For each bunch of tokens of the part (which might be either
 		// a simple word or phrase) we have to perform findElements();
 
-		QHash<QString, QSet<IndexMatch>> partPubMatches;
-		QHash<QString, QSet<IndexMatch>> partVenueMatches;
+		QHash<QString, QVector<IndexMatch>> partPubMatches;
+		QHash<QString, QVector<IndexMatch>> partVenueMatches;
 
 		foreach (QString macroToken, part->tokens()) {
 
@@ -118,7 +118,7 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 				// that the All type takes just the publications)
 				// Obviously we cannot use just ElementFieldType::Publication,
 				// otherwise we would throw away any other filter of the query part
-				QSet<IndexMatch> partPubMatchesSet;
+				QVector<IndexMatch> partPubMatchesSet;
 
 				index->findMatches(macroToken,
 									searchFields & ElementFieldType::Publication,
@@ -135,7 +135,7 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 				// that the All type takes just the venues)
 				// Obviously we cannot use just ElementFieldType::Venue,
 				// otherwise we would throw away any other filter of the query part
-				QSet<IndexMatch> partVenueMatchesSet;
+				QVector<IndexMatch> partVenueMatchesSet;
 
 				index->findMatches(macroToken,
 									searchFields & ElementFieldType::Venue,
@@ -156,13 +156,13 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 		vv2("Computing score for query part: " << *part);
 
 		auto elementScoreCalculator = [this](
-				QHash<QString, QSet<IndexMatch>> &partMatches,
+				QHash<QString, QVector<IndexMatch>> &partMatches,
 				QHash<elem_serial, ScoredIndexMatches> &matchesScores) {
 
 			// Foreach query part
 			for (auto it = partMatches.begin(); it != partMatches.end(); it++) {
 				const QString &macroToken = it.key();
-				const QSet<IndexMatch> &matches = it.value();
+				const QVector<IndexMatch> &matches = it.value();
 
 				// Split the macro token (which might be a word or a phrase) into
 				// simple terms for which we know the ief

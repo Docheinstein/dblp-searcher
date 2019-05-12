@@ -91,20 +91,20 @@ void MainWindow::doSearch(const QString &query)
 
 	emit searchStarted();
 
-	QFuture<QList<QueryMatch>> queryFuture =
+	QFuture<QVector<QueryMatch>> queryFuture =
 			QtConcurrent::run(this, &MainWindow::doSearchReal, query);
 
 	mQueryWatcher.setFuture(queryFuture);
 }
 
-QList<QueryMatch> MainWindow::doSearchReal(const QString &query)
+QVector<QueryMatch> MainWindow::doSearchReal(const QString &query)
 {
 	PROF_FUNC_BEGIN0
 
 	QElapsedTimer queryTimer;
 	queryTimer.start();
 
-	QList<QueryMatch> matches = mResolver->resolveQuery(query);
+	QVector<QueryMatch> matches = mResolver->resolveQuery(query);
 
 	for (auto it = matches.begin(); it != matches.end(); it++) {
 		const QueryMatch &queryMatch = *it;
@@ -140,7 +140,7 @@ void MainWindow::searchStarted()
 
 void MainWindow::searchFinished()
 {
-	QList<QueryMatch> matches = mQueryWatcher.result();
+	QVector<QueryMatch> matches = mQueryWatcher.result();
 
 	ii("Search done; # results = " << matches.size());
 

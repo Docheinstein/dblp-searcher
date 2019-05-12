@@ -155,7 +155,7 @@ float IRModelIef::computeIef(const QMap<QString, IndexTermRef>::const_iterator &
 //		ii("H1");
 
 		// Take the posts that contains this term within this field
-		QSet<IndexPost> posts;
+		QVector<IndexPost> posts;
 //		ii("H2");
 
 		mIndex->findPosts(vocabularyEntry, type, posts);

@@ -23,8 +23,8 @@ public:
 	QueryMatchComponent(const QSet<IndexMatch> &matches);
 
 	elem_serial elementSerial() const;
-	QSet<IndexMatch> matches() const;
 	ElementType elementType() const;
+	QSet<IndexMatch> matches() const;
 
 	operator QString() const;
 
@@ -32,8 +32,8 @@ private:
 	void finalize();
 
 	elem_serial mSerial = NO_ELEMENT;
-	QSet<IndexMatch> mMatches;
 	ElementType mType;
+	QSet<IndexMatch> mMatches;
 };
 
 class QueryMatch {

@@ -13,7 +13,7 @@ class QueryResolver : protected Loggable {
 public:
 	QueryResolver(IRModel *irmodel);
 
-	QList<QueryMatch> resolveQuery(const Query &query);
+	QVector<QueryMatch> resolveQuery(const Query &query);
 
 	IRModel *irModel();
 

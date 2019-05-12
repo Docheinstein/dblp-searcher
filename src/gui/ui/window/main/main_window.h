@@ -55,7 +55,7 @@ private:
 	QString qmlName() override;
 	QString qmlResourceName() override;
 
-	QFutureWatcher<QList<QueryMatch>> mQueryWatcher;
+	QFutureWatcher<QVector<QueryMatch>> mQueryWatcher;
 
 	QueryResolver *mResolver;
 
@@ -66,7 +66,7 @@ private:
 	const char *logTag() const override;
 	bool canLog() const override;
 
-	QList<QueryMatch> doSearchReal(const QString &query);
+	QVector<QueryMatch> doSearchReal(const QString &query);
 };
 
 #endif // MAIN_WINDOW_H

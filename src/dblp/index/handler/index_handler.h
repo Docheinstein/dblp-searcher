@@ -28,36 +28,36 @@ public:
 
 	// Use a phrase, that will be automatically splitted to tokens
 	bool findMatches(const QString &phrase,
-					  ElementFieldTypes fieldTypes,
-					 QSet<IndexMatch> &matches);
+					 ElementFieldTypes fieldTypes,
+					 QVector<IndexMatch> &matches);
 
 	// Use the token list
 	bool findMatches(const QStringList &tokens,
 					ElementFieldTypes fieldTypes,
-					 QSet<IndexMatch> &matches);
+					QVector<IndexMatch> &matches);
 
 
 	bool findWordMatches(
 						const QString &token,
 						ElementFieldType fieldType,
-						QSet<IndexMatch> &matches);
+						QVector<IndexMatch> &matches);
 
 
 	bool findPhraseMatches(
 						const QStringList &tokens,
 						ElementFieldType fieldType,
-						QSet<IndexMatch> &matches);
+						QVector<IndexMatch> &matches);
 
 
 	// Pass through the vocabulary
 	bool findPosts(const QString &term,
 				   ElementFieldType fieldType,
-				   QSet<IndexPost> &posts);
+				   QVector<IndexPost> &posts);
 
 	// Use the ref already taken from the vocabulary
 	void findPosts(const QMap<QString, IndexTermRef>::const_iterator vocabularyEntry,
 				   ElementFieldType fieldType,
-				   QSet<IndexPost> &posts);
+				   QVector<IndexPost> &posts);
 
 	const QList<QString> identifiers() const;
 	bool identifier(elem_serial serial, QString &identifier) const;
