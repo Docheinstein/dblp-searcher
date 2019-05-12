@@ -35,7 +35,7 @@ private:
 	void computeIefs();
 	float computeIef(const QString &term);
 	float computeIef(const QMap<QString, IndexTermRef>::const_iterator &vocabularyEntry);
-	void debug_printIefs();
+	void printIefs();
 
 	QHash<QString, float> mIefs;	// := inverse element frequency
 									// log10(|E|/ef_t)

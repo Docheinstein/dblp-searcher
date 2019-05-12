@@ -25,12 +25,22 @@ void GuiQueryMatches::addMatch(const QueryMatch &match)
 	endInsertRows();
 }
 
+void GuiQueryMatches::addMatches(const QVector<QueryMatch> &matches)
+{
+	beginInsertRows(QModelIndex(), rowCount(), rowCount() + matches.size() - 1);
+	for (const QueryMatch& match : matches) {
+		mMatches.append(GuiQueryMatch(match));
+	}
+	endInsertRows();
+}
+
 void GuiQueryMatches::clearMatches()
 {
 	beginRemoveRows(QModelIndex(), 0, rowCount());
 	mMatches.clear();
 	endRemoveRows();
 }
+
 
 void GuiQueryMatches::setIrModel(IRModel *irModel)
 {

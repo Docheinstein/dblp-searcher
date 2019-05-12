@@ -66,7 +66,7 @@ private:
 	const char *logTag() const override;
 	bool canLog() const override;
 
-	QVector<QueryMatch> doSearchReal(const QString &query);
+	QVector<QueryMatch> doSearchReal(const QString &queryString);
 };
 
 #endif // MAIN_WINDOW_H

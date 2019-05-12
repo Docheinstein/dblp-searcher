@@ -97,15 +97,18 @@ void MainWindow::doSearch(const QString &query)
 	mQueryWatcher.setFuture(queryFuture);
 }
 
-QVector<QueryMatch> MainWindow::doSearchReal(const QString &query)
+QVector<QueryMatch> MainWindow::doSearchReal(const QString &queryString)
 {
+
 	PROF_FUNC_BEGIN0
 
 	QElapsedTimer queryTimer;
 	queryTimer.start();
 
+	Query query(queryString);
 	QVector<QueryMatch> matches = mResolver->resolveQuery(query);
 
+#if INFO
 	for (auto it = matches.begin(); it != matches.end(); it++) {
 		const QueryMatch &queryMatch = *it;
 
@@ -124,9 +127,13 @@ QVector<QueryMatch> MainWindow::doSearchReal(const QString &query)
 		}
 	}
 
-	setQueryTime(INT(queryTimer.elapsed()));
+#endif
 
 	PROF_FUNC_END
+
+	ii("Query took: " << queryTimer.elapsed() << "ms");
+
+	setQueryTime(INT(queryTimer.elapsed()));
 
 	return matches;
 }
@@ -144,11 +151,9 @@ void MainWindow::searchFinished()
 
 	ii("Search done; # results = " << matches.size());
 
-	foreach (QueryMatch match, matches) {
-		mMatches.addMatch(match);
-	}
+	mMatches.addMatches(matches);
 
-//	emit matchesChanged();
+	//	emit matchesChanged();
 	emit matchesCountChanged();
 	setStatus(STATUS_RESOLVED);
 }

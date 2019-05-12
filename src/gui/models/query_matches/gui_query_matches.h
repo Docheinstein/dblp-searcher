@@ -15,7 +15,10 @@ public:
 	GuiQueryMatches(QObject *parent = nullptr);
 
 	void addMatch(const QueryMatch &match);
+	void addMatches(const QVector<QueryMatch> &matches);
 	void clearMatches();
+
+	void notifyDataChanged();
 
 	void setIrModel(IRModel *irModel);
 
@@ -39,7 +42,7 @@ private:
 
 	static QHash<int, QByteArray> GUI_QUERY_MATCH_ROLES;
 
-	QList<GuiQueryMatch> mMatches;
+	QVector<GuiQueryMatch> mMatches;
 
 	IRModel *mIrModel;
 };

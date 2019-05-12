@@ -1,7 +1,7 @@
 #ifndef QUERY_MATCH_H
 #define QUERY_MATCH_H
 
-#include <QSet>
+#include <QVector>
 #include <QtGlobal>
 
 #include <dblp/index/handler/index_handler.h>
@@ -20,11 +20,11 @@ public:
 	static const elem_serial NO_ELEMENT = ~static_cast<elem_serial>(0);
 
 	QueryMatchComponent();
-	QueryMatchComponent(const QSet<IndexMatch> &matches);
+	QueryMatchComponent(const QVector<IndexMatch> &matches);
 
 	elem_serial elementSerial() const;
 	ElementType elementType() const;
-	QSet<IndexMatch> matches() const;
+	QVector<IndexMatch> matches() const;
 
 	operator QString() const;
 
@@ -33,15 +33,15 @@ private:
 
 	elem_serial mSerial = NO_ELEMENT;
 	ElementType mType;
-	QSet<IndexMatch> mMatches;
+	QVector<IndexMatch> mMatches;
 };
 
 class QueryMatch {
 public:
-	static QueryMatch forPublication(const QSet<IndexMatch> &pubMatches, float score);
-	static QueryMatch forVenue(const QSet<IndexMatch> &venueMatches, float score);
-	static QueryMatch forPublicationVenue(const QSet<IndexMatch> &pubMatches,
-										  const QSet<IndexMatch> &venueMatches,
+	static QueryMatch forPublication(const QVector<IndexMatch> &pubMatches, float score);
+	static QueryMatch forVenue(const QVector<IndexMatch> &venueMatches, float score);
+	static QueryMatch forPublicationVenue(const QVector<IndexMatch> &pubMatches,
+										  const QVector<IndexMatch> &venueMatches,
 										  float score);
 
 	QueryMatchType matchType() const;

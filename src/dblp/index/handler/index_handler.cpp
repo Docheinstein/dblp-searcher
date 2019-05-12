@@ -809,6 +809,7 @@ void IndexHandler::loadCrossrefs()
 
 void IndexHandler::printIdentifiers()
 {
+#if VERBOSE
 	vv("==== IDENTIFIERS ====");
 	elem_serial i = 0;
 	foreach(QString id, mIdentifiers) {
@@ -816,24 +817,29 @@ void IndexHandler::printIdentifiers()
 		i++;
 	}
 	vv("==== IDENTIFIERS END ====");
+#endif
 }
 
 void IndexHandler::printVocabulary()
 {
+#if VERBOSE
 	vv("==== VOCABULARY ====");
 	for (auto it = mVocabulary.begin(); it != mVocabulary.end(); it++) {
 		vv1("'" << it.key() << "' : " << it.value());
 	}
 	vv("==== VOCABULARY END ====");
+#endif
 }
 
 void IndexHandler::printCrossrefs()
 {
+#if VERBOSE
 	vv("==== CROSSREFS ====");
 	for (auto it = mCrossrefs.begin(); it != mCrossrefs.end(); it++) {
 		vv1(it.key() << " => " << it.value());
 	}
 	vv("==== CROSSREFS END ====");
+#endif
 }
 
 // --- Hashing purpose

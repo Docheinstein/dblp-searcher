@@ -6,6 +6,7 @@
 class GuiQueryMatch {
 
 public:
+	GuiQueryMatch();
 	GuiQueryMatch(const QueryMatch &match);
 
 	QueryMatch model() const;

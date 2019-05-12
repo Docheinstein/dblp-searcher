@@ -5,6 +5,7 @@
 #include <dblp/query/query/models/publication/query_publication_part.h>
 #include <dblp/query/query/models/basic/query_basic_part.h>
 #include <dblp/query/query/models/venue/query_venue_part.h>
+#include "commons/profiler/profiler.h"
 
 namespace QueryConst = Const::Dblp::Query;
 namespace QueryUtil = Util::Dblp::Query;
@@ -18,6 +19,8 @@ const QList<QueryBasePart *> Query::parts() const
 
 Query::Query(const QString &queryString)
 {
+	PROF_FUNC_BEGIN1
+
 	dd("Parsing query: '" << queryString << "'");
 
 	/*
@@ -190,6 +193,8 @@ Query::Query(const QString &queryString)
 	}
 
 	dd("Query has been parsed:" << endl << *this);
+
+	PROF_FUNC_END
 }
 
 // If the token is a search pattern, returns true and put into part

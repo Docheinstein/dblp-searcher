@@ -78,7 +78,7 @@ void QueryMatch::finalize()
 
 QueryMatchComponent::QueryMatchComponent() {}
 
-QueryMatchComponent::QueryMatchComponent(const QSet<IndexMatch> &matches)
+QueryMatchComponent::QueryMatchComponent(const QVector<IndexMatch> &matches)
 {
 	mMatches = matches;
 	finalize();
@@ -89,7 +89,7 @@ elem_serial QueryMatchComponent::elementSerial() const
 	return mSerial;
 }
 
-QSet<IndexMatch> QueryMatchComponent::matches() const
+QVector<IndexMatch> QueryMatchComponent::matches() const
 {
 	return mMatches;
 }
@@ -145,7 +145,7 @@ QueryMatchComponent::operator QString() const
 }
 
 
-QueryMatch QueryMatch::forPublication(const QSet<IndexMatch> &pubMatches, float score)
+QueryMatch QueryMatch::forPublication(const QVector<IndexMatch> &pubMatches, float score)
 {
 	QueryMatch match;
 	match.mPublication = QueryMatchComponent(pubMatches);
@@ -155,7 +155,7 @@ QueryMatch QueryMatch::forPublication(const QSet<IndexMatch> &pubMatches, float 
 	return match;
 }
 
-QueryMatch QueryMatch::forVenue(const QSet<IndexMatch> &venueMatches, float score)
+QueryMatch QueryMatch::forVenue(const QVector<IndexMatch> &venueMatches, float score)
 {
 	QueryMatch match;
 	match.mVenue = QueryMatchComponent(venueMatches);
@@ -165,8 +165,8 @@ QueryMatch QueryMatch::forVenue(const QSet<IndexMatch> &venueMatches, float scor
 	return match;
 }
 
-QueryMatch QueryMatch::forPublicationVenue(const QSet<IndexMatch> &pubMatches,
-										   const QSet<IndexMatch> &venueMatches,
+QueryMatch QueryMatch::forPublicationVenue(const QVector<IndexMatch> &pubMatches,
+										   const QVector<IndexMatch> &venueMatches,
 										   float score)
 {
 	QueryMatch match;

@@ -31,7 +31,7 @@ void IRModelIef::init(bool lazy)
 
 	// Compute all the iefs now (may require some time)
 	computeIefs();
-	debug_printIefs();
+//	printIefs();
 }
 
 float IRModelIef::termScore(const QString &term)
@@ -101,12 +101,11 @@ void IRModelIef::computeIefs()
 	int i = 0;
 	for (auto it = vocabulary.begin(); it != vocabulary.end(); it++, i++) {
 		const QString &term = it.key();
-		const IndexTermRef &ref = it.value();
 
 		if (term.isEmpty())
 			continue;
 
-//		ii("Computing ief of '" << term << "'");
+		vv1("Computing ief of '" << term << "'");
 
 		float ief = computeIef(it);
 
@@ -114,8 +113,8 @@ void IRModelIef::computeIefs()
 		mIefs.insert(term, ief);
 
 		// Notify the current progress
-		double progress = static_cast<double>(i) / vocabularySize;
-//		ii("IRModel Progress: " << progress);
+		double progress = DOUBLE(i) / vocabularySize;
+		vv1("IRModel Progress: " << progress);
 
 		emit initProgress(progress);
 	}
@@ -144,22 +143,18 @@ float IRModelIef::computeIef(const QMap<QString, IndexTermRef>::const_iterator &
 
 	// We have to invoke loadPosts() for each possible field
 
-	QSet<quint32> elementsWithTerm;
+	QSet<elem_serial> elementsWithTerm;
 
 	for (int f = static_cast<int>(ElementFieldType::_Start);
 		 f <= static_cast<int>(ElementFieldType::_End);
 		 f = f << 1) {
 
-//		ii("For field: " << f);
 		ElementFieldType type = static_cast<ElementFieldType>(f);
-//		ii("H1");
 
 		// Take the posts that contains this term within this field
 		QVector<IndexPost> posts;
-//		ii("H2");
 
 		mIndex->findPosts(vocabularyEntry, type, posts);
-//		ii("H3");
 
 		// At this point posts contains the posts of the term within the field,
 		// which may contain duplicate element id if an element.field contains
@@ -167,19 +162,12 @@ float IRModelIef::computeIef(const QMap<QString, IndexTermRef>::const_iterator &
 		// For this reason, we have to scan the posts and create another
 		// set from that avoids elements duplicates
 
-		int i = 0;
-//		ii("H4");
 
 		foreach (IndexPost post, posts) {
-//			ii("Post num: " << i++);
-
 			// Push the element id
 			elementsWithTerm.insert(post.elementSerial);
 		}
-//		ii("H5");
-
 	}
-//	ii("H6");
 
 	const double ef_t = elementsWithTerm.size();
 
@@ -193,24 +181,24 @@ float IRModelIef::computeIef(const QMap<QString, IndexTermRef>::const_iterator &
 
 	// At this point elementsWithTerm contains only the elements ids
 	// in which the term occurs; the size of it is actually the ef_t
-	float ief_t = static_cast<float>(log10(E / ef_t));
+	float ief_t = FLOAT(log10(E / ef_t));
 
-//	ii("E" << " = " << E);
-//	ii("ef(" << term << ")" << " = " << ef_t);
-//	ii("ief(" << term << ")" << " = " << ief_t);
+	dd("E" << " = " << E);
+	dd("ef(" << term << ")" << " = " << ef_t);
+	dd("ief(" << term << ")" << " = " << ief_t);
 
 	return ief_t;
 }
 
-void IRModelIef::debug_printIefs()
+void IRModelIef::printIefs()
 {
+#if VERBOSE
 	const int E = mIndex->identifiers().size();
 
-	dd("Computed iefs are: " << "( |E| = " << E << " )");
+	vv("==== IEFS ====");
 
 	// For print the iefs sorted, put those inside a map (which automatically
 	// order by key)
-
 	QMap<float, QString> sortedIefs;
 
 	for (auto it = mIefs.begin(); it != mIefs.end(); it++) {
@@ -220,7 +208,10 @@ void IRModelIef::debug_printIefs()
 	for (auto it = sortedIefs.begin(); it != sortedIefs.end(); it++) {
 		const float ief = it.key();
 		float ef = static_cast<float>(E / pow(10, ief)); // bonus; recompute ef with the inverse formula
-		dd("-- ief(" << it.value() << ") = " << ief << " | ef ~= " << ef);
-
+		Q_UNUSED(ef)
+		dd1("ief(" << it.value() << ") = " << ief << " | ef ~= " << ef);
 	}
+
+	vv("==== IEFS END ====");
+#endif
 }
