@@ -4,6 +4,10 @@ import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.1
 
 ApplicationWindow {
+    property string publicationColor: "#f7eccd"
+    property string venueColor: "#d5eded"
+    property string publicationVenueColor: "#dcf4de"
+
     function humanTime(ms) {
         const MS = ms % 1000;
 
@@ -84,9 +88,6 @@ ApplicationWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: 0
 
-                    //                    Layout.fillHeight: true
-                    //                    Layout.fillWidth: false
-
                     icon.source: "qrc:/img/search.png"
                     icon.color: "white"
 
@@ -143,8 +144,14 @@ ApplicationWindow {
 
             ListView {
                 id: queryResults
+                clip: true
                 anchors.fill: parent
                 visible: _main.status === "resolved"
+                ScrollBar.vertical: ScrollBar {
+                    active: true
+                    policy: ScrollBar.AlwaysOn
+                    minimumSize: 0.1
+                }
 
                 // == QUERY MATCH ==
                 delegate: Rectangle {
@@ -153,13 +160,13 @@ ApplicationWindow {
                     width: queryResults.width
                     color: {
                         if (model.type === "publication") {
-                            "#f7eccd"
+                            publicationColor
                         }
                         else if (model.type === "venue" ){
-                            "#d5eded"
+                            venueColor
                         }
                         else if (model.type === "publication_venue") {
-                            "#bedbc0"
+                            publicationVenueColor
                         }
                     }
 
@@ -177,10 +184,25 @@ ApplicationWindow {
 
                             spacing: 15
 
-                            Label {
-                                id: queryMatchRank
-                                text: model.rank + "."
-                                Layout.fillHeight: false
+                            ColumnLayout {
+                                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                                spacing: 5
+                                Layout.fillHeight: true
+
+                                Label {
+                                    id: queryMatchRank
+                                    text: model.rank + "."
+                                    font.pointSize: 10
+                                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                                }
+
+                                Label {
+                                    id: queryMatchScore
+                                    color: "#595e61"
+                                    text: "(" + model.score.toFixed(2) + ")"
+                                    font.pointSize: 8
+                                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                                }
                             }
 
                             ColumnLayout {
@@ -238,45 +260,48 @@ ApplicationWindow {
 
                         Rectangle  {
                             id: rectangle
-                            height: 2
+                            height: 1
                             color: "#4c292929"
-                            Layout.fillHeight: false
                             Layout.fillWidth: true
                         }
                     }
                 }
 
                 model: _main.matches
-                /*
-                model: ListModel {
-                    ListElement {
-                        rank: 1
-                        type: "publication"
-                        publicationIdentifier: "/key/bdt/2019"
-                        publicationElementType: "Article"
-                        venueIdentifier: "/key/bdt/2019"
-                        venueElementType: "Journal"
-                    }
-                    ListElement {
-                        rank: 2
-                        type: "venue"
-                        publicationIdentifier: "/key/bdt/2019"
-                        publicationElementType: "Article"
-                        venueIdentifier: "/key/bdt/2019"
-                        venueElementType: "Journal"
-                    }
-                    ListElement {
-                        rank: 3
-                        type: "publication_venue"
-                        publicationIdentifier: "/key/bdt/2019"
-                        publicationElementType: "Article"
-                        venueIdentifier: "/key/bdt/2019"
-                        venueElementType: "Journal"
-                    }
-                }
-                */
+
+//                model: ListModel {
+//                    ListElement {
+//                        rank: 1
+//                        type: "publication"
+//                        publicationIdentifier: "/key/bdt/2019"
+//                        publicationElementType: "Article"
+//                        venueIdentifier: "/key/bdt/2019"
+//                        venueElementType: "Journal"
+//                        score: 0.4
+//                    }
+//                    ListElement {
+//                        rank: 2
+//                        type: "venue"
+//                        publicationIdentifier: "/key/bdt/2019"
+//                        publicationElementType: "Article"
+//                        venueIdentifier: "/key/bdt/2019"
+//                        venueElementType: "Journal"
+//                        score: 0.2
+//                    }
+//                    ListElement {
+//                        rank: 3
+//                        type: "publication_venue"
+//                        publicationIdentifier: "/key/bdt/2019"
+//                        publicationElementType: "Article"
+//                        venueIdentifier: "/key/bdt/2019"
+//                        venueElementType: "Journal"
+//                        score: 0.1
+//                    }
+//                }
+
             }
         }
+
     }
 
     footer: Item {
@@ -305,7 +330,7 @@ ApplicationWindow {
                     Rectangle {
                         height: 16
                         width: 16
-                        color: "#f7eccd"
+                        color: publicationColor
                     }
 
                     Text {
@@ -318,7 +343,7 @@ ApplicationWindow {
                     Rectangle {
                         height: 16
                         width: 16
-                        color: "#d5eded"
+                        color: venueColor
                     }
 
                     Text {
@@ -331,7 +356,7 @@ ApplicationWindow {
                     Rectangle {
                         height: 16
                         width: 16
-                        color: "#bedbc0"
+                        color: publicationVenueColor
                     }
 
                     Text {
@@ -340,10 +365,6 @@ ApplicationWindow {
                 }
             }
         }
-
-
-
-
 
     }
 }
@@ -372,7 +393,62 @@ ApplicationWindow {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*##^## Designer {
-    D{i:29;anchors_height:30}
+    D{i:21;anchors_height:30}D{i:22;anchors_height:30}D{i:30;anchors_height:30}D{i:29;anchors_height:30}
+D{i:28;anchors_height:30}
 }
  ##^##*/

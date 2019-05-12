@@ -13,24 +13,9 @@
 #include "dblp/index/models/reference/index_term_ref.h"
 #include "dblp/index/models/post/index_post.h"
 #include "dblp/shared/element_field_type/element_field_type.h"
+#include "commons/profiler/profiler.h"
+#include "dblp/index/models/match/index_match.h"
 
-// Represents a match for findElements(), which contains the element
-// id and the term count. The field and the term are implicit with the
-// findElements() call
-typedef struct IndexMatch {
-	// (QString token) implicit
-	QStringList matchedTokens;
-	elem_serial elementSerial; // element id
-	ElementFieldType fieldType;	// field type
-	field_num fieldNumber; // field number for the fieldType
-	term_pos matchPosition; // where the tokens matches within
-							// the fieldType + fieldNumber
-							// starting position, in case of phrases
-	operator QString();
-} IndexMatch;
-
-bool operator==(const IndexMatch &efm1, const IndexMatch &efm2);
-uint qHash(const IndexMatch &efm, uint seed);
 
 class IndexHandler : public QObject, protected Loggable
 {
@@ -44,12 +29,25 @@ public:
 	// Use a phrase, that will be automatically splitted to tokens
 	bool findMatches(const QString &phrase,
 					  ElementFieldTypes fieldTypes,
-					  QSet<IndexMatch> &matches);
+					 QSet<IndexMatch> &matches);
 
 	// Use the token list
 	bool findMatches(const QStringList &tokens,
-					  ElementFieldTypes fieldTypes,
-					  QSet<IndexMatch> &matches);
+					ElementFieldTypes fieldTypes,
+					 QSet<IndexMatch> &matches);
+
+
+	bool findWordMatches(
+						const QString &token,
+						ElementFieldType fieldType,
+						QSet<IndexMatch> &matches);
+
+
+	bool findPhraseMatches(
+						const QStringList &tokens,
+						ElementFieldType fieldType,
+						QSet<IndexMatch> &matches);
+
 
 	// Pass through the vocabulary
 	bool findPosts(const QString &term,
@@ -92,10 +90,21 @@ protected:
 
 private:
 	// Use the token list
-	bool findMatchesSingleType(
-						const QStringList &tokens,
-						ElementFieldType fieldType,
-						QSet<IndexMatch> &matches);
+//	bool findMatchesSingleType(
+//						const QStringList &tokens,
+//						ElementFieldType fieldType,
+//						QSet<IndexMatch> &matches);
+
+//	bool findMatchesSingleTypeWord(
+//						const QString &token,
+//						ElementFieldType fieldType,
+//						QSet<IndexMatch> &matches);
+
+//	bool findMatchesSingleTypePhrase(
+//						const QStringList &tokens,
+//						ElementFieldType fieldType,
+//						QSet<IndexMatch> &matches);
+
 	void init();
 
 	void loadIdentifiers();

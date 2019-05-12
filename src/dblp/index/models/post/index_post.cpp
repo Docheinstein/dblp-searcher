@@ -12,16 +12,3 @@ IndexPost::operator QString() const
 		"in_field_pos = " + DEC(inFieldTermPosition) +
 	"}";
 }
-
-bool operator==(const IndexPost &ip1, const IndexPost &ip2)
-{
-	return ip1.elementSerial == ip2.elementSerial &&
-			ip1.fieldNumber == ip2.fieldNumber &&
-			ip1.inFieldTermPosition == ip2.inFieldTermPosition;
-}
-
-uint qHash(const IndexPost &ip, uint seed)
-{
-	return qHash(ip.elementSerial, seed) ^
-			ip.fieldNumber * ip.inFieldTermPosition;
-}

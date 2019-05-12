@@ -99,7 +99,6 @@ void IRModelIef::computeIefs()
 	const qint64 vocabularySize = vocabulary.size();
 
 	int i = 0;
-
 	for (auto it = vocabulary.begin(); it != vocabulary.end(); it++, i++) {
 		const QString &term = it.key();
 		const IndexTermRef &ref = it.value();

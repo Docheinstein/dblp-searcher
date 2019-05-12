@@ -12,6 +12,7 @@
 #include "gui/engine/gui_engine.h"
 #include "commons/globals/globals.h"
 #include "main/tests.cpp"
+#include "commons/profiler/profiler.h"
 
 #define QML_REGISTER_BASE "org.docheinstein."
 
@@ -236,6 +237,8 @@ static Arguments parseArguments(int argc, char *argv[]) {
 
 int main(int argc, char *argv[])
 {
+	PROF_FUNC_BEGIN
+
 	if (argc < 2) {
 		dblpSearcherAbort();
 	}
@@ -259,4 +262,11 @@ int main(int argc, char *argv[])
 				  << endl << ">>" << e;
 	  return 0;
 	}
+
+	PROF_FUNC_END
+
+#if PROFILER
+	prof_print();
+#endif
+
 }

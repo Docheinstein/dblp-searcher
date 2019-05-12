@@ -8,7 +8,7 @@
 
 class Query : protected Loggable {
 public:
-	~Query();
+	~Query() override;
 	Query(const QString &queryString);
 	operator QString() const;
 

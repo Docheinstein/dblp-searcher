@@ -14,7 +14,7 @@ class MainWindow : public GuiWindow {
 
 	Q_PROPERTY(QString status READ status WRITE setStatus NOTIFY statusChanged)
 	Q_PROPERTY(int queryTime READ queryTime WRITE setQueryTime NOTIFY queryTimeChanged)
-	Q_PROPERTY(QObject * matches READ matches)
+	Q_PROPERTY(QObject * matches READ matches NOTIFY matchesChanged)
 	Q_PROPERTY(int matchesCount READ matchesCount NOTIFY matchesCountChanged)
 
 public:
@@ -47,6 +47,7 @@ public slots:
 signals:
 	void statusChanged();
 	void queryTimeChanged();
+	void matchesChanged();
 	void matchesCountChanged();
 
 private:

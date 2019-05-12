@@ -9,6 +9,7 @@
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QElapsedTimer>
+#include "commons/profiler/profiler.h"
 
 LOGGING(MainWindow, true)
 
@@ -74,6 +75,18 @@ int MainWindow::matchesCount()
 
 void MainWindow::doSearch(const QString &query)
 {
+	// Easter egg for profiling
+
+	if (query == QLatin1String("r")) {
+		prof_reset();
+		return;
+	}
+
+	if (query == QLatin1String("p")) {
+		prof_print();
+		return;
+	}
+
 	ii("Performing search for: " << query << "");
 
 	emit searchStarted();
@@ -86,6 +99,7 @@ void MainWindow::doSearch(const QString &query)
 
 QList<QueryMatch> MainWindow::doSearchReal(const QString &query)
 {
+	PROF_FUNC_BEGIN0
 
 	QElapsedTimer queryTimer;
 	queryTimer.start();
@@ -111,6 +125,8 @@ QList<QueryMatch> MainWindow::doSearchReal(const QString &query)
 	}
 
 	setQueryTime(INT(queryTimer.elapsed()));
+
+	PROF_FUNC_END
 
 	return matches;
 }

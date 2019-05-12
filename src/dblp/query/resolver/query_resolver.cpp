@@ -4,6 +4,7 @@
 #include "commons/globals/globals.h"
 #include "commons/const/const.h"
 #include "commons/config/config.h"
+#include "commons/profiler/profiler.h"
 
 LOGGING(QueryResolver, true);
 
@@ -19,6 +20,8 @@ IRModel *QueryResolver::irModel()
 
 QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 {
+	PROF_FUNC_BEGIN1
+
 	/*
 	 * The query is resolved with the following logic
 	 * x) Retr pubs
@@ -56,6 +59,9 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 
 	// Resolve each query part (the query part are ORred)
 	foreach (QueryBasePart *part, query.parts()) {
+
+		PROF_BEGIN2(resolveQueryPart)
+
 		vv1("Resolving part of query: " << *part);
 		// For each bunch of tokens of the part (which might be either
 		// a simple word or phrase) we have to perform findElements();
@@ -64,6 +70,9 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 		QHash<QString, QSet<IndexMatch>> partVenueMatches;
 
 		foreach (QString macroToken, part->tokens()) {
+
+			PROF_BEGIN3(resolveQueryPartMacroToken)
+
 			vv2("Resolving subpart for token: " << macroToken);
 
 			// Figure out if we are treating publications or venue (or both, for All)
@@ -135,15 +144,16 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 				partVenueMatches.insert(macroToken, partVenueMatchesSet);
 
 			}
+
+			PROF_END(resolveQueryPartMacroToken)
 		}
 
 		// Compute the score for each retrieved element (pub or venue)
 		// and add it to the current score of that element
 
-		vv2("Computing score for query part: " << *part);
+		PROF_BEGIN2(resolveQueryPartScoreComputing)
 
-		// First of all, split the macro token into
-		// simple terms for which we know the ief
+		vv2("Computing score for query part: " << *part);
 
 		auto elementScoreCalculator = [this](
 				QHash<QString, QSet<IndexMatch>> &partMatches,
@@ -154,11 +164,14 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 				const QString &macroToken = it.key();
 				const QSet<IndexMatch> &matches = it.value();
 
+				// Split the macro token (which might be a word or a phrase) into
+				// simple terms for which we know the ief
+
 				QStringList queryPartTerms =
 						macroToken.split(Const::Dblp::Query::TOKENS_SPLITTER,
 						QString::SplitBehavior::SkipEmptyParts);
 
-				// Foreach match
+				// Foreach match of the matches found for the macro token
 				foreach (IndexMatch efMatch, matches) {
 
 					dd3("Foreach efMatch; current: " << efMatch);
@@ -185,6 +198,7 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 
 					// Add the score for this part to the element score
 
+
 					float queryPartScoreForElement = 0;
 
 					// Foreach term retrieve the ief and add it to the current
@@ -193,11 +207,8 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 					// since the score is increased of ief for each term
 					// (the "tf" part).
 					foreach (QString queryPartTerm, queryPartTerms) {
-
 						float ief = mIrModel->termScore(queryPartTerm);
-
 						dd4("[e" << efMatch.elementSerial << "] ief(" << queryPartTerm << ") = " << ief );
-
 						queryPartScoreForElement += ief;
 					}
 
@@ -217,22 +228,29 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 						queryPartScoreForElement *= phraseBonus;
 					}
 
+#if DEBUG
 					QString s = DEC(efMatch.elementSerial) + " += " +
 								FLT(queryPartScoreForElement);
-
+#endif
 					// Add the score to the this scoredMatches (for a single element)
 					scoredMatches.score += queryPartScoreForElement;
-
+#if DEBUG
 					s += FLT(scoredMatches.score);
 
 					dd3(s);
+#endif
 				}
 			}
 		};
 
 		elementScoreCalculator(partPubMatches, scoredPubs);
 		elementScoreCalculator(partVenueMatches, scoredVenues);
+
+		PROF_END(resolveQueryPartScoreComputing)
+
+		PROF_END(resolveQueryPart)
 	}
+
 
 	// Print the matches of scoredPubs and scoredVenues
 
@@ -253,6 +271,7 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 	printPartialMatches(scoredPubs, "publication");
 	printPartialMatches(scoredVenues, "venue");
 
+
 	// Privilege publication for which the crossrefed venue contains matches
 
 	// For each publication in scoredPubs, check if a venue in scoredVenues
@@ -265,6 +284,8 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 	// Keep the venues that has already been crosreferred in order to not
 	// insert those between the matches
 	QSet<elem_serial> crossReferredVenues;
+
+	PROF_BEGIN(crossrefsCheck)
 
 	for (auto it = scoredPubs.begin(); it != scoredPubs.end(); it++) {
 
@@ -363,11 +384,16 @@ QList<QueryMatch> QueryResolver::resolveQuery(const Query &query)
 		vv1("Pushing venue match for [" << venueSerial << "] - score = " << score);
 		matches.append(QueryMatch::forVenue(scoredVenueMatches.matches, score));
 	}
+	PROF_END(crossrefsCheck)
 
+	PROF_BEGIN(sortQueryMatches)
 
 	// Finally, sort the query matches by score (reverse)
-
 	std::sort(matches.rbegin(), matches.rend());
+
+	PROF_END(sortQueryMatches)
+
+	PROF_FUNC_END
 
 	return matches;
 }

@@ -5,8 +5,9 @@
 #include "commons/util/util.h"
 #include "commons/const/const.h"
 #include "commons/globals/globals.h"
+#include "commons/profiler/profiler.h"
 
-LOGGING(IndexHandler, true);
+LOGGING(IndexHandler, false);
 
 IndexHandler::IndexHandler(const QString &indexPath, const QString &baseName)
 {
@@ -74,7 +75,7 @@ void IndexHandler::load()
 
 bool IndexHandler::findMatches(const QString &phrase,
 								ElementFieldTypes fieldTypes,
-								QSet<IndexMatch> &matches)
+							   QSet<IndexMatch>& matches)
 {
 
 	// If the phrase is actually a space separeted list of words,
@@ -94,6 +95,11 @@ typedef struct ElementSerial_FieldNumber {
 bool IndexHandler::findMatches(const QStringList &tokens,
 								ElementFieldTypes fieldTypes,
 								QSet<IndexMatch> &matches) {
+
+	PROF_FUNC_BEGIN4
+
+	bool phrasal = tokens.size() > 1;
+
 	QStringList sanitizedTokens;
 
 	// Moreover, sanitize each term (lowercase, no punctuation, (trimmed))
@@ -113,18 +119,53 @@ bool IndexHandler::findMatches(const QStringList &tokens,
 		if (!fieldTypes.testFlag(fieldFlag))
 			continue; // do not search within this field
 
-		somethingFound |= findMatchesSingleType(tokens, fieldFlag, matches);
+		if (!phrasal)
+			somethingFound |= findWordMatches(tokens.at(0), fieldFlag, matches);
+		else
+			somethingFound |= findPhraseMatches(tokens, fieldFlag, matches);
 	}
 
-	return somethingFound;
+	PROF_FUNC_END
 
+	return somethingFound;
 }
 
+bool IndexHandler::findWordMatches(const QString &token,
+								   ElementFieldType fieldType,
+								   QSet<IndexMatch> &matches) {
+	PROF_FUNC_BEGIN5
 
-bool IndexHandler::findMatchesSingleType(const QStringList &tokens,
-										  ElementFieldType fieldType,
-										  QSet<IndexMatch> &matches)
-{
+	// Just retrieve the posts and push to matches
+
+	vv("Finding elements for word '" << token << "'");
+
+	QSet<IndexPost> termPosts;
+
+	if (!findPosts(token, fieldType, termPosts))
+		return false; // nothing found for the term
+
+	for (auto it = termPosts.cbegin(); it != termPosts.cend(); it++) {
+		// For every post, push it as a match
+		const IndexPost &post = *it;
+		IndexMatch match;
+		match.matchedTokens = QStringList({token});
+		match.elementSerial = post.elementSerial;
+		match.fieldType = fieldType;
+		match.fieldNumber = post.fieldNumber;
+		match.matchPosition = post.inFieldTermPosition;
+		matches.insert(match);
+	}
+
+	PROF_FUNC_END
+
+	return true;
+}
+
+bool IndexHandler::findPhraseMatches(const QStringList &tokens,
+									 ElementFieldType fieldType,
+									 QSet<IndexMatch> &matches) {
+
+	PROF_FUNC_BEGIN5
 
 	int matchesSizeBefore = matches.size();
 
@@ -133,6 +174,8 @@ bool IndexHandler::findMatchesSingleType(const QStringList &tokens,
 	 * This is done by doing:
 	 * 1) For each term in the phrase, retrieve the associated posts
 	 * and push those to an hash that maps <element,field> to <term,positions>
+	 *
+	 * [EVENTUALLY, FOR PHRASALS]
 	 * 2) For each element/field retrieved do the following
 	 * - for each term of the phrase, do a parallel scan between the terms'
 	 *   positions lists and check that the position of the terms are sequential
@@ -152,7 +195,9 @@ bool IndexHandler::findMatchesSingleType(const QStringList &tokens,
 				// Term positions in element/field
 				QSet<term_pos> // tf_t
 			>
-	> categorizedTerms;
+	> categorizedTermsByElementField;
+
+	PROF_BEGIN6(findPhraseMatchesReal)
 
 	// 1) For each term in the phrase, retrieve the associated posts
 	// and push those to an hash that maps <element,field> to <term,positions>
@@ -172,20 +217,20 @@ bool IndexHandler::findMatchesSingleType(const QStringList &tokens,
 			// Check if this field has already been found
 			ElementSerial_FieldNumber ef {post.elementSerial, post.fieldNumber};
 
-			if (!categorizedTerms.contains(ef)) {
+			if (!categorizedTermsByElementField.contains(ef)) {
 				vv2("Inserting ef: " <<
 					"{" << ef.elementSerial << ", "<< ef.fieldNumber << "}" <<
 					" for the first time" );
 				// Push a new term to positions map, empty for now
-				categorizedTerms.insert(ef, {});
+				categorizedTermsByElementField.insert(ef, {});
 			}
 
 			// Take the termPositions, whether it is the existing one or
 			// the just inserted one
 
-			auto termsPosIt = categorizedTerms.find(ef);
+			auto termsPosIt = categorizedTermsByElementField.find(ef);
 
-			ASSERT(termsPosIt != categorizedTerms.end(), "index_handling",
+			ASSERT(termsPosIt != categorizedTermsByElementField.end(), "index_handling",
 					   "Elements retrieval failed");
 
 			QHash<QString, QSet<term_pos>> &termsPositions = termsPosIt.value();
@@ -216,12 +261,42 @@ bool IndexHandler::findMatchesSingleType(const QStringList &tokens,
 		}
 	}
 
+	PROF_END(findPhraseMatchesReal)
+
+	PROF_BEGIN6(findPhraseMatchesParallelCheck)
+
+	// Eventually perform phrasal check if the tokens are > 1, otherwise
+	// skip it.
+
+//	if (tokens.size() <= 1) {
+//		dd("Skipping phrasal check since only one token has been provided");
+
+//		for (auto it = categorizedTermsByElementField.begin();
+//			 it != categorizedTermsByElementField.end();
+//			 it++) {
+
+//		}
+//		// Let's push this match
+//		IndexMatch match;
+//		match.matchedTokens = tokens;
+//		match.elementSerial = ef.elementSerial;
+//		match.fieldType = fieldType;
+//		match.fieldNumber = ef.fieldNumber;
+//		match.matchPosition = ps0_pos;
+
+//		vv1("Pushing a match: " << match);
+
+//		matches.insert(match);
+//	}
+
 	// 2) For each element/field retrieved do the following
 	// - for each term of the phrase, do a parallel scan between the terms'
 	//   positions lists and check that the position of the terms are sequential
 	//   according to the phrase order
 
-	for (auto it = categorizedTerms.begin(); it != categorizedTerms.end(); it++) {
+	for (auto it = categorizedTermsByElementField.begin();
+			it != categorizedTermsByElementField.end(); it++) {
+
 		const ElementSerial_FieldNumber &ef = it.key();
 		const QHash<QString, QSet<term_pos>> &termsPositions = it.value();
 
@@ -311,10 +386,12 @@ bool IndexHandler::findMatchesSingleType(const QStringList &tokens,
 	if (matches.size() > matchesSizeBefore) {
 		vv1("Found " << matches.size() << " matches");
 	} else {
-#if !VERBOSE
 		dd1("No matches found");
-#endif
 	}
+
+	PROF_END(findPhraseMatchesParallelCheck)
+
+	PROF_FUNC_END
 
 	return true;
 }
@@ -768,25 +845,27 @@ bool operator==(const ElementSerial_FieldNumber &ef1,
 			ef1.fieldNumber == ef2.fieldNumber;
 }
 
-uint qHash(const ElementSerial_FieldNumber &ef, uint seed)
+uint qHash(const ElementSerial_FieldNumber &ef)
 {
-	return qHash(ef.elementSerial, seed) ^ ef.fieldNumber;
+	return (ef.elementSerial * 71881) ^ ef.fieldNumber;
 }
 
-bool operator==(const IndexMatch &efm1, const IndexMatch &efm2)
-{
-	return	efm1.elementSerial == efm2.elementSerial &&
-			efm1.fieldType == efm2.fieldType &&
-			efm1.fieldNumber == efm2.fieldNumber &&
-			efm1.matchPosition == efm2.matchPosition
-	;
-}
+//inline bool operator==(const IndexMatch &efm1, const IndexMatch &efm2)
+//{
+//	return
+//			efm1.elementSerial == efm2.elementSerial
+//			//&&
+////			efm1.fieldType == efm2.fieldType &&
+////			efm1.fieldNumber == efm2.fieldNumber &&
+////			efm1.matchPosition == efm2.matchPosition
+//	;
+//}
 
-uint qHash(const IndexMatch &efm, uint seed)
-{
-	return qHash(efm.elementSerial * efm.fieldNumber * efm.matchPosition, seed)
-			^ UINT32(efm.fieldType);
-}
+//uint qHash(const IndexMatch &efm, uint seed)
+//{
+//	return qHash(efm.elementSerial * efm.fieldNumber * efm.matchPosition, seed)
+//		^ UINT32(efm.fieldType);
+//}
 
 // ---
 

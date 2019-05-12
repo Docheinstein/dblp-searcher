@@ -7,6 +7,7 @@
 #include <dblp/index/handler/index_handler.h>
 #include "commons/globals/globals.h"
 #include "dblp/shared/element_type/element_type.h"
+#include "commons/config/config.h"
 
 enum class QueryMatchType {
 	Publication,
@@ -62,9 +63,41 @@ private:
 
 // --- Hashing purpose
 
-bool operator==(const QueryMatch &qm1, const QueryMatch &qm2);
-bool operator<(const QueryMatch &qm1, const QueryMatch &qm2);
-uint qHash(const QueryMatch &qm, uint seed);
+inline bool operator==(const QueryMatch &qm1, const QueryMatch &qm2)
+{
+	if (qm1.matchType() != qm2.matchType())
+		return false;
+
+	if (qm1.matchType() == QueryMatchType::Publication ||
+		qm1.matchType() == QueryMatchType::PublicationVenue) {
+		if (qm1.publication().elementSerial() != qm2.publication().elementSerial())
+			return false;
+	}
+
+	if (qm1.matchType() == QueryMatchType::Venue ||
+		qm1.matchType() == QueryMatchType::PublicationVenue) {
+		if (qm1.venue().elementSerial() != qm2.venue().elementSerial())
+			return false;
+	}
+
+	return true;
+}
+
+inline uint qHash(const QueryMatch &qm)
+{
+	static quint32 SERIAL_ENLARGER =
+			UINT_MAX / Config::Index::PostingList::ELEMENT_SERIAL_THRESHOLD;
+
+	return	qHash(qm.publication().elementSerial() * SERIAL_ENLARGER) ^
+			qHash(qm.venue().elementSerial() * SERIAL_ENLARGER);
+}
+
+
+inline bool operator<(const QueryMatch &qm1, const QueryMatch &qm2)
+{
+	return qm1.score() < qm2.score();
+}
+
 
 // ---
 

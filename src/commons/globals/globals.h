@@ -15,7 +15,7 @@
 #define UINT8(x) static_cast<quint8>(x)
 #define UINT16(x) static_cast<quint16>(x)
 #define UINT32(x) static_cast<quint32>(x)
-#define UINT64(x) static_cast<quint64(x)
+#define UINT64(x) static_cast<quint64>(x)
 
 #define INT8(x) static_cast<qint8>(x)
 #define INT16(x) static_cast<qint16>(x)
