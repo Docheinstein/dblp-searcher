@@ -26,6 +26,8 @@ public:
 
 	void load();
 
+	// All the finds are thread-safe (since findPosts is thread-safe)
+
 	// Use a phrase, that will be automatically splitted to tokens
 	bool findMatches(const QString &phrase,
 					 ElementFieldTypes fieldTypes,
@@ -130,9 +132,9 @@ private:
 
 	TextStreamFile mIdentifiersStream;
 	DataStreamFile mVocabularyStream;
-	DataStreamFile mPostingsStream;
 	DataStreamFile mElementsPositionsStream;
 	DataStreamFile mCrossrefsStream;
+	DataStreamFile mPostingsStream;
 
 	// ===================
 	// DATA STRUCTURES

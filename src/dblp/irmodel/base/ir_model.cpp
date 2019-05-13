@@ -3,32 +3,31 @@
 
 IRModel::~IRModel() {}
 
-IRModel::IRModel(IndexHandler *indexHandler)
+IRModel::IRModel(IndexHandler &indexHandler) : mIndex(indexHandler)
 {
-	mIndex = indexHandler;
 }
 
-float IRModel::bonusFactorPerPhraseTerm()
-{
-	return 1; // no bonus
-}
-
-float IRModel::bonusFactorForPublicationMatch()
+float IRModel::bonusFactorPerPhraseTerm() const
 {
 	return 1; // no bonus
 }
 
-float IRModel::bonusFactorForVenueMatch()
+float IRModel::bonusFactorForPublicationMatch() const
 {
 	return 1; // no bonus
 }
 
-float IRModel::bonusFactorForPublicationVenueMatch()
+float IRModel::bonusFactorForVenueMatch() const
 {
 	return 1; // no bonus
 }
 
-IndexHandler *IRModel::index()
+float IRModel::bonusFactorForPublicationVenueMatch() const
+{
+	return 1; // no bonus
+}
+
+IndexHandler &IRModel::index()
 {
 	return mIndex;
 }

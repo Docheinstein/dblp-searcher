@@ -4,6 +4,9 @@
 #include <QString>
 #include <limits>
 
+// Whether precompute all the ief (slow init, but faster searches) or not
+#define LAZY_IEF
+
 namespace Config {
 	namespace Index {
 		namespace Extensions {
@@ -12,7 +15,6 @@ namespace Config {
 			const QString VOCABULARY = ".vix";
 			const QString ELEMENTS_POS = ".epix";
 			const QString CROSSREFS = ".cix";
-//			const QString ARTICLES_JOURNAL = ".ajix";
 		}
 		namespace PostingList {
 			const quint32 ELEMENT_SERIAL_BITS = 23u;

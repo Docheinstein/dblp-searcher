@@ -6,6 +6,7 @@
 #include "commons/const/const.h"
 #include "commons/globals/globals.h"
 #include "commons/profiler/profiler.h"
+#include <QMutex>
 
 LOGGING(IndexHandler, false);
 
@@ -120,9 +121,9 @@ bool IndexHandler::findMatches(const QStringList &tokens,
 			continue; // do not search within this field
 
 		if (!phrasal)
-			somethingFound |= findWordMatches(tokens.at(0), fieldFlag, matches);
+			somethingFound |= findWordMatches(sanitizedTokens.at(0), fieldFlag, matches);
 		else
-			somethingFound |= findPhraseMatches(tokens, fieldFlag, matches);
+			somethingFound |= findPhraseMatches(sanitizedTokens, fieldFlag, matches);
 	}
 
 	PROF_FUNC_END
@@ -449,9 +450,9 @@ bool IndexHandler::findPosts(const QString &term,
 	dd("Finding posts for " << term << " in field : " <<
 	   elementFieldTypeString(field));
 
-	auto refIt = mVocabulary.find(term);
+	auto refIt = mVocabulary.constFind(term);
 
-	if (refIt == mVocabulary.end()) {
+	if (refIt == mVocabulary.cend()) {
 		ww("Term '" << term << "' not found in vocabulary");
 		// Term not found in the vocabulary
 		return false;
@@ -465,7 +466,7 @@ bool IndexHandler::findPosts(const QString &term,
 void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator vocabularyEntry,
 							 ElementFieldType field, QVector<IndexPost> &posts)
 {
-	const QString &term = vocabularyEntry.key();
+	PROF_FUNC_BEGIN
 	const IndexTermRef &ref = vocabularyEntry.value();
 
 	// Calculate the field relative position within the ref based on the field
@@ -575,21 +576,22 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 			<< " and term '" << vocabularyEntry.key() << "'");
 	}
 
-
 	for (quint32 i = 0; i < refPost->count; i++) {
+
 		// Figure out the position of the posts in the posting list (of the first one)
 		qint64 postPos = ref.postingListPosition +
 				(refPost->offset + i) * PostingListConf::POST_BYTES;
 
+#if DEBUG
+		const QString &term = vocabularyEntry.key();
 		dd1(i << "° post pos: " << postPos << " of term (" << term << ")");
-
-		// Go the the figured out position
-		mPostingsStream.file.seek(postPos);
-
-		// Read 5 bytes
+#endif
+		// 5 Bytes that will be read
 		quint32 P32;
 		quint8 P8;
 
+		// Go the the figured out position and read 5 bytes
+		mPostingsStream.file.seek(postPos);
 		mPostingsStream.stream >> P32 >> P8;
 
 		// Figure out element id, field nubmer and field pos
@@ -622,6 +624,8 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 #endif
 
 	}
+
+	PROF_FUNC_END
 }
 
 

@@ -2,7 +2,52 @@
 #include <QDebug>
 #include "commons/profiler/profiler.h"
 #include "dblp/index/models/match/index_match.h"
+#include <QtConcurrent>
+#include <QVector>
+#include <omp.h>
+#include <QMutex>
+#include <QHash>
 
+#define abs(x)   (x<0 ? -x : x)
+#define LARGENUM 2147483647
+#define N        1000000
+int data[N];
+
+[[noreturn]] void omp_tests() {
+//	int i;
+//	int result = 1000000;
+
+//	#pragma omp declare reduction(minabs : int :              \
+//	  omp_out = abs(omp_in) > omp_out ? omp_out : abs(omp_in))
+////	  initializer (omp_priv=1000000))
+
+//	#pragma omp parallel for reduction(minabs:result)
+//	for (i=5; i<N; i++) {
+//	  if (abs(data[i]) < result) {
+//		result = abs(data[i]);
+//	  }
+//	}
+
+//	qInfo() << "Result: " << result;
+//	exit(-1);
+
+	QVector<int> array({1, 2, 3, 5, 2, 53, 15, 125, 4124, 2});
+
+	#pragma omp declare reduction(array_to_hash : QHash<int, int> : \
+		omp_out.unite(omp_in))
+
+	QHash<int, int> result;
+	#pragma omp parallel for reduction(array_to_hash:result)
+	for (int i = 0; i < array.size(); i++) {
+		result.insert(i, i * 2);
+	}
+
+	for (auto it = result.begin(); it != result.end(); it++) {
+		qInfo() << it.key() << " - " << it.value();
+	}
+
+	exit(-1);
+}
 
 void hash_test_uint() {
 	const int insertions = 36036760;
@@ -127,3 +172,35 @@ void hash_test_index_matches() {
 	hash_test_index_matches();
 	exit(-1);
 }
+
+
+// U function(const T &t);
+int map_func(const int &val) {
+	return val / 2;
+}
+
+// V function(T &result, const U &intermediate)
+void reduce_func(double &reduceResult, const int &mapResult) {
+	reduceResult += mapResult;
+}
+
+[[noreturn]] void map_reduce_tests() {
+	QVector<int> arr({10, 5, 5, 2, 3, 1, 5, 6, 8, 3, 11});
+	double res = QtConcurrent::blockingMappedReduced(arr, map_func, reduce_func);
+	qInfo() << "Result: " << res;
+	exit(-1);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -8,6 +8,7 @@
 #include "commons/config/config.h"
 
 typedef struct IndexMatch {
+//	IndexMatch() {}
 	elem_serial elementSerial; // element id
 	term_pos matchPosition; // where the tokens matches within
 							// the fieldType + fieldNumber

@@ -43,15 +43,6 @@ SEARCH MODE
 		Requires two additional arguments, the path where to load the index
 		files and the base name of those.
 		e.g. --search /tmp/dblp-index/ indexname
-
-	ARGUMENTS
-		--lazy-ief
-			All the ief of every term in the vocabulary is usually loaded
-			before start the application; this speed up the further queries
-			but may require some time.
-			If you wish to start the application faster, use this option
-			(but queries resolving may be slower).
-
 )#";
 
 enum class Mode {
@@ -65,7 +56,6 @@ public:
 	QString dblpFilePath;
 	QString indexFolderPath;
 	QString baseIndexName;
-	bool lazyIefs = false;
 
 	int argc;
 	char **argv;
@@ -94,9 +84,6 @@ static int startSearchMode(Arguments args) {
 
 	// Global qml engine
 	QQmlEngine *engine = new QQmlEngine;
-//	engine->addImportPath("qml/modules");
-//	engine->addImportPath("qrc:/");
-//	engine->addImportPath(":/qml");
 	GuiEngine::instance(engine);
 
 	// Custom types registration
@@ -161,14 +148,14 @@ static int startSearchMode(Arguments args) {
 
 		// IR MODEL
 
-		irmodel = new IRModelIef(indexHandler);
+		irmodel = new IRModelIef(*indexHandler);
 
 		QObject::connect(irmodel, &IRModelIef::initStarted, [&splashWindow]() {
 			splashWindow.setStatus("Initializing IR Model");
 		});
 		QObject::connect(irmodel, &IRModelIef::initProgress, splashProgressor);
 
-		irmodel->init(args.lazyIefs);
+		irmodel->init();
 
 		// QUERY RESOLVER (gratis)
 		queryResolver = new QueryResolver(irmodel);
@@ -225,11 +212,6 @@ static Arguments parseArguments(int argc, char *argv[]) {
 		}
 
 		// Other options
-		// Lazy
-
-		else if (streq(arg, "--lazy-ief")) {
-			args.lazyIefs = true;
-		}
 	}
 
 	return args;
@@ -237,6 +219,8 @@ static Arguments parseArguments(int argc, char *argv[]) {
 
 int main(int argc, char *argv[])
 {
+//	map_reduce_tests();
+//	omp_tests();
 	PROF_FUNC_BEGIN
 
 	if (argc < 2) {

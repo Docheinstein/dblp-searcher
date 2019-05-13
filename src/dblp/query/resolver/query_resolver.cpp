@@ -1,12 +1,21 @@
 #include "query_resolver.h"
 #include "math.h"
+#include "commons/util/util.h"
 #include <dblp/index/handler/index_handler.h>
 #include "commons/globals/globals.h"
 #include "commons/const/const.h"
 #include "commons/config/config.h"
 #include "commons/profiler/profiler.h"
+#include <omp.h>
+#include <QMutex>
+#include <QThread>
 
 LOGGING(QueryResolver, true);
+
+struct ScoredIndexElementMatches {
+	QVector<IndexMatch> matches; // the matches should have the same serial
+	float score;
+};
 
 QueryResolver::QueryResolver(IRModel *irmodel)
 {
@@ -18,20 +27,37 @@ IRModel *QueryResolver::irModel()
 	return mIrModel;
 }
 
+static void computeElementsScoreCombiner(
+		const QHash<elem_serial, ScoredIndexElementMatches> &in,
+		QHash<elem_serial, ScoredIndexElementMatches> &out) {
+	for (auto in_it = in.cbegin(); in_it != in.cend(); in_it++) {
+		auto out_it = out.find(in_it.key());
+		if (out_it == out.cend()) {
+			_dd4("Combiner: inserting [e" << in_it.key() <<
+				"] for the first time w/ score = " << in_it.value().score);
+			out.insert(in_it.key(), in_it.value());
+		}
+		else {
+			const ScoredIndexElementMatches &in_siem = in_it.value();
+			ScoredIndexElementMatches &out_siem = out_it.value();
+			out_siem.score += in_siem.score;
+			out_siem.matches.append(in_siem.matches);
+			_dd4("Combiner: increased score of [e" << in_it.key() << "] of " <<
+				 in_siem.score << ", now = " << out_siem.score);
+		}
+	}
+}
+
 QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 	PROF_FUNC_BEGIN1
 
-	IndexHandler *index = mIrModel->index();
+	IndexHandler &index = mIrModel->index();
 
-	struct ScoredIndexElementMatches {
-		QVector<IndexMatch> matches; // the matches should have the same serial
-		float score;
-	};
+	QVector<QueryMatch> queryMatches;
 
 	QHash<elem_serial, ScoredIndexElementMatches> scoredPubs;
 	QHash<elem_serial, ScoredIndexElementMatches> scoredVenues;
 
-	QVector<QueryMatch> queryMatches;
 
 	QVector<IndexMatch> publicationMatches;
 	QVector<IndexMatch> venueMatches;
@@ -40,11 +66,25 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 
 	// Find matches (posts)
 
-	foreach (QueryBasePart *part, query.parts()) {
+	for (QueryBasePart *part : query.parts()) {
 
 		vv1("Resolving part of query: " << *part);
 
-		foreach (QString macroToken, part->tokens()) {
+		for (const QString &macroToken : part->tokens()) {
+
+			// If lazy ief is required, compute all the needed ief now (since its
+			// not thread safe to compute in omp for, and use a lock would be an overkill
+			// Those will be necessary for compute the elements score
+
+#ifdef LAZY_IEF
+			QStringList tokens = macroToken.split(
+						Const::Dblp::Query::TOKENS_SPLITTER,
+						QString::SplitBehavior::SkipEmptyParts);
+			for (auto it = tokens.cbegin(); it < tokens.cend(); it++) {
+				float ief = mIrModel->termScore(Util::String::sanitizeTerm(*it));
+				vv4("Computing ief(" << *it << ") now due lazy ief: " << ief);
+			}
+#endif
 
 			vv2("Resolving subpart for token: " << macroToken);
 
@@ -91,7 +131,7 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 				// Obviously we cannot use just ElementFieldType::Publication,
 				// otherwise we would throw away any other filter of the query part
 
-				index->findMatches(macroToken,
+				index.findMatches(macroToken,
 								searchFields & ElementFieldType::Publication,
 								publicationMatches);
 			}
@@ -105,7 +145,7 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 				// Obviously we cannot use just ElementFieldType::Venue,
 				// otherwise we would throw away any other filter of the query part
 
-				index->findMatches(macroToken,
+				index.findMatches(macroToken,
 								searchFields & ElementFieldType::Venue,
 								venueMatches);
 			}
@@ -118,42 +158,47 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 
 	PROF_BEGIN2(resolveQueryScoreComputing)
 
-	auto computeElementsScore = [this](
-				QVector<IndexMatch> &matches,
-				QHash<elem_serial, ScoredIndexElementMatches> &scoredMatches) {
+	#pragma omp declare reduction( \
+		computeElementsScoreReducer : \
+		QHash<elem_serial, ScoredIndexElementMatches> : \
+			computeElementsScoreCombiner(omp_in, omp_out))
 
-		// Foreach match
-		for (const IndexMatch &match : matches) {
+	auto computeElementsScore = [&](
+			const QVector<IndexMatch> &matches,
+			QHash<elem_serial, ScoredIndexElementMatches> &scoredMatches) {
+
+		#pragma omp parallel for reduction(computeElementsScoreReducer:scoredMatches)
+		for (int i = 0; i < matches.size(); i++) {
+			const IndexMatch &match = matches.at(i);
 
 			// Retrieve the current score for this element, if it doesn't exist
 			// insert a new one
 
 			if (!scoredMatches.contains(match.elementSerial)) {
-				dd4("Creating ScoredIndexMatches for element = " << efMatch.elementSerial);
+				dd4("Creating ScoredIndexMatches for element = " << match.elementSerial);
 				// With the no match (for now, than this efMatch will
 				// be pushed) and score = 0 (which will
 				// be increased later)
 				scoredMatches.insert(match.elementSerial, {{}, 0});
 			}
 
-			// Take the (existing) reference
 			auto scoredMatchIt = scoredMatches.find(match.elementSerial);
 
 			ASSERT(scoredMatchIt != scoredMatches.end(), "querying",
 				"ScoredIndexMatches not found; is this a programming error?");
 
-			ScoredIndexElementMatches &scoredMatches = scoredMatchIt.value();
+			ScoredIndexElementMatches &scoredElementMatches = scoredMatchIt.value();
+			float matchPartialScore = 0;
 
 			// Push this match
-			scoredMatches.matches.append(match);
-
-			float matchPartialScore = 0;
+			scoredElementMatches.matches.append(match);
 
 			// For each matched token inside this match, retrieve the ief
 			// and add it to the global score of the associated element
 			for (const QString &token : match.matchedTokens) {
-				float ief = mIrModel->termScore(token);
-				dd4("[e" << efMatch.elementSerial << "] ief(" << queryPartTerm << ") = " << ief );
+				float ief;
+				ief = mIrModel->termScore(token);
+				dd4("[e" << match.elementSerial << "] ief(" << token << ") = " << ief );
 				matchPartialScore += ief;
 			}
 
@@ -169,24 +214,19 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 				);
 
 				vv2("Giving bonus of " << phraseBonus
-				   << " to phrase: " << queryPartTerms.join(" "));
+				   << " to phrase: " << match.matchedTokens.join(" "));
 				matchPartialScore *= phraseBonus;
 			}
 
-#if DEBUG
-			QString s = DEC(match.elementSerial) + " += " +
-						FLT(matchPartialScore);
-#endif
 			// Add the score to the this scoredMatches (for a single element)
-			scoredMatches.score += matchPartialScore;
-#if DEBUG
-			s += FLT(scoredMatches.score);
+			scoredElementMatches.score += matchPartialScore;
 
-			dd3(s);
-#endif
+			dd3("[e" << DEC(match.elementSerial) + "] += " + FLT(matchPartialScore));
+			dd4("    = " + FLT(scoredElementMatches.score));
 		}
 	};
 
+	// Compute publications and venues scores
 	computeElementsScore(publicationMatches, scoredPubs);
 	computeElementsScore(venueMatches, scoredVenues);
 
@@ -196,7 +236,7 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 
 	PROF_BEGIN2(crossrefsCheck)
 
-	for (auto it = scoredPubs.begin(); it != scoredPubs.end(); it++) {
+	for (auto it = scoredPubs.cbegin(); it != scoredPubs.cend(); it++) {
 
 		const elem_serial pubSerial = it.key();
 		const ScoredIndexElementMatches &scoredPubMatches = it.value();
@@ -213,15 +253,15 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 		vv1("Checking crossref existence for element = " << pubSerial);
 
 		// Retrieve the crossref
-		if (mIrModel->index()->crossref(pubSerial, crossrefSerial)) {
+		if (mIrModel->index().crossref(pubSerial, crossrefSerial)) {
 			// Crossref found, check if we have crossrefSerial among
 			// our matches venues
 
 			dd2("Crossref found; " << pubSerial << " => " << crossrefSerial);
 
-			auto crossrefVenueIt = scoredVenues.find(crossrefSerial);
+			auto crossrefVenueIt = scoredVenues.constFind(crossrefSerial);
 
-			if (crossrefVenueIt != scoredVenues.end()) {
+			if (crossrefVenueIt != scoredVenues.cend()) {
 				// We have both a publication and the crossreffed venue among
 				// our pub matches and venue matches, enhance the score
 				// and push a pub+venue match
@@ -266,17 +306,17 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 			float score = scoredPubMatches.score *
 					mIrModel->bonusFactorForPublicationMatch();
 
-			vv2("Pushing pub match for [" << pubSerial <<
-				"] - score = " << score);
+			vv2("Pushing pub match for [" << pubSerial << "] - score = " << score);
 
 			queryMatches.append(QueryMatch::forPublication(
-									scoredPubMatches.matches, score));
+							scoredPubMatches.matches, score));
 		}
 	}
 
 	// VENUE matches (the venue not crossreferred yet)
 
-	for (auto it = scoredVenues.begin(); it != scoredVenues.end(); it++) {
+	for (auto it = scoredVenues.cbegin(); it != scoredVenues.cend(); it++) {
+
 		const elem_serial venueSerial = it.key();
 
 		if (crossReferredVenues.contains(venueSerial)) {
@@ -288,12 +328,11 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 
 		// Venue do not appear in any pub+venue, push it
 
-		float score = scoredVenueMatches.score *
-				mIrModel->bonusFactorForVenueMatch();
+		float score = scoredVenueMatches.score * mIrModel->bonusFactorForVenueMatch();
 
 		vv1("Pushing venue match for [" << venueSerial << "] - score = " << score);
 		queryMatches.append(QueryMatch::forVenue(
-								scoredVenueMatches.matches, score));
+						scoredVenueMatches.matches, score));
 	}
 
 	PROF_END(crossrefsCheck)

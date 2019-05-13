@@ -13,7 +13,7 @@ Loader::Loader(const QString &indexPath, const QString &baseIndexName)
 void Loader::run()
 {
 	IndexHandler handler(mIndexPath, mBaseIndexName);
-	IRModelIef irmodel(&handler);
+	IRModelIef irmodel(handler);
 	QueryResolver resolver(&irmodel);
 	sleep(1);
 

@@ -10,28 +10,29 @@ LOGGING(IRModelIef, true)
 
 IRModelIef::~IRModelIef() {}
 
-IRModelIef::IRModelIef(IndexHandler *indexHandler) : IRModel(indexHandler)
+IRModelIef::IRModelIef(IndexHandler &indexHandler) : IRModel(indexHandler)
 {
 
 }
 
-void IRModelIef::init(bool lazy)
+void IRModelIef::init()
 {
 	// Calling computeIefs() now will speed up any further call to termScore()
 	// but may require some time, for this reason the computing is parametrized
 	// at can be done either now or at runtime
-	if (lazy) {
-		dd("Not computing iefs now since lazy initialization has been required");
 
-		// Emit signals any way
-		emit initStarted();
-		emit initEnded();
-		return;
-	}
+#ifdef LAZY_IEF
+	dd("Not computing iefs now since lazy initialization has been required");
 
+	// Emit signals any way
+	emit initStarted();
+	emit initEnded();
+#else
 	// Compute all the iefs now (may require some time)
 	computeIefs();
-//	printIefs();
+#endif
+
+	printIefs();
 }
 
 float IRModelIef::termScore(const QString &term)
@@ -48,30 +49,31 @@ float IRModelIef::termScore(const QString &term)
 	if (ief < 0)
 		return 0;
 
-	// Ief has never been computed for the term, compute it, put in the map
-	// and return it
+	// Ief has never been computed for the term, compute it,
+	// put in the map and return it
 	ief = computeIef(term);
+
 	mIefs.insert(term, ief);
 
 	return ief;
 }
 
-float IRModelIef::bonusFactorPerPhraseTerm()
+float IRModelIef::bonusFactorPerPhraseTerm() const
 {
 	return 1.15f;
 }
 
-float IRModelIef::bonusFactorForPublicationMatch()
+float IRModelIef::bonusFactorForPublicationMatch() const
 {
 	return 1;
 }
 
-float IRModelIef::bonusFactorForVenueMatch()
+float IRModelIef::bonusFactorForVenueMatch() const
 {
 	return 1.1f;
 }
 
-float IRModelIef::bonusFactorForPublicationVenueMatch()
+float IRModelIef::bonusFactorForPublicationVenueMatch() const
 {
 	return 1.3f;
 }
@@ -94,7 +96,7 @@ void IRModelIef::computeIefs()
 	// in set; at the end of the post list, the size of the set contains
 	// the number of elements that contain the term.
 
-	const QMap<QString, IndexTermRef> &vocabulary = mIndex->vocabulary();
+	const QMap<QString, IndexTermRef> &vocabulary = mIndex.vocabulary();
 
 	const qint64 vocabularySize = vocabulary.size();
 
@@ -126,10 +128,10 @@ void IRModelIef::computeIefs()
 
 float IRModelIef::computeIef(const QString &term)
 {
-	auto termRefIt = mIndex->vocabulary().constFind(term);
+	auto termRefIt = mIndex.vocabulary().constFind(term);
 
 	// Term not present in the vocabulary
-	if (termRefIt == mIndex->vocabulary().end())
+	if (termRefIt == mIndex.vocabulary().cend())
 		return TERM_NOT_FOUND;
 
 	// Really compute the ief
@@ -139,9 +141,9 @@ float IRModelIef::computeIef(const QString &term)
 
 float IRModelIef::computeIef(const QMap<QString, IndexTermRef>::const_iterator &vocabularyEntry)
 {
-	static const double E = mIndex->identifiers().size();
+	static const double E = mIndex.identifiers().size();
 
-	// We have to invoke loadPosts() for each possible field
+	// We have to invoke findPosts() for each possible field
 
 	QSet<elem_serial> elementsWithTerm;
 
@@ -154,7 +156,8 @@ float IRModelIef::computeIef(const QMap<QString, IndexTermRef>::const_iterator &
 		// Take the posts that contains this term within this field
 		QVector<IndexPost> posts;
 
-		mIndex->findPosts(vocabularyEntry, type, posts);
+		// findPosts is already thread-safe, no need to lock it
+		mIndex.findPosts(vocabularyEntry, type, posts);
 
 		// At this point posts contains the posts of the term within the field,
 		// which may contain duplicate element id if an element.field contains
@@ -162,8 +165,7 @@ float IRModelIef::computeIef(const QMap<QString, IndexTermRef>::const_iterator &
 		// For this reason, we have to scan the posts and create another
 		// set from that avoids elements duplicates
 
-
-		foreach (IndexPost post, posts) {
+		for (const IndexPost &post : posts) {
 			// Push the element id
 			elementsWithTerm.insert(post.elementSerial);
 		}
@@ -183,17 +185,19 @@ float IRModelIef::computeIef(const QMap<QString, IndexTermRef>::const_iterator &
 	// in which the term occurs; the size of it is actually the ef_t
 	float ief_t = FLOAT(log10(E / ef_t));
 
+#if DEBUG
+	const QString &term = vocabularyEntry.key();
 	dd("E" << " = " << E);
 	dd("ef(" << term << ")" << " = " << ef_t);
 	dd("ief(" << term << ")" << " = " << ief_t);
-
+#endif
 	return ief_t;
 }
 
 void IRModelIef::printIefs()
 {
 #if VERBOSE
-	const int E = mIndex->identifiers().size();
+	const int E = mIndex.identifiers().size();
 
 	vv("==== IEFS ====");
 

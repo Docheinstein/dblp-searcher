@@ -39,6 +39,9 @@ DISTFILES += \
 	qml/main.qml
 	qml/splash.qml
 
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -fopenmp
+
 #QML_IMPORT_PATH += \
 #	$$PWD/qml/modules
 

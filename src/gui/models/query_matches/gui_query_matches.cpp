@@ -71,7 +71,7 @@ QVariant GuiQueryMatches::data(const QModelIndex &index, int role) const
 		QString identifier;
 		if (match.matchType() == QueryMatchType::Publication ||
 			match.matchType() == QueryMatchType::PublicationVenue) {
-			if (mIrModel->index()->identifier(
+			if (mIrModel->index().identifier(
 					match.publication().elementSerial(), identifier))
 				return identifier;
 		}
@@ -88,7 +88,7 @@ QVariant GuiQueryMatches::data(const QModelIndex &index, int role) const
 		QString identifier;
 		if (match.matchType() == QueryMatchType::Venue ||
 			match.matchType() == QueryMatchType::PublicationVenue) {
-			if (mIrModel->index()->identifier(
+			if (mIrModel->index().identifier(
 					match.venue().elementSerial(), identifier))
 				return identifier;
 		}

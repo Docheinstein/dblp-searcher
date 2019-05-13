@@ -8,18 +8,18 @@ class IndexHandler;
 class IRModel {
 public:
 	virtual ~IRModel();
-	IRModel(IndexHandler *indexHandler);
+	IRModel(IndexHandler &indexHandler);
 
 	virtual float termScore(const QString &term) = 0;
-	virtual float bonusFactorPerPhraseTerm();
-	virtual float bonusFactorForPublicationMatch();
-	virtual float bonusFactorForVenueMatch();
-	virtual float bonusFactorForPublicationVenueMatch();
+	virtual float bonusFactorPerPhraseTerm() const;
+	virtual float bonusFactorForPublicationMatch() const;
+	virtual float bonusFactorForVenueMatch() const;
+	virtual float bonusFactorForPublicationVenueMatch() const;
 
-	IndexHandler * index();
+	IndexHandler & index();
 
 protected:
-	IndexHandler *mIndex;
+	IndexHandler &mIndex;
 };
 
 #endif // IR_MODEL_H
