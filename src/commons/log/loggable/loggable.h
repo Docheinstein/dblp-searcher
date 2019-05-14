@@ -13,12 +13,16 @@
 	const char * clazz::logTag() const { return LOG_TAG; } \
 	bool clazz::canLog() const { return CAN_LOG; }
 
-#define TRACE	0
-#define DEBUG	0
-#define VERBOSE 0
-#define INFO	0
-#define WARN	1
-#define ERROR	1
+// Shut up every log level
+#define SILENT 1
+
+// Active log levels (SILENT must be 0)
+#define TRACE	(0 && !SILENT)
+#define DEBUG	(1 && !SILENT)
+#define VERBOSE (1 && !SILENT)
+#define INFO	(1 && !SILENT)
+#define WARN	(1 && !SILENT)
+#define ERROR	(1 && !SILENT)
 
 #if TRACE
 #define _tt(x) if (CAN_LOG) Logger::trace(LOG_TAG) << \
@@ -103,12 +107,12 @@
 #define ww(x)
 #endif
 
-#if ERROR
+#if ERROR && !SILENT
 #define _ee(x) if (CAN_LOG) Logger::error(LOG_TAG) << x
 #define ee(x) if (canLog()) Logger::error(logTag()) << x
 #else
 #define _ee(x)
-#define ee(x)s
+#define ee(x)
 #endif
 
 class Loggable

@@ -466,7 +466,8 @@ bool IndexHandler::findPosts(const QString &term,
 void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator vocabularyEntry,
 							 ElementFieldType field, QVector<IndexPost> &posts)
 {
-	PROF_FUNC_BEGIN
+	PROF_FUNC_BEGIN6
+
 	const IndexTermRef &ref = vocabularyEntry.value();
 
 	// Calculate the field relative position within the ref based on the field

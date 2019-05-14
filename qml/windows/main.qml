@@ -15,14 +15,14 @@ ApplicationWindow {
             return MS + "ms";
 
         const S = parseInt((ms % 60000) / 1000);
+        const SS = S + "." + parseInt((MS / 10)) + "s";
 
         if (ms < 60000)
-            return S + "s " + MS + "ms"
+            return SS;
 
         const M = parseInt(ms / 60000);
 
-
-        return M + "m " + S  + "s " + MS + "ms"
+        return M + "m " + SS;
     }
 
 

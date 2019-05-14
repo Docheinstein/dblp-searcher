@@ -75,6 +75,8 @@ int MainWindow::matchesCount()
 
 void MainWindow::doSearch(const QString &query)
 {
+	PROF_FUNC_BEGIN0
+
 	// Easter egg for profiling
 
 	if (query == QLatin1String("r")) {
@@ -95,6 +97,8 @@ void MainWindow::doSearch(const QString &query)
 			QtConcurrent::run(this, &MainWindow::doSearchReal, query);
 
 	mQueryWatcher.setFuture(queryFuture);
+
+	PROF_FUNC_END
 }
 
 QVector<QueryMatch> MainWindow::doSearchReal(const QString &queryString)
@@ -126,14 +130,14 @@ QVector<QueryMatch> MainWindow::doSearchReal(const QString &queryString)
 			   "; score = " << FLT(queryMatch.score()));
 		}
 	}
-
 #endif
 
-	PROF_FUNC_END
 
 	ii("Query took: " << queryTimer.elapsed() << "ms");
 
 	setQueryTime(INT(queryTimer.elapsed()));
+
+	PROF_FUNC_END
 
 	return matches;
 }
@@ -147,7 +151,9 @@ void MainWindow::searchStarted()
 
 void MainWindow::searchFinished()
 {
-	QVector<QueryMatch> matches = mQueryWatcher.result();
+	PROF_FUNC_BEGIN
+
+	const QVector<QueryMatch> &matches = mQueryWatcher.result();
 
 	ii("Search done; # results = " << matches.size());
 
@@ -156,5 +162,7 @@ void MainWindow::searchFinished()
 	//	emit matchesChanged();
 	emit matchesCountChanged();
 	setStatus(STATUS_RESOLVED);
+
+	PROF_FUNC_END
 }
 

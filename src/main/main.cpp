@@ -221,6 +221,7 @@ int main(int argc, char *argv[])
 {
 //	map_reduce_tests();
 //	omp_tests();
+//	insert_sort_tests();
 	PROF_FUNC_BEGIN
 
 	if (argc < 2) {

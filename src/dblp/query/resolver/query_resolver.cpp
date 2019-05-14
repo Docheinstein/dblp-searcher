@@ -12,11 +12,6 @@
 
 LOGGING(QueryResolver, true);
 
-struct ScoredIndexElementMatches {
-	QVector<IndexMatch> matches; // the matches should have the same serial
-	float score;
-};
-
 QueryResolver::QueryResolver(IRModel *irmodel)
 {
 	mIrModel = irmodel;
@@ -27,9 +22,19 @@ IRModel *QueryResolver::irModel()
 	return mIrModel;
 }
 
+struct ScoredIndexElementMatches {
+	QVector<IndexMatch> matches; // the matches should have the same serial
+	float score;
+};
+
+struct CrossrefsCheckReductionContainer {
+	QSet<elem_serial> crossrefVenues;
+	QVector<QueryMatch> matches;
+};
+
 static void computeElementsScoreCombiner(
-		const QHash<elem_serial, ScoredIndexElementMatches> &in,
-		QHash<elem_serial, ScoredIndexElementMatches> &out) {
+		QHash<elem_serial, ScoredIndexElementMatches> &out,
+		const QHash<elem_serial, ScoredIndexElementMatches> &in) {
 	for (auto in_it = in.cbegin(); in_it != in.cend(); in_it++) {
 		auto out_it = out.find(in_it.key());
 		if (out_it == out.cend()) {
@@ -48,16 +53,22 @@ static void computeElementsScoreCombiner(
 	}
 }
 
+static void checkCrossrefsCombiner(
+		CrossrefsCheckReductionContainer &out,
+		const CrossrefsCheckReductionContainer &in) {
+	_dd4("Combiner: matches was " << out.matches.size() << ", will be "
+		 << out.matches.size() + in.matches.size());
+	out.matches.append(in.matches);
+	out.crossrefVenues.unite(in.crossrefVenues);
+}
+
 QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 	PROF_FUNC_BEGIN1
 
 	IndexHandler &index = mIrModel->index();
 
-	QVector<QueryMatch> queryMatches;
-
 	QHash<elem_serial, ScoredIndexElementMatches> scoredPubs;
 	QHash<elem_serial, ScoredIndexElementMatches> scoredVenues;
-
 
 	QVector<IndexMatch> publicationMatches;
 	QVector<IndexMatch> venueMatches;
@@ -161,7 +172,7 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 	#pragma omp declare reduction( \
 		computeElementsScoreReducer : \
 		QHash<elem_serial, ScoredIndexElementMatches> : \
-			computeElementsScoreCombiner(omp_in, omp_out))
+			computeElementsScoreCombiner(omp_out, omp_in))
 
 	auto computeElementsScore = [&](
 			const QVector<IndexMatch> &matches,
@@ -232,14 +243,27 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 
 	PROF_END(resolveQueryScoreComputing)
 
-	QSet<elem_serial> crossReferredVenues;
+//	QSet<elem_serial> crossReferredVenues;
 
 	PROF_BEGIN2(crossrefsCheck)
 
-	for (auto it = scoredPubs.cbegin(); it != scoredPubs.cend(); it++) {
+	CrossrefsCheckReductionContainer crossrefCheckReductionContainer;
 
-		const elem_serial pubSerial = it.key();
-		const ScoredIndexElementMatches &scoredPubMatches = it.value();
+	const QList<elem_serial> &scoredPubsSerials = scoredPubs.keys();
+	const QList<ScoredIndexElementMatches> &scoredPubsElements = scoredPubs.values();
+
+	PROF_BEGIN3(crossrefsCheckPubs)
+
+	#pragma omp declare reduction( \
+		checkCrossrefsReducer : \
+		CrossrefsCheckReductionContainer : \
+			checkCrossrefsCombiner(omp_out, omp_in))
+
+	#pragma omp parallel for reduction(checkCrossrefsReducer:crossrefCheckReductionContainer)
+	for (int i = 0; i < scoredPubsElements.size(); i++) {
+
+		elem_serial scoredPubSerial = scoredPubsSerials.at(i);
+		const ScoredIndexElementMatches &scoredPub = scoredPubsElements.at(i);
 
 		// PUB+VENUE match
 
@@ -250,14 +274,14 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 		bool crossrefMatch = false;
 		elem_serial crossrefSerial;
 
-		vv1("Checking crossref existence for element = " << pubSerial);
+		vv1("Checking crossref existence for element = " << scoredPubSerial);
 
 		// Retrieve the crossref
-		if (mIrModel->index().crossref(pubSerial, crossrefSerial)) {
+		if (mIrModel->index().crossref(scoredPubSerial, crossrefSerial)) {
 			// Crossref found, check if we have crossrefSerial among
 			// our matches venues
 
-			dd2("Crossref found; " << pubSerial << " => " << crossrefSerial);
+			dd2("Crossref found; " << scoredPubSerial << " => " << crossrefSerial);
 
 			auto crossrefVenueIt = scoredVenues.constFind(crossrefSerial);
 
@@ -269,28 +293,34 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 					"this is actually a pub+venue match");
 
 				crossrefMatch = true; // do not push the publication
-									  // by itself later, but as a pub+venue now
+									  // by itself later, but now as a pub+venue now
 
-				crossReferredVenues.insert(crossrefSerial);
+//				crossReferredVenues.insert(crossrefSerial);
+				crossrefCheckReductionContainer.crossrefVenues.insert(crossrefSerial);
 
 				const ScoredIndexElementMatches &scoredVenueMatches = *crossrefVenueIt;
 
 				// Compute the score (at least the sum)
 
-				dd3("[" << pubSerial << "] score = " << scoredPubMatches.score);
+				dd3("[" << scoredPubSerial << "] score = " << scoredPub.score);
 				dd3("[" << crossrefSerial << "] score = " << scoredVenueMatches.score);
 				dd3("Bonus factor = " << mIrModel->bonusFactorForPublicationVenueMatch());
 
 				float enhancedScore =
-						(scoredPubMatches.score + scoredVenueMatches.score) *
+						(scoredPub.score + scoredVenueMatches.score) *
 						mIrModel->bonusFactorForPublicationVenueMatch();
 
-				vv2("Pushing pub+venue match for [" << pubSerial << "]" <<
+				vv2("Pushing pub+venue match for [" << scoredPubSerial << "]" <<
 					" => [" << crossrefSerial << "] - score = " << enhancedScore);
 
-				queryMatches.append(QueryMatch::forPublicationVenue(
-					scoredPubMatches.matches, scoredVenueMatches.matches,
-					enhancedScore));
+//				queryMatches.append(QueryMatch::forPublicationVenue(
+//					scoredPub.matches, scoredVenueMatches.matches,
+//					enhancedScore));
+
+				crossrefCheckReductionContainer.matches.append(
+							QueryMatch::forPublicationVenue(
+							   scoredPub.matches, scoredVenueMatches.matches,
+							   enhancedScore));
 			}
 			// else: the crossreffed venue is not among the matched venues
 		}
@@ -303,28 +333,50 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 			// using as query match score the publication score
 			dd2("Pubication to venue match crossref not satisfied");
 
-			float score = scoredPubMatches.score *
+			float score = scoredPub.score *
 					mIrModel->bonusFactorForPublicationMatch();
 
-			vv2("Pushing pub match for [" << pubSerial << "] - score = " << score);
+			vv2("Pushing pub match for [" << scoredPubSerial << "] - score = " << score);
 
-			queryMatches.append(QueryMatch::forPublication(
-							scoredPubMatches.matches, score));
+//			queryMatches.append(QueryMatch::forPublication(
+//							scoredPub.matches, score));
+			crossrefCheckReductionContainer.matches.append(
+						QueryMatch::forPublication(
+							scoredPub.matches, score));
 		}
 	}
 
+	PROF_END(crossrefsCheckPubs)
+
+	dd1("Pubs count # = " << scoredPubs.size());
+	dd1("Venues count # = " << scoredVenues.size());
+	dd1("Crossrefed venues count # = " << crossrefCheckReductionContainer.matches.size());
+	dd1("Crossrefed venues count # = " << crossrefCheckReductionContainer.crossrefVenues.size());
+
+	QVector<QueryMatch> &queryMatches = crossrefCheckReductionContainer.matches;
+
 	// VENUE matches (the venue not crossreferred yet)
+	const QList<elem_serial> &scoredVenuesSerials = scoredVenues.keys();
+	const QList<ScoredIndexElementMatches> &scoredVenuesElements = scoredVenues.values();
 
-	for (auto it = scoredVenues.cbegin(); it != scoredVenues.cend(); it++) {
+	#pragma omp declare reduction( \
+		insertVenueInQueryMatchReducer : \
+		QVector<QueryMatch> : \
+			omp_out.append(omp_in))
 
-		const elem_serial venueSerial = it.key();
+	#pragma omp parallel for reduction(insertVenueInQueryMatchReducer:queryMatches)
+	for (int i = 0; i < scoredVenuesSerials.size(); i++) {
 
-		if (crossReferredVenues.contains(venueSerial)) {
+		const elem_serial venueSerial = scoredVenuesSerials.at(i);
+//		const elem_serial venueSerial = it.key();
+
+		if (crossrefCheckReductionContainer.crossrefVenues.contains(venueSerial)) {
 			dd1("Venue [" << venueSerial << "] is already part of a pub+venue; ignoring it");
 			continue;
 		}
 
-		const ScoredIndexElementMatches &scoredVenueMatches = it.value();
+//		const ScoredIndexElementMatches &scoredVenueMatches = it.value();
+		const ScoredIndexElementMatches &scoredVenueMatches = scoredVenuesElements.at(i);
 
 		// Venue do not appear in any pub+venue, push it
 

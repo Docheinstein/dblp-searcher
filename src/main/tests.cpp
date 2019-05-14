@@ -8,10 +8,53 @@
 #include <QMutex>
 #include <QHash>
 
-#define abs(x)   (x<0 ? -x : x)
-#define LARGENUM 2147483647
 #define N        1000000
 int data[N];
+
+
+typedef struct Element {
+	int serial;
+	float score;
+} Element;
+
+bool operator <(const Element &e1, const Element &e2) {
+	return e1.score < e2.score;
+}
+
+[[noreturn]] void insert_sort_tests() {
+	srand(time(nullptr));
+
+	QMap<float, Element> hash;
+	QVector<Element> vect;
+
+	PROF_BEGIN(hash)
+		PROF_BEGIN1(insertHash)
+		for (int i = 0; i < N; i++) {
+			float sc = rand() % 10000 / FLOAT(100);
+			hash.insert(sc, {i, sc});
+		}
+		const QList<Element> hashValues = hash.values();
+		PROF_END(insertHash)
+	PROF_END(hash)
+
+	PROF_BEGIN(vector)
+
+		PROF_BEGIN1(insertVector)
+		for (int i = 0; i < N; i++) {
+			float sc = rand() % 10000 / FLOAT(100);
+			vect.append({i, sc});
+		}
+		PROF_END(insertVector)
+		PROF_BEGIN1(sortVector)
+		std::sort(vect.begin(), vect.end());
+		PROF_END(sortVector)
+
+	PROF_END(vector)
+
+	prof_print();
+
+	exit(-1);
+}
 
 [[noreturn]] void omp_tests() {
 //	int i;
