@@ -1,10 +1,14 @@
 #include "gui_query_matches.h"
 #include "dblp/irmodel/base/ir_model.h"
 
+#define NOT_FOUND -1
+
 QHash<int, QByteArray> GuiQueryMatches::GUI_QUERY_MATCH_ROLES = {
+	{GuiQueryMatchRolePublicationSerial, "publicationSerial"},
 	{GuiQueryMatchRolePublicationIdentifier, "publicationIdentifier"},
 	{GuiQueryMatchRolePublicationElementType, "publicationElementType"},
 
+	{GuiQueryMatchRoleVenueSerial, "venueSerial"},
 	{GuiQueryMatchRoleVenueIdentifier, "venueIdentifier"},
 	{GuiQueryMatchRoleVenueElementType, "venueElementType"},
 
@@ -66,6 +70,12 @@ QVariant GuiQueryMatches::data(const QModelIndex &index, int role) const
 	const QueryMatch &match = mMatches.at(index.row()).model();
 
 	switch (role) {
+	case GuiQueryMatchRolePublicationSerial:
+		if (match.matchType() == QueryMatchType::Publication ||
+			match.matchType() == QueryMatchType::PublicationVenue) {
+			return match.publication().elementSerial();
+		}
+		return NOT_FOUND;
 	case GuiQueryMatchRolePublicationIdentifier: {
 		// Retrieve the identifier based on the serial
 		QString identifier;
@@ -83,6 +93,12 @@ QVariant GuiQueryMatches::data(const QModelIndex &index, int role) const
 			return elementTypeString(match.publication().elementType());
 		}
 		return "<unknown>";
+	case GuiQueryMatchRoleVenueSerial:
+		if (match.matchType() == QueryMatchType::Venue ||
+			match.matchType() == QueryMatchType::PublicationVenue) {
+			return match.venue().elementSerial();
+		}
+		return NOT_FOUND;
 	case GuiQueryMatchRoleVenueIdentifier: {
 		// Retrieve the identifier based on the serial
 		QString identifier;
@@ -103,11 +119,11 @@ QVariant GuiQueryMatches::data(const QModelIndex &index, int role) const
 	case GuiQueryMatchRoleType:
 		switch (match.matchType()) {
 		case QueryMatchType::Publication:
-			return "publication";
+			return GuiQueryMatchType::Publication;
 		case QueryMatchType::Venue:
-			return "venue";
+			return GuiQueryMatchType::Venue;
 		case QueryMatchType::PublicationVenue:
-			return "publication_venue";
+			return GuiQueryMatchType::PublicationVenue;
 		}
 	case GuiQueryMatchRoleScore:
 		return match.score();

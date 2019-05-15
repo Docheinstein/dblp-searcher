@@ -27,7 +27,7 @@ Window {
         id: splashLayout
         spacing: 20
         anchors.top: parent.top
-        anchors.topMargin: splashContainer.height / 2 + 30
+        anchors.topMargin: splash.height / 2 + 30
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 0
         anchors.right: parent.right

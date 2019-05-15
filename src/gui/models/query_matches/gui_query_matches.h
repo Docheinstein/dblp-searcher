@@ -31,10 +31,14 @@ public:
 
 private:
 	enum GuiQueryMatchRole {
-		GuiQueryMatchRolePublicationIdentifier = Qt::UserRole + 1,
+		GuiQueryMatchRolePublicationSerial = Qt::UserRole + 1,
+		GuiQueryMatchRolePublicationIdentifier,
 		GuiQueryMatchRolePublicationElementType,
+
+		GuiQueryMatchRoleVenueSerial,
 		GuiQueryMatchRoleVenueIdentifier,
 		GuiQueryMatchRoleVenueElementType,
+
 		GuiQueryMatchRoleType,
 		GuiQueryMatchRoleScore,
 		GuiQueryMatchRoleRank,

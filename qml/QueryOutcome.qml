@@ -11,25 +11,25 @@ ColumnLayout {
     Label {
         id: queryOutcomeQueryTime
         color: "#262a27"
-        text: "Query time: " + humanTime(QueryResolver.queryTime)
+        text: "Query time: " + humanTime(MainWindow.queryTime)
         font.bold: true
         Layout.topMargin: 10
-        visible: QueryResolver.status === QueryResolver.Done
+        visible: MainWindow.queryStatus === MainWindow.Done
         Layout.fillWidth: true
     }
 
     Label {
         id: queryOutcomeMatchesCount
-        text: "Query matches: " + QueryResolver.matchesCount
+        text: "Query matches: " + MainWindow.matchesCount
         font.bold: true
-        visible: QueryResolver.status === QueryResolver.Done
+        visible: MainWindow.queryStatus === MainWindow.Done
         Layout.fillWidth: true
     }
 
     Rectangle {
         id: queryOutcomeMatchesSeparator
         height: 1
-        visible: QueryResolver.status === QueryResolver.Done
+        visible: MainWindow.queryStatus === MainWindow.Done
         color: "#80282828"
         Layout.bottomMargin: 10
         Layout.topMargin: 10
@@ -45,14 +45,14 @@ ColumnLayout {
             id: queryOutcomeQueryProgress
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
-            visible: QueryResolver.status === QueryResolver.Resolving
+            visible: MainWindow.queryStatus === MainWindow.Resolving
         }
 
         ListView {
             id: queryOutcomeResults
             clip: true
             anchors.fill: parent
-            visible: QueryResolver.status === QueryResolver.Done
+            visible: MainWindow.queryStatus === MainWindow.Done
             ScrollBar.vertical: ScrollBar {
                 active: true
                 policy: ScrollBar.AlwaysOn
@@ -61,10 +61,18 @@ ColumnLayout {
 
             // == QUERY MATCH ==
             delegate: Loader {
+                id: queryMatchLoader
                 source: "QueryMatch.qml"
+                property variant queryOutcomeResultsRef: queryOutcomeResults
+
+                Binding {
+                    target: queryMatchLoader.item
+                    property: "parentRef"
+                    value: queryOutcomeResults
+                }
             }
 
-            model: QueryResolver.matches
+            model: MainWindow.matches
 
 //                model: ListModel {
 //                    ListElement {

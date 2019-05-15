@@ -1,27 +1,31 @@
 import QtQuick 2.4
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
+import DblpSearcher 1.0
 
 Rectangle {
     readonly property string publicationColor: "#f7eccd"
     readonly property string venueColor: "#d5eded"
     readonly property string publicationVenueColor: "#dcf4de"
+    readonly property string linkColor: "steelblue"
 
-    function openElementDetails() {
-//       stackView.push("ElementDetails.qml")
+    property QtObject parentRef; // Bound from outside
+
+    function openElementDetails(serial) {
+        MainWindow.openElementDetails(serial)
     }
 
     id: queryMatch
     height: queryMatchLayout.implicitHeight
-    width: queryResults.width
+    width: parentRef.width
     color: {
-        if (model.type === "publication") {
+        if (model.type === QueryMatchType.Publication) {
             publicationColor
         }
-        else if (model.type === "venue" ){
+        else if (model.type === QueryMatchType.Venue ){
             venueColor
         }
-        else if (model.type === "publication_venue") {
+        else if (model.type === QueryMatchType.PublicationVenue) {
             publicationVenueColor
         } else {
             "white"
@@ -69,9 +73,9 @@ Rectangle {
                 Layout.fillWidth: true
 
                 Label {
-                    id: publicationType
-                    visible: model.type === "publication" ||
-                             model.type === "publication_venue"
+                    id: queryMatchPublicationType
+                    visible: model.type === QueryMatchType.Publication ||
+                             model.type === QueryMatchType.PublicationVenue
                     text: model.publicationElementType
                     Layout.fillWidth: true
                     font.pointSize: 10
@@ -79,26 +83,26 @@ Rectangle {
                 }
 
                 Label {
-                    id: publicationIdentifier
-                    visible: model.type === "publication" ||
-                             model.type === "publication_venue"
+                    id: queryMatchPublicationIdentifier
+                    visible: model.type === QueryMatchType.Publication ||
+                             model.type === QueryMatchType.PublicationVenue
                     text: model.publicationIdentifier
                     Layout.fillWidth: true
-                    color: "steelblue"
+                    color: linkColor
                     font.italic: true
                     font.underline: true
 
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: openElementDetails()
+                        onClicked: openElementDetails(model.publicationSerial)
                     }
                 }
 
                 Label {
-                    id: venueType
-                    visible: model.type === "venue" ||
-                             model.type === "publication_venue"
+                    id: queryMatchVenueType
+                    visible: model.type === QueryMatchType.Venue ||
+                             model.type === QueryMatchType.PublicationVenue
                     text: model.venueElementType
                     Layout.fillWidth: true
                     font.pointSize: 10
@@ -106,19 +110,19 @@ Rectangle {
                 }
 
                 Label {
-                    id: venueIdentifier
-                    visible: model.type === "venue" ||
-                             model.type === "publication_venue"
+                    id: queryMatchVenueIdentifier
+                    visible: model.type === QueryMatchType.Venue ||
+                             model.type === QueryMatchType.PublicationVenue
                     text: model.venueIdentifier
                     Layout.fillWidth: true
-                    color: "steelblue"
+                    color: linkColor
                     font.italic: true
                     font.underline: true
 
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: openElementDetails()
+                        onClicked: openElementDetails(model.venueSerial)
                     }
                 }
 
@@ -126,7 +130,7 @@ Rectangle {
         }
 
         Rectangle  {
-            id: rectangle
+            id: queryMatchDivider
             height: 1
             color: "#4c292929"
             Layout.fillWidth: true

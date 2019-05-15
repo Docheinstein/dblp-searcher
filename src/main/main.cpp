@@ -15,10 +15,16 @@
 #include "commons/profiler/profiler.h"
 #include "gui/splash/gui_splash_window.h"
 #include "gui/main/gui_main_window.h"
-#include "gui/resolver/gui_query_resolver.h"
+#include "gui/models/element_details/gui_element_details.h"
+//#include "gui/resolver/gui_query_resolver.h"
 #include <QQmlComponent>
 
-#define QML_REGISTER_BASE "DblpSearcher"
+#define QML_URI				"DblpSearcher"
+#define QML_VERSION_MAJOR	1
+#define QML_REVISION		0
+
+#define QML_REGISTRAR QML_URI, QML_VERSION_MAJOR, QML_REVISION
+
 
 static const char * const HELP =
 R"#(NAME
@@ -91,15 +97,25 @@ static int startSearchMode(Arguments args) {
 	GuiEngine::instance(engine);
 
 	// Custom types registration
-//	qmlRegisterType<MainWindow>(QML_REGISTER_BASE "MainWindow", 1, 0, "MainWindow");
+	// - singletons
 	qmlRegisterSingletonType<GuiSplashWindow>(
-		QML_REGISTER_BASE, 1, 0, GUI_SPLASH_WINDOW_QML_NAME,
+		QML_REGISTRAR, GUI_SPLASH_WINDOW_QML_NAME,
 		&GuiSplashWindow::qmlInstance
 	);
-	qmlRegisterSingletonType<GuiQueryResolver>(
-		QML_REGISTER_BASE, 1, 0, GUI_QUERY_RESOLVER_QML_NAME,
-		&GuiQueryResolver::qmlInstance
+	qmlRegisterSingletonType<GuiMainWindow>(
+		QML_REGISTRAR, GUI_MAIN_WINDOW_QML_NAME,
+		&GuiMainWindow::qmlInstance
 	);
+	// - instantiable
+	qmlRegisterType<GuiElementDetails>(
+		QML_REGISTRAR, GUI_ELEMENT_DETAILS_QML_NAME
+	);
+	// - enums
+	qmlRegisterUncreatableType<GuiQueryMatchType>(
+		QML_REGISTRAR, GUI_QUERY_MATCH_TYPE_QML_NAME,
+		"Not instantiable"
+	);
+
 
 	IndexHandler *indexHandler;
 	IRModelIef *irmodel;
@@ -107,7 +123,6 @@ static int startSearchMode(Arguments args) {
 
 	GuiSplashWindow &guiSplashWindow = GuiSplashWindow::instance();
 	GuiMainWindow &guiMainWindow = GuiMainWindow::instance();
-	GuiQueryResolver &guiQueryResolver = GuiQueryResolver::instance();
 
 	if (!guiSplashWindow.create())
 		dblpSearcherAbort("Error occurred while creating SplashWindow");
@@ -118,7 +133,7 @@ static int startSearchMode(Arguments args) {
 	guiSplashWindow.setShown(true);
 
 	// Load async
-	QtConcurrent::run([&args, &guiSplashWindow, &guiMainWindow, &guiQueryResolver,
+	QtConcurrent::run([&args, &guiSplashWindow, &guiMainWindow,
 					  &indexHandler, &irmodel, &queryResolver]() {
 
 		auto splashProgressor = [&guiSplashWindow](double progress) {
@@ -168,7 +183,7 @@ static int startSearchMode(Arguments args) {
 		queryResolver = new QueryResolver(irmodel);
 
 		// Set the resolver
-		guiQueryResolver.setResolver(queryResolver);
+		guiMainWindow.setResolver(queryResolver);
 
 		// Load of everything finished, show main window
 		qDebug() << ">>> Going to HIDE splash and show main window";

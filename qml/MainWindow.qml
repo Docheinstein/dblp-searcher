@@ -5,9 +5,13 @@ import QtQuick.Layouts 1.1
 import DblpSearcher 1.0
 
 ApplicationWindow {
+    // Consts
+
     readonly property string publicationColor: "#f7eccd"
     readonly property string venueColor: "#d5eded"
     readonly property string publicationVenueColor: "#dcf4de"
+
+    // Funcs
 
     function humanTime(ms) {
         const MS = ms % 1000;
@@ -26,10 +30,37 @@ ApplicationWindow {
         return M + "m " + SS;
     }
 
-    function doSearch() {
+    function clearStack() {
         mainStackView.pop(null)
-        QueryResolver.doSearch(mainSearchBar.text)
     }
+
+    function doSearch() {
+        clearStack()
+        MainWindow.doSearch(mainSearchBar.text)
+    }
+
+    // Signals binding
+
+    Connections {
+        target: MainWindow
+        onOpenElementDetailsRequired: {
+            console.log("Element details opening required for: " + serial)
+            console.log("Going to push:" + Qt.resolvedUrl("ElementDetails.qml"))
+            mainStackView.push(
+                "ElementDetails.qml",
+                {
+                    "serial": serial
+                }
+            )
+        }
+
+        onPopViewRequired: {
+            console.log("Stackview pop required")
+            mainStackView.pop()
+        }
+    }
+
+    // View
 
     id: main
     visible: true
@@ -197,7 +228,13 @@ ApplicationWindow {
     }
 }
 
+
+
+
+
+
+
 /*##^## Designer {
-    D{i:18;anchors_height:30}D{i:19;anchors_height:30}D{i:20;anchors_height:30}D{i:11;anchors_width:800}
+    D{i:19;anchors_height:30}D{i:20;anchors_height:30}D{i:21;anchors_height:30}D{i:12;anchors_width:800}
 }
  ##^##*/
