@@ -9,12 +9,12 @@
 
 #define LOGGING(clazz, enabled) \
 	static bool CAN_LOG = enabled; \
-	static const char * LOG_TAG = #clazz; \
+	static const char * const LOG_TAG = #clazz; \
 	const char * clazz::logTag() const { return LOG_TAG; } \
 	bool clazz::canLog() const { return CAN_LOG; }
 
 // Shut up every log level
-#define SILENT 1
+#define SILENT 0
 
 // Active log levels (SILENT must be 0)
 #define TRACE	(0 && !SILENT)

@@ -1,13 +1,14 @@
 import QtQuick 2.4
 import QtQuick.Window 2.4
 import QtQuick.Controls 2.4
+import DblpSearcher 1.0
 
 Window {
-    id: splashWindow
+    id: splashContainer
     color: "transparent"
     modality: Qt.ApplicationModal
     flags: Qt.SplashScreen
-    visible: _splash.visible
+    visible: SplashWindow.shown
 
     //    x: (Screen.width - splash.width) / 2
     //    y: (Screen.height - splash.height) / 2
@@ -16,7 +17,7 @@ Window {
     title: "Dblp Searcher"
 
     Image {
-        id: splashImage
+        id: splashBackground
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
         source: "qrc:/img/splash.png"
@@ -26,7 +27,7 @@ Window {
         id: splashLayout
         spacing: 20
         anchors.top: parent.top
-        anchors.topMargin: splashWindow.height / 2 + 30
+        anchors.topMargin: splashContainer.height / 2 + 30
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 0
         anchors.right: parent.right
@@ -37,7 +38,7 @@ Window {
         Text {
             id: splashText
             color: "#363636"
-            text: _splash.status
+            text: SplashWindow.status
             font.pointSize: 11
             renderType: Text.NativeRendering
             anchors.left: parent.left
@@ -48,14 +49,12 @@ Window {
         }
 
         ProgressBar {
-            id: progressBar
+            id: splashProgress
             anchors.horizontalCenter: parent.horizontalCenter
-            value: _splash.progress
+            value: SplashWindow.progress
         }
 
     }
-
-//    Component.onCompleted: visible = true
 }
 
 

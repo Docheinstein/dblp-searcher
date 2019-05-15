@@ -1,12 +1,12 @@
 <RCC>
     <qresource prefix="/qml">
-        <file alias="splash.qml">qml/windows/splash.qml</file>
-        <file alias="main.qml">qml/windows/main.qml</file>
-        <file alias="QueryMatch.qml">qml/components/QueryMatch.qml</file>
+		<file alias="SplashWindow.qml">qml/SplashWindow.qml</file>
+		<file alias="MainWindow.qml">qml/MainWindow.qml</file>
     </qresource>
     <qresource prefix="/img">
         <file alias="search.png">res/images/search.png</file>
         <file alias="dblp-logo.png">res/images/dblp-logo.png</file>
         <file alias="splash.png">res/images/splash.png</file>
+        <file alias="back.png">res/images/back.png</file>
     </qresource>
 </RCC>

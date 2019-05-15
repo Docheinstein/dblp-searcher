@@ -30,23 +30,14 @@ include(DblpSearcher.pri)
 RESOURCES += \
 	main.qrc
 
-
-OTHER_FILES += \
-	qml/main.qml
-	qml/splash.qml
-
-DISTFILES += \
-	qml/main.qml
-	qml/splash.qml
-
 QMAKE_CXXFLAGS += -fopenmp
 LIBS += -fopenmp
 
-#QML_IMPORT_PATH += \
-#	$$PWD/qml/modules
+#QML_IMPORT_PATH += $$PWD/qml
 
-#QML_DESIGNER_IMPORT_PATH += \
-#	$$PWD/qml/modules
+#QML2_IMPORT_PATH += $$PWD/qml
+
+#QML_DESIGNER_IMPORT_PATH += $$PWD/qml
 
 
 # Default rules for deployment.

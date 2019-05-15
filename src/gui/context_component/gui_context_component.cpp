@@ -1,5 +1,4 @@
-#include "gui_component.h"
-
+#include "gui_context_component.h"
 #include <QQmlEngine>
 #include <QQmlComponent>
 #include <QQmlContext>
@@ -7,24 +6,20 @@
 #include "commons/util/util.h"
 #include "gui/engine/gui_engine.h"
 
-LOGGING(GuiComponent, true)
-
-GuiComponent::~GuiComponent()
+bool GuiContextComponent::create()
 {
-	delete mComponent;
-	delete mContext;
-}
+//	GuiEngine::instance().engine()->setObjectOwnership(this, ownership());
 
-bool GuiComponent::create()
-{
-	QUrl qmlResource = Util::Qml::resourceUrl(qmlResourceName());
+	QUrl qmlResource = Util::Qml::resourceUrl(qmlName());
 
 	vv("Going to create GUI component; " <<
 	   "resource: '" << qmlResource << "' | " <<
-	   "name: '" << qmlName() << "'");
+	   "context name: '" << contextName() << "'");
 
-	mContext = new QQmlContext(GuiEngine::instance().engine()->rootContext());
-	mContext->setContextProperty(qmlName(), this);
+//	mContext = new QQmlContext(GuiEngine::instance().engine()->rootContext());
+//	mContext->setContextProperty(qmlName(), this);
+
+	GuiEngine::instance().engine()->rootContext()->setContextProperty(contextName(), this);
 
 	mComponent = new QQmlComponent(GuiEngine::instance().engine(), qmlResource);
 
@@ -35,13 +30,12 @@ bool GuiComponent::create()
 		QEventLoop loop;
 
 		// Detect when the component has been created
-		QObject::connect(this, &GuiComponent::componentCreated,
+		QObject::connect(this, &GuiContextComponent::componentCreated,
 						 &loop, &QEventLoop::quit);
-
 
 		// Wait for QQmlComponent to load the qml file before create the component
 		QObject::connect(mComponent, &QQmlComponent::statusChanged,
-						 this, &GuiComponent::createComponent);
+						 this, &GuiContextComponent::createComponent);
 
 		// Double check, just in case...
 		if (!mComponent->isReady()) {
@@ -60,18 +54,16 @@ bool GuiComponent::create()
 	return !mComponent->isError();
 }
 
-void GuiComponent::createComponent()
+void GuiContextComponent::createComponent()
 {
 	if (mComponent->isReady()) {
-		vv("Actually creating component '" << qmlResourceName() << "'");
-		mComponent->create(mContext);
+		vv("Actually creating component '" << qmlName() << "'");
+		mComponent->create();
 		emit componentCreated();
 	}
 	else if (mComponent->isError()) {
-		ee("Errors occurred while creating component '" << qmlResourceName() << "'");
+		ee("Errors occurred while creating component '" << qmlName() << "'");
 		ee("Reason: " << mComponent->errorString());
 		emit componentCreated();
 	}
 }
-
-
