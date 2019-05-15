@@ -1,16 +1,15 @@
-#ifndef SPLASH_WINDOW_H
-#define SPLASH_WINDOW_H
+#ifndef GUI_SPLASH_WINDOW_H
+#define GUI_SPLASH_WINDOW_H
 
-#define SPLASH_WINDOW_QML_NAME "SplashWindow"
-#define SPLASH_WINDOW_CONTEXT_NAME "_splash"
+#define GUI_SPLASH_WINDOW_QML_NAME "SplashWindow"
 
 #include <QObject>
-#include "gui/context_component/gui_context_component.h"
+#include "gui/base/component/gui_component.h"
 
 class QQmlEngine;
 class QJSEngine;
 
-class SplashWindow : public GuiContextComponent {
+class GuiSplashWindow : public GuiComponent {
 
 	Q_OBJECT
 
@@ -19,7 +18,7 @@ class SplashWindow : public GuiContextComponent {
 
 public:
 	static QObject * qmlInstance(QQmlEngine *qeng, QJSEngine *jseng);
-	static SplashWindow & instance();
+	static GuiSplashWindow & instance();
 
 	QString status();
 	void setStatus(const QString &status);
@@ -31,13 +30,14 @@ signals:
 	void statusChanged();
 	void progressChanged();
 
-protected:
+private:
 	QString qmlName() override;
-	QString contextName() override;
 
 	QString mStatus = "";
+
+	double mLastNotifiedProgress = 0;
 	double mProgress = 0;
 
 };
 
-#endif // SPLASH_WINDOW_H
+#endif // GUI_SPLASH_WINDOW_H

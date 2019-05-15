@@ -13,7 +13,9 @@
 #include "commons/globals/globals.h"
 #include "main/tests.cpp"
 #include "commons/profiler/profiler.h"
-#include "gui/splash/splash_window.h"
+#include "gui/splash/gui_splash_window.h"
+#include "gui/main/gui_main_window.h"
+#include "gui/resolver/gui_query_resolver.h"
 #include <QQmlComponent>
 
 #define QML_REGISTER_BASE "DblpSearcher"
@@ -90,28 +92,37 @@ static int startSearchMode(Arguments args) {
 
 	// Custom types registration
 //	qmlRegisterType<MainWindow>(QML_REGISTER_BASE "MainWindow", 1, 0, "MainWindow");
-	qmlRegisterSingletonType<SplashWindow>(
-		QML_REGISTER_BASE, 1, 0, SPLASH_WINDOW_QML_NAME,
-		&SplashWindow::qmlInstance
+	qmlRegisterSingletonType<GuiSplashWindow>(
+		QML_REGISTER_BASE, 1, 0, GUI_SPLASH_WINDOW_QML_NAME,
+		&GuiSplashWindow::qmlInstance
+	);
+	qmlRegisterSingletonType<GuiQueryResolver>(
+		QML_REGISTER_BASE, 1, 0, GUI_QUERY_RESOLVER_QML_NAME,
+		&GuiQueryResolver::qmlInstance
 	);
 
 	IndexHandler *indexHandler;
 	IRModelIef *irmodel;
 	QueryResolver *queryResolver;
 
-	SplashWindow &splashWindow = SplashWindow::instance();
+	GuiSplashWindow &guiSplashWindow = GuiSplashWindow::instance();
+	GuiMainWindow &guiMainWindow = GuiMainWindow::instance();
+	GuiQueryResolver &guiQueryResolver = GuiQueryResolver::instance();
 
-	if (!splashWindow.create())
+	if (!guiSplashWindow.create())
 		dblpSearcherAbort("Error occurred while creating SplashWindow");
 
-	splashWindow.setShown(true);
+	if (!guiMainWindow.create())
+		dblpSearcherAbort("Error occurred while creating SplashWindow");
+
+	guiSplashWindow.setShown(true);
 
 	// Load async
-	QtConcurrent::run([&args, &splashWindow, // &mainWindow,
+	QtConcurrent::run([&args, &guiSplashWindow, &guiMainWindow, &guiQueryResolver,
 					  &indexHandler, &irmodel, &queryResolver]() {
 
-		auto splashProgressor = [&splashWindow](double progress) {
-			splashWindow.setProgress(progress);
+		auto splashProgressor = [&guiSplashWindow](double progress) {
+			guiSplashWindow.setProgress(progress);
 		};
 
 		// INDEX HANDLER
@@ -121,21 +132,21 @@ static int startSearchMode(Arguments args) {
 		// Connect to signals for detect progress
 
 		// Keys
-		QObject::connect(indexHandler, &IndexHandler::keysLoadStarted, [&splashWindow]() {
-			splashWindow.setStatus("Loading index file: keys");
+		QObject::connect(indexHandler, &IndexHandler::keysLoadStarted, [&guiSplashWindow]() {
+			guiSplashWindow.setStatus("Loading index file: keys");
 		});
 		QObject::connect(indexHandler, &IndexHandler::keysLoadProgress, splashProgressor);
 
 		// Vocabulary
-		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadStarted, [&splashWindow]() {
-			splashWindow.setStatus("Loading index file: vocabulary");
+		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadStarted, [&guiSplashWindow]() {
+			guiSplashWindow.setStatus("Loading index file: vocabulary");
 		});
 		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadProgress, splashProgressor);
 
 		// Crossrefs & Articles journals
 		// Do both on the same status
-		QObject::connect(indexHandler, &IndexHandler::crossrefsLoadStarted, [&splashWindow]() {
-			splashWindow.setStatus("Loading index file: crossrefs");
+		QObject::connect(indexHandler, &IndexHandler::crossrefsLoadStarted, [&guiSplashWindow]() {
+			guiSplashWindow.setStatus("Loading index file: crossrefs");
 		});
 		QObject::connect(indexHandler, &IndexHandler::crossrefsLoadProgress,
 						 splashProgressor);
@@ -146,8 +157,8 @@ static int startSearchMode(Arguments args) {
 
 		irmodel = new IRModelIef(*indexHandler);
 
-		QObject::connect(irmodel, &IRModelIef::initStarted, [&splashWindow]() {
-			splashWindow.setStatus("Initializing IR Model");
+		QObject::connect(irmodel, &IRModelIef::initStarted, [&guiSplashWindow]() {
+			guiSplashWindow.setStatus("Initializing IR Model");
 		});
 		QObject::connect(irmodel, &IRModelIef::initProgress, splashProgressor);
 
@@ -156,98 +167,15 @@ static int startSearchMode(Arguments args) {
 		// QUERY RESOLVER (gratis)
 		queryResolver = new QueryResolver(irmodel);
 
-		// Load of everything finished, show main window
-
-		qDebug() << ">>> Going to HIDE splash and show main window";
-		splashWindow.setShown(false);
-
 		// Set the resolver
-//		mainWindow.setResolver(queryResolver);
-//		mainWindow.setVisible(true);
-	});
-
-#if 0
-	// Declared index stuff outside the QtConcurrent::run() scope
-	IndexHandler *indexHandler;
-	IRModelIef *irmodel;
-	QueryResolver *queryResolver;
-
-	// Allocates the windows (splash and main)
-
-	SplashWindow splashWindow;
-	if (!splashWindow.create()) {
-		qCritical() << "Error occurred while creating SplashWindow";
-		exit(-1);
-	}
-
-	MainWindow mainWindow;
-	if (!mainWindow.create()) {
-		qCritical() << "Error occurred while creating MainWindow";
-		exit(-1);
-	}
-
-	splashWindow.setVisible(true);
-
-	// Load async
-	QtConcurrent::run([&args, &splashWindow, &mainWindow,
-					  &indexHandler, &irmodel, &queryResolver]() {
-
-		auto splashProgressor = [&splashWindow](double progress) {
-			splashWindow.setProgress(progress);
-		};
-
-		// INDEX HANDLER
-
-		indexHandler = new IndexHandler(args.indexFolderPath, args.baseIndexName);
-
-		// Connect to signals for detect progress
-
-		// Keys
-		QObject::connect(indexHandler, &IndexHandler::keysLoadStarted, [&splashWindow]() {
-			splashWindow.setStatus("Loading index file: keys");
-		});
-		QObject::connect(indexHandler, &IndexHandler::keysLoadProgress, splashProgressor);
-
-		// Vocabulary
-		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadStarted, [&splashWindow]() {
-			splashWindow.setStatus("Loading index file: vocabulary");
-		});
-		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadProgress, splashProgressor);
-
-		// Crossrefs & Articles journals
-		// Do both on the same status
-		QObject::connect(indexHandler, &IndexHandler::crossrefsLoadStarted, [&splashWindow]() {
-			splashWindow.setStatus("Loading index file: crossrefs");
-		});
-		QObject::connect(indexHandler, &IndexHandler::crossrefsLoadProgress,
-						 splashProgressor);
-
-		indexHandler->load();
-
-		// IR MODEL
-
-		irmodel = new IRModelIef(*indexHandler);
-
-		QObject::connect(irmodel, &IRModelIef::initStarted, [&splashWindow]() {
-			splashWindow.setStatus("Initializing IR Model");
-		});
-		QObject::connect(irmodel, &IRModelIef::initProgress, splashProgressor);
-
-		irmodel->init();
-
-		// QUERY RESOLVER (gratis)
-		queryResolver = new QueryResolver(irmodel);
+		guiQueryResolver.setResolver(queryResolver);
 
 		// Load of everything finished, show main window
-
 		qDebug() << ">>> Going to HIDE splash and show main window";
-		splashWindow.setVisible(false);
-
-		// Set the resolver
-		mainWindow.setResolver(queryResolver);
-		mainWindow.setVisible(true);
+		guiSplashWindow.setShown(false);
+		guiMainWindow.setShown(true);
 	});
-#endif
+
 	return guiApp.exec();
 }
 

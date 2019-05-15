@@ -2,6 +2,8 @@
     <qresource prefix="/qml">
 		<file alias="SplashWindow.qml">qml/SplashWindow.qml</file>
 		<file alias="MainWindow.qml">qml/MainWindow.qml</file>
+		<file alias="QueryOutcome.qml">qml/QueryOutcome.qml</file>
+		<file alias="QueryMatch.qml">qml/QueryMatch.qml</file>
     </qresource>
     <qresource prefix="/img">
         <file alias="search.png">res/images/search.png</file>

@@ -2,11 +2,12 @@ import QtQuick 2.4
 import QtQuick.Window 2.4
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.1
+import DblpSearcher 1.0
 
 ApplicationWindow {
-    property string publicationColor: "#f7eccd"
-    property string venueColor: "#d5eded"
-    property string publicationVenueColor: "#dcf4de"
+    readonly property string publicationColor: "#f7eccd"
+    readonly property string venueColor: "#d5eded"
+    readonly property string publicationVenueColor: "#dcf4de"
 
     function humanTime(ms) {
         const MS = ms % 1000;
@@ -26,12 +27,12 @@ ApplicationWindow {
     }
 
     function doSearch() {
-        stackView.pop(null)
-        _main.doSearch(searchBar.text)
+        mainStackView.pop(null)
+        QueryResolver.doSearch(mainSearchBar.text)
     }
 
-    id: mainWindow
-    visible: _main.visible
+    id: main
+    visible: true
     minimumWidth: 600
     minimumHeight: 480
     width: 800
@@ -55,7 +56,7 @@ ApplicationWindow {
 
             // LOGO
             Image {
-                id: dblpLogo
+                id: mainDblpLogo
                 visible: false
                 sourceSize.height: 40
                 fillMode: Image.PreserveAspectFit
@@ -64,7 +65,7 @@ ApplicationWindow {
 
             // SEARCH BAR
             TextField {
-                id: searchBar
+                id: mainSearchBar
                 selectByMouse: true
                 rightPadding: 60
 
@@ -86,7 +87,7 @@ ApplicationWindow {
 
                 // SEARCH BUTTON
                 Button {
-                    id: searchButton
+                    id: mainSearchButton
                     width: 50
                     spacing: 5
                     anchors.bottom: parent.bottom
@@ -106,7 +107,7 @@ ApplicationWindow {
                     }
 
                     background: Rectangle {
-                        color: searchButton.hovered ? "#2d627b" : "#bf2d627b"
+                        color: mainSearchButton.hovered ? "#2d627b" : "#bf2d627b"
                         radius: 10
                         border.width: 0
                     }
@@ -116,7 +117,7 @@ ApplicationWindow {
 
         // MAIN STACK VIEW
         StackView {
-            id: stackView
+            id: mainStackView
             Layout.fillWidth: true
             Layout.fillHeight: true
             initialItem: Loader {
@@ -133,7 +134,7 @@ ApplicationWindow {
         height: 28
 
         Rectangle {
-            id: rectangle1
+            id: mainFooterRectangle
             anchors.fill: parent
             color: "#e5e8e7"
             border.color: "#80a2a2a2"
@@ -188,7 +189,7 @@ ApplicationWindow {
                     }
 
                     Text {
-                        text: "Publication+Venue"
+                        text: "Publication & Venue"
                     }
                 }
             }

@@ -1,4 +1,4 @@
-#include "gui_context_component.h"
+#include "gui_component.h"
 #include <QQmlEngine>
 #include <QQmlComponent>
 #include <QQmlContext>
@@ -6,20 +6,25 @@
 #include "commons/util/util.h"
 #include "gui/engine/gui_engine.h"
 
-bool GuiContextComponent::create()
+LOGGING(GuiComponent, true)
+
+GuiComponent::~GuiComponent()
+{
+}
+
+bool GuiComponent::create()
 {
 //	GuiEngine::instance().engine()->setObjectOwnership(this, ownership());
 
 	QUrl qmlResource = Util::Qml::resourceUrl(qmlName());
 
 	vv("Going to create GUI component; " <<
-	   "resource: '" << qmlResource << "' | " <<
-	   "context name: '" << contextName() << "'");
+	   "resource: '" << qmlResource);
 
 //	mContext = new QQmlContext(GuiEngine::instance().engine()->rootContext());
 //	mContext->setContextProperty(qmlName(), this);
 
-	GuiEngine::instance().engine()->rootContext()->setContextProperty(contextName(), this);
+//	GuiEngine::instance().engine()->rootContext()->setContextProperty(contextName(), this);
 
 	mComponent = new QQmlComponent(GuiEngine::instance().engine(), qmlResource);
 
@@ -30,12 +35,12 @@ bool GuiContextComponent::create()
 		QEventLoop loop;
 
 		// Detect when the component has been created
-		QObject::connect(this, &GuiContextComponent::componentCreated,
+		QObject::connect(this, &GuiComponent::componentCreated,
 						 &loop, &QEventLoop::quit);
 
 		// Wait for QQmlComponent to load the qml file before create the component
 		QObject::connect(mComponent, &QQmlComponent::statusChanged,
-						 this, &GuiContextComponent::createComponent);
+						 this, &GuiComponent::createComponent);
 
 		// Double check, just in case...
 		if (!mComponent->isReady()) {
@@ -54,7 +59,7 @@ bool GuiContextComponent::create()
 	return !mComponent->isError();
 }
 
-void GuiContextComponent::createComponent()
+void GuiComponent::createComponent()
 {
 	if (mComponent->isReady()) {
 		vv("Actually creating component '" << qmlName() << "'");
@@ -67,3 +72,16 @@ void GuiContextComponent::createComponent()
 		emit componentCreated();
 	}
 }
+
+
+bool GuiComponent::shown()
+{
+	return mShown;
+}
+
+void GuiComponent::setShown(bool shown)
+{
+	mShown = shown;
+	emit shownChanged();
+}
+

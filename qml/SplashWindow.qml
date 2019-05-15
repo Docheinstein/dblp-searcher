@@ -4,7 +4,7 @@ import QtQuick.Controls 2.4
 import DblpSearcher 1.0
 
 Window {
-    id: splashContainer
+    id: splash
     color: "transparent"
     modality: Qt.ApplicationModal
     flags: Qt.SplashScreen
