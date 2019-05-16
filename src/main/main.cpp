@@ -113,9 +113,12 @@ static int startSearchMode(Arguments args) {
 	// - enums
 	qmlRegisterUncreatableType<GuiQueryMatchType>(
 		QML_REGISTRAR, GUI_QUERY_MATCH_TYPE_QML_NAME,
-		"Not instantiable"
+		"Not instantiable (enum)"
 	);
-
+	qmlRegisterUncreatableType<GuiDblpXmlLineType>(
+		QML_REGISTRAR, GUI_DBLP_XML_LINE_QML_NAME,
+		"Not instantiable (enum)"
+	);
 
 	IndexHandler *indexHandler;
 	IRModelIef *irmodel;

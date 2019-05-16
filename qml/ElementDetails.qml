@@ -10,12 +10,16 @@ ColumnLayout {
     readonly property string tabSelectedTextColor: "#f9f9f9"
     readonly property string tabUnselectedTextColor: "#27282a"
 
-    property int serial; // Bound from outside
+    property int elementSerial;
+
+    spacing: 0
+    // Bound from outside
 
     id: elementDetails
 
     ElementDetails {
-        elementSerial: serial
+        id: elementDetailsModel
+        serial: elementSerial // Create with the bound serial
     }
 
     Button {
@@ -43,7 +47,6 @@ ColumnLayout {
         id: elementDetailsTabBar
 
         height: 40
-        Layout.fillHeight: true
         Layout.fillWidth: true
 
         TabButton {
@@ -80,6 +83,68 @@ ColumnLayout {
                 text: elementDetailsVenuesTab.text
                 horizontalAlignment: Text.AlignHCenter
             }
+        }
+    }
+
+    StackLayout {
+        Layout.rightMargin: 5
+        Layout.leftMargin: 5
+        Layout.topMargin: 20
+        Layout.fillHeight: true
+        Layout.fillWidth: true
+
+//        currentIndex: elementDetailsTabBar.currentIndex
+        currentIndex: 0
+
+        Item {
+            id: elementDetailsXmlView
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+
+            ListView {
+                id: elementDetailsXmlListView
+                anchors.fill: parent
+                clip: true
+
+                delegate: Loader {
+                    id: elementDetailsXmlLineLoader
+                    source: "DblpXmlLine.qml"
+
+                    Binding {
+                        target: elementDetailsXmlLineLoader.item
+                        property: "parentRef"
+                        value: elementDetailsXmlListView
+                    }
+                }
+
+                model: elementDetailsModel.xmlLines
+
+//                model: ListModel {
+//                    ListElement {
+//                        tag: "article"
+//                        type: "open"
+//                        attributes: "key=\"journals/it/ele-eco\" mdate=\"2018-03-26\""
+//                        indent: false
+//                    }
+//                    ListElement {
+//                        tag: "author"
+//                        type: "inline"
+//                        attributes: ""
+//                        content: "Amarjot <b>Singh</b>";
+//                        indent: true
+//                    }
+//                    ListElement {
+//                        tag: "article"
+//                        type: "close"
+//                        attributes: ""
+//                        indent: false
+//                    }
+//                }
+            }
+        }
+
+        Item {
+            id: elementDetailsPublicationsView
         }
     }
 }

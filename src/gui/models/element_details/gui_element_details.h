@@ -5,35 +5,44 @@
 
 #include "dblp/shared/defs/defs.h"
 #include "commons/log/loggable/loggable.h"
+#include "gui/models/dblp_xml_lines/gui_dblp_xml_lines.h"
 
+#include <QFutureWatcher>
 #include <QObject>
 #include <QString>
 
 class GuiElementDetails : public QObject, Loggable {
 	Q_OBJECT
 
-	Q_PROPERTY(int elementSerial READ elementSerial WRITE setElementSerial NOTIFY elementSerialChanged)
-	Q_PROPERTY(QString elementXml READ elementXml NOTIFY elementXmlChanged)
+	Q_PROPERTY(int serial READ serial WRITE setSerial NOTIFY serialChanged)
+	Q_PROPERTY(QObject * xmlLines READ xmlLines NOTIFY xmlLinesChanged)
 
 public:
-	int elementSerial();
-	void setElementSerial(int serial);
+	GuiElementDetails();
+	int serial();
+	void setSerial(int serial);
 
-	QString elementXml();
+	QObject * xmlLines();
+
+public slots:
+	void xmlLoadingFinished();
 
 signals:
-	void elementSerialChanged();
-	void elementXmlChanged();
+	void serialChanged();
+	void xmlLinesChanged();
 
 protected:
 	LOGGING_OVERRIDE
 
 private:
-	void setElementXml(const QString &xml);
+	void loadXml();
 
-	elem_serial mElementSerial;
-	QString mElementXml;
+	elem_serial mSerial;
 
+	QVector<GuiDblpXmlLine> mLinesRaw;
+	GuiDblpXmlLines mLines;
+
+	QFutureWatcher<void> mXmlLoadingWatcher;
 };
 
 #endif // GUI_ELEMENT_DETAILS_H

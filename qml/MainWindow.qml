@@ -49,7 +49,7 @@ ApplicationWindow {
             mainStackView.push(
                 "ElementDetails.qml",
                 {
-                    "serial": serial
+                    "elementSerial": serial
                 }
             )
         }

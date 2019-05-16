@@ -63,7 +63,6 @@ ColumnLayout {
             delegate: Loader {
                 id: queryMatchLoader
                 source: "QueryMatch.qml"
-                property variant queryOutcomeResultsRef: queryOutcomeResults
 
                 Binding {
                     target: queryMatchLoader.item
