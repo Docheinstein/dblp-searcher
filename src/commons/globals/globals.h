@@ -37,6 +37,22 @@
 
 #define streq(a, b) (strcmp(a, b) == 0)
 
+// Handly enum macros
+
+#define ENUM_STRING(...) \
+	enum { \
+		__VA_ARGS__ \
+	} type;
+
+#define ENUM_STRING_SWITCH_BEGIN switch (type) {
+#define ENUM_STRING_SWITCH_END }
+
+#define ENUM_STRING_CASE(case_name, case_str) \
+	case case_name: { \
+		return #case_str; \
+	}
+
+#define ENUM_AUTO_STRING_CASE(case_name) ENUM_STRING_CASE(case_name, #case_name)
 
 // Asserts
 
@@ -95,4 +111,4 @@
 		QString(what7) + QString(what8) \
 	).toStdString().c_str())
 
-#endif
+#endif // GLOBALS_H

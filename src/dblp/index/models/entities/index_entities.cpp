@@ -1,4 +1,4 @@
-#include "xml_entities.h"
+#include "index_entities.h"
 #include <QDebug>
 
 QDebug operator<<(QDebug stream, const DblpWork &entity)

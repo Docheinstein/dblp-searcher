@@ -1,0 +1,105 @@
+#include "xml_parser.h"
+
+LOGGING(XmlParser, true)
+
+XmlParser::	XmlParser(QFile &inputDevice, XmlParseHandler &parseHandler)
+	: mInputDevice(inputDevice), mHandler(parseHandler) {
+	
+}
+
+bool XmlParser::parse()
+{
+	if (!mInputDevice.open(QIODevice::ReadOnly)) {
+		ee("Error occurred while opening XML file");
+		return false;
+	}
+	
+	while (!mReader.atEnd() && !mReader.hasError()) {
+		mReader.readNext();
+		dd("Read token type: " << mReader.tokenType());
+		dd("Read token string: " << mReader.tokenString());
+
+		switch (mReader.tokenType()) {
+		case QXmlStreamReader::StartElement:
+			handleStartElement();
+			break;
+		case QXmlStreamReader::EndElement:
+			handleEndElement();
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (mReader.hasError()) {
+		ee("Error occurred while parsing XML file: " << mReader.errorString());
+		return false;
+	}
+	
+	return true;
+}
+
+void XmlParser::handleStartElement()
+{
+	
+}
+
+void XmlParser::handleEndElement()
+{
+	
+}
+
+//namespace DblpXml = Const::Dblp::Xml;
+
+
+//#define VERBOSE_XML 0
+
+//XmlParser2::XmlParser2(const QString &dblpXmlPath,
+//					XmlParseHandler &parseHandler) : mHandler(parseHandler)
+//{
+//	mInputFile.setFileName(dblpXmlPath);
+//}
+
+//bool XmlParser2::parse()
+//{
+//	ii("Parsing DBLP file at " << mInputFile.fileName());
+//	mInputFile.open(QFile::ReadOnly);
+
+//	mReader.setDevice(&mInputFile);
+
+//	while (!mReader.atEnd() && !mReader.hasError()) {
+//		mReader.readNext();
+//		dd("Read token type: " << mReader.tokenType());
+//		dd("Read token string: " << mReader.tokenString());
+
+//		if (mReader.isStartElement()) {
+//			handleStartElement();
+//		}
+
+//		if (mReader.isEndElement()) {
+//			handleEndElement();
+//		}
+//	}
+
+//	if (mReader.hasError()) {
+//		ee("Error occurred while parsing XML file: " << mReader.errorString());
+//		return false;
+//	}
+
+
+//	return true;
+//}
+
+//void XmlParser2::handleStartElement()
+//{
+////	const QString &val = mReader.readElementText();
+//	const QString &token = mReader.tokenString();
+//	if (token == *XmlElementType::ARTICLE) {
+//		mAttributes = mReader.attributes().toList();
+//	}
+//}
+
+//void XmlParser2::handleEndElement()
+//{
+
+//}

@@ -4,7 +4,8 @@
 #include <QtConcurrentRun>
 //#include <gui/ui/window/splash/splash_window.h>
 #include "dblp/index/indexer/indexer.h"
-#include "dblp/xml/parser/xml_parser.h"
+//#include "dblp/xml/parser/xml_parser.h"
+//#include "dblp/xml/parser2/xml_parser2.h"
 #include "dblp/index/handler/index_handler.h"
 #include "dblp/query/resolver/query_resolver.h"
 #include "dblp/irmodel/impl/ief/ir_model_ief.h"
@@ -18,6 +19,9 @@
 #include "gui/models/element_details/gui_element_details.h"
 //#include "gui/resolver/gui_query_resolver.h"
 #include <QQmlComponent>
+#include "dblp/xml/models/element/dblp_xml_element.h"
+#include "dblp/xml/handler/dblp_xml_parse_handler.h"
+#include "dblp/xml/parser/dblp_xml_parser.h"
 
 #define QML_URI				"DblpSearcher"
 #define QML_VERSION_MAJOR	1
@@ -76,11 +80,30 @@ public:
 	exit(-1);
 }
 
+class DblpXmlParseHandlerImpl : public DblpXmlParseHandler {
+
+	// DblpXmlParseHandler interface
+public:
+	void onParseStart();
+	void onParseEnd();
+	void onElement(const DblpXmlElement &element, qint64 pos);
+};
+
+void DblpXmlParseHandlerImpl::onParseStart() {}
+void DblpXmlParseHandlerImpl::onParseEnd() {}
+void DblpXmlParseHandlerImpl::onElement(const DblpXmlElement &element, qint64 pos) {
+	qInfo() << "ON ELEMENT: " <<  element.name;
+}
+
 static int startIndexMode(Arguments args) {
 	Q_ASSERT(args.mode == Mode::Index);
 
 	Indexer indexer(args.indexFolderPath, args.baseIndexName);
-	XmlParser parser(args.dblpFilePath, indexer);
+	DblpXmlParser parser(args.dblpFilePath, indexer);
+//	XmlParser2 parser(args.dblpFilePath, indexer);
+//	DblpXmlParseHandlerImpl handler;
+//	QFile inFile(args.dblpFilePath);
+//	DblpXmlParser parser(inFile, handler);
 	parser.parse();
 
 	return 0;

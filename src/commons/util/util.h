@@ -9,7 +9,7 @@
 namespace Util {
 	namespace Dblp {
 		namespace Xml {
-			bool isElement(const QString &elementName);
+//			bool isElement(const QString &elementName);
 		}
 
 		namespace Query {

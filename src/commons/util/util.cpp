@@ -1,7 +1,7 @@
 #include "util.h"
 #include "commons/const/const.h"
 #include "commons/globals/globals.h"
-#include "dblp/xml/models/types/xml_types.h"
+#include "dblp/xml/models/types/dblp_xml_types.h"
 
 #include <QTextDocument>
 #include <QTime>
@@ -16,15 +16,15 @@
 namespace Util {
 	namespace Dblp {
 		namespace Xml {
-			bool isElement(const QString &elementName) {
-				return	elementName == *XmlElementType::ARTICLE ||
-						elementName == *XmlElementType::INCOLLECTION ||
-						elementName == *XmlElementType::BOOK ||
-						elementName == *XmlElementType::INPROCEEDINGS ||
-						elementName == *XmlElementType::PROCEEDINGS ||
-						elementName == *XmlElementType::PHDTHESIS ||
-						elementName == *XmlElementType::MASTERTHESIS;
-			}
+//			bool isElement(const QString &elementName) {
+//				return	elementName == Const::Dblp::Xml::Elements::ARTICLE ||
+//						elementName == DblpXmlElementType::Incollection ||
+//						elementName == DblpXmlElementType::Book ||
+//						elementName == DblpXmlElementType::Inproceedings ||
+//						elementName == DblpXmlElementType::Proceedings ||
+//						elementName == DblpXmlElementType::Phdthesis ||
+//						elementName == DblpXmlElementType::Masterthesis;
+//			}
 		}
 
 		namespace Query {

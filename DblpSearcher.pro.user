@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.9.0, 2019-05-16T16:51:35. -->
+<!-- Written by QtCreator 4.9.0, 2019-05-17T22:17:03. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -67,7 +67,7 @@
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">qt.qt5.5112.gcc_64_kit</value>
    <value type="int" key="ProjectExplorer.Target.ActiveBuildConfiguration">1</value>
    <value type="int" key="ProjectExplorer.Target.ActiveDeployConfiguration">0</value>
-   <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">0</value>
+   <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">12</value>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.BuildConfiguration.0">
     <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
     <valuemap type="QVariantMap" key="ProjectExplorer.BuildConfiguration.BuildStepList.0">
@@ -328,7 +328,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">DblpSearcher</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">DblpSearcher_Test</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/stefano/Develop/Qt/DblpSearcher/DblpSearcher.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Develop/Qt/DblpSearcher/res/index/ test</value>
+    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Documents/DblpSearcher/index/ test_new</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
@@ -394,7 +394,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">DblpSearcher</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">DblpIndexer_Test</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/stefano/Develop/Qt/DblpSearcher/DblpSearcher.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">--index /home/stefano/Develop/Qt/DblpSearcher/res/dblp-mini.xml /home/stefano/Develop/Qt/DblpSearcher/res/index/ test</value>
+    <value type="QString" key="RunConfiguration.Arguments">--index  /home/stefano/Documents/DblpSearcher/xml/dblp-mini.xml /home/stefano/Documents/DblpSearcher/index/ test_new</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
@@ -460,7 +460,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">DblpSearcher</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">DblpSearcher_Large</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/stefano/Develop/Qt/DblpSearcher/DblpSearcher.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Develop/Qt/DblpSearcher/res/index/ large</value>
+    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Documents/DblpSearcher/index/ large_new</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
@@ -592,7 +592,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">DblpSearcher</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">DblpIndexer_Large</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/stefano/Develop/Qt/DblpSearcher/DblpSearcher.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">--index /home/stefano/Develop/Qt/DblpSearcher/res/dblp-large.xml /home/stefano/Develop/Qt/DblpSearcher/res/index/ large</value>
+    <value type="QString" key="RunConfiguration.Arguments">--index /home/stefano/Documents/DblpSearcher/xml/dblp-large.xml /home/stefano/Documents/DblpSearcher/index/ large_new</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
@@ -658,7 +658,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">DblpSearcher</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">DblpIndexer_Prod</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/stefano/Develop/Qt/DblpSearcher/DblpSearcher.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">--index /home/stefano/Develop/Qt/DblpSearcher/res/dblp.xml /home/stefano/Develop/Qt/DblpSearcher/res/index/ prod</value>
+    <value type="QString" key="RunConfiguration.Arguments">--index /home/stefano/Documents/DblpSearcher/xml/dblp-prod.xml /home/stefano/Documents/DblpSearcher/index/ prod</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
@@ -724,7 +724,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">DblpSearcher</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">DblpIndexer_Shrink</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/stefano/Develop/Qt/DblpSearcher/DblpSearcher.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">--index /home/stefano/Develop/Qt/DblpSearcher/res/dblp-shrink.xml /home/stefano/Develop/Qt/DblpSearcher/res/index/ shrink</value>
+    <value type="QString" key="RunConfiguration.Arguments">--index /home/stefano/Documents/DblpSearcher/xml/dblp-shrink.xml /home/stefano/Documents/DblpSearcher/index/ shrink</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
@@ -790,7 +790,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">DblpSearcher</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">DblpSearcher_Prod</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/stefano/Develop/Qt/DblpSearcher/DblpSearcher.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Develop/Qt/DblpSearcher/res/index/ prod</value>
+    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Documents/DblpSearcher/index/ prod</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
@@ -856,7 +856,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">DblpSearcher</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">DblpSearcher_Shrink</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/stefano/Develop/Qt/DblpSearcher/DblpSearcher.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Develop/Qt/DblpSearcher/res/index/ shrink</value>
+    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Documents/DblpSearcher/index/ shrink</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
@@ -988,7 +988,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">DblpSearcher</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">DblpIndexer_Medium</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/stefano/Develop/Qt/DblpSearcher/DblpSearcher.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">--index /home/stefano/Develop/Qt/DblpSearcher/res/dblp-medium.xml /home/stefano/Develop/Qt/DblpSearcher/res/index/ medium</value>
+    <value type="QString" key="RunConfiguration.Arguments">--index /home/stefano/Documents/DblpSearcher/xml/dblp-medium.xml /home/stefano/Documents/DblpSearcher/index/ medium</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
@@ -1054,7 +1054,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">DblpSearcher</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">DblpSearcher_Medium</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/stefano/Develop/Qt/DblpSearcher/DblpSearcher.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Develop/Qt/DblpSearcher/res/index/ medium</value>
+    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Documents/DblpSearcher/index/ medium</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>

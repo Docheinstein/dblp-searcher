@@ -1,11 +1,18 @@
 #include "indexer.h"
 #include <QDir>
 
+#include "commons/const/const.h"
 #include "commons/config/config.h"
 #include "commons/util/util.h"
 #include "commons/globals/globals.h"
+#include "commons/profiler/profiler.h"
+#include "dblp/xml/models/types/dblp_xml_types.h"
 
 LOGGING(Indexer, true)
+
+namespace DblpXmlElements = Const::Dblp::Xml::Elements;
+namespace DblpXmlFields = Const::Dblp::Xml::Fields;
+namespace DblpXmlAttributes = Const::Dblp::Xml::Attributes;
 
 Indexer::Indexer(const QString &outputPath, const QString &baseName)
 {
@@ -13,7 +20,7 @@ Indexer::Indexer(const QString &outputPath, const QString &baseName)
 	mBaseIndexName = baseName;
 }
 
-void Indexer::onStart()
+void Indexer::onParseStart()
 {
 	static const char * const INDEX_CREATION_ERROR =
 			"Cannot create index file directory. "
@@ -63,7 +70,7 @@ void Indexer::onStart()
 	ii("Started parsing of XML file...");
 }
 
-void Indexer::onEnd()
+void Indexer::onParseEnd()
 {
 	ii("Finished parsing of XML file");
 	ii("Actually writing index files...");
@@ -90,7 +97,76 @@ void Indexer::onEnd()
 	printStats();
 }
 
-void Indexer::onArticle(const DblpArticle &article, qint64 pos)
+
+void Indexer::onElement(const DblpXmlElement &element, qint64 pos)
+{
+	PROF_FUNC_BEGIN
+
+	dd("On element: " << endl << QString(element));
+
+	auto fillWork = [](DblpWork &work, const DblpXmlElement xmlElement) {
+		work.key = xmlElement.attributes.value(DblpXmlAttributes::KEY).toString();
+		work.title = xmlElement.fields.value(DblpXmlFields::TITLE, {""}).at(0);
+		work.year = xmlElement.fields.value(DblpXmlFields::YEAR, {""}).at(0);
+	};
+
+	auto fillPublication = [&fillWork](
+			DblpPublication &pub, const DblpXmlElement &xmlElement) {
+		fillWork(pub, xmlElement);
+		pub.authors = xmlElement.fields.value(DblpXmlFields::AUTHOR);
+	};
+
+	auto fillPublicationCrossref = [&fillPublication](
+			DblpPublicationCrossref &pub, const DblpXmlElement &xmlElement) {
+		fillPublication(pub, xmlElement);
+		pub.crossref = xmlElement.fields.value(DblpXmlFields::CROSSREF, {""}).at(0);
+	};
+
+	auto fillVenue = [&fillWork](DblpVenue &venue, const DblpXmlElement &xmlElement) {
+		fillWork(venue, xmlElement);
+		venue.publisher = xmlElement.fields.value(DblpXmlFields::PUBLISHER, {""}).at(0);
+	};
+
+	if (element.name == DblpXmlElements::ARTICLE) {
+		DblpJournal journal;
+		journal.name = element.fields.value(DblpXmlFields::JOURNAL, {""}).at(0);
+		handleJournal(journal, pos);
+
+		DblpArticle article;
+		fillPublication(article, element);
+		article.journal = journal.name;
+		handleArticle(article, pos);
+	} else if (element.name == DblpXmlElements::INCOLLECTION) {
+		DblpIncollection incollection;
+		fillPublicationCrossref(incollection, element);
+		handleIncollection(incollection, pos);
+	} else if (element.name == DblpXmlElements::BOOK) {
+		DblpBook book;
+		fillVenue(book, element);
+		handleBook(book, pos);
+	} else if (element.name == DblpXmlElements::INPROCEEDINGS) {
+		DblpInproceedings inproc;
+		fillPublicationCrossref(inproc, element);
+		handleInproceedings(inproc, pos);
+	} else if (element.name == DblpXmlElements::PROCEEDINGS) {
+		DblpProceedings proc;
+		fillVenue(proc, element);
+		handleProceedings(proc, pos);
+	} else if (element.name == DblpXmlElements::PHDTHESIS) {
+		DblpPhdThesis phd;
+		fillPublication(phd, element);
+		handlePhdThesis(phd, pos);
+	} else if (element.name == DblpXmlElements::MASTERTHESIS) {
+		DblpMasterThesis master;
+		fillPublication(master, element);
+		handleMasterThesis(master, pos);
+	}
+
+	PROF_FUNC_END
+}
+
+
+void Indexer::handleArticle(const DblpArticle &article, qint64 pos)
 {
 	vv("Handling article: " << article);
 
@@ -118,7 +194,7 @@ void Indexer::onArticle(const DblpArticle &article, qint64 pos)
 	elementHandled();
 }
 
-void Indexer::onJournal(const DblpJournal &journal, qint64 pos)
+void Indexer::handleJournal(const DblpJournal &journal, qint64 pos)
 {
 	vv("Handling journal: " << journal.name);
 
@@ -153,7 +229,7 @@ void Indexer::onJournal(const DblpJournal &journal, qint64 pos)
 	elementHandled();
 }
 
-void Indexer::onIncollection(const DblpIncollection &incollection, qint64 pos)
+void Indexer::handleIncollection(const DblpIncollection &incollection, qint64 pos)
 {
 	vv("Handling incollection: " << incollection);
 
@@ -175,11 +251,11 @@ void Indexer::onIncollection(const DblpIncollection &incollection, qint64 pos)
 		incollection.year
 	);
 
-	vv1("Adding terms of incollection.booktitle");
-	addTermsOfField([](IndexTerm &term, const IndexPost &post)
-		{ term.incollection.booktitle.append(post); },
-		incollection.booktitle
-	);
+//	vv1("Adding terms of incollection.booktitle");
+//	addTermsOfField([](IndexTerm &term, const IndexPost &post)
+//		{ term.incollection.booktitle.append(post); },
+//		incollection.booktitle
+//	);
 
 	addIdentifier(incollection.key);
 	addPosition(pos);
@@ -187,15 +263,15 @@ void Indexer::onIncollection(const DblpIncollection &incollection, qint64 pos)
 	elementHandled();
 }
 
-void Indexer::onBook(const DblpBook &book, qint64 pos)
+void Indexer::handleBook(const DblpBook &book, qint64 pos)
 {
 	vv("Handling book: " << book);
 
-	vv1("Adding terms of book.authors");
-	addTermsOfFields([](IndexTerm &term, const IndexPost &post)
-		{ term.book.author.append(post); },
-		book.authors
-	);
+//	vv1("Adding terms of book.authors");
+//	addTermsOfFields([](IndexTerm &term, const IndexPost &post)
+//		{ term.book.author.append(post); },
+//		book.authors
+//	);
 
 	vv1("Adding terms of book.title");
 	addTermsOfField([](IndexTerm &term, const IndexPost &post)
@@ -221,7 +297,7 @@ void Indexer::onBook(const DblpBook &book, qint64 pos)
 	elementHandled();
 }
 
-void Indexer::onInproceedings(const DblpInproceedings &inproc, qint64 pos)
+void Indexer::handleInproceedings(const DblpInproceedings &inproc, qint64 pos)
 {
 	vv("Handling inproceedings: " << inproc);
 
@@ -243,11 +319,11 @@ void Indexer::onInproceedings(const DblpInproceedings &inproc, qint64 pos)
 		inproc.year
 	);
 
-	vv1("Adding terms of inproc.booktitle");
-	addTermsOfField([](IndexTerm &term, const IndexPost &post)
-		{ term.inproceedings.booktitle.append(post); },
-		inproc.booktitle
-	);
+//	vv1("Adding terms of inproc.booktitle");
+//	addTermsOfField([](IndexTerm &term, const IndexPost &post)
+//		{ term.inproceedings.booktitle.append(post); },
+//		inproc.booktitle
+//	);
 
 	addIdentifier(inproc.key);
 	addPosition(pos);
@@ -255,7 +331,7 @@ void Indexer::onInproceedings(const DblpInproceedings &inproc, qint64 pos)
 	elementHandled();
 }
 
-void Indexer::onProceedings(const DblpProceedings &proc, qint64 pos)
+void Indexer::handleProceedings(const DblpProceedings &proc, qint64 pos)
 {
 	vv("Handling proceedings: " << proc);
 
@@ -271,10 +347,10 @@ void Indexer::onProceedings(const DblpProceedings &proc, qint64 pos)
 		proc.year
 	);
 
-	vv1("Adding terms of proc.booktitle");
+	vv1("Adding terms of proc.publisher");
 	addTermsOfField([](IndexTerm &term, const IndexPost &post)
 		{ term.proceedings.booktitle.append(post); },
-		proc.booktitle
+		proc.publisher
 	);
 
 	addIdentifier(proc.key);
@@ -283,7 +359,7 @@ void Indexer::onProceedings(const DblpProceedings &proc, qint64 pos)
 	elementHandled();
 }
 
-void Indexer::onPhdThesis(const DblpPhdThesis &phd, qint64 pos)
+void Indexer::handlePhdThesis(const DblpPhdThesis &phd, qint64 pos)
 {
 	vv("Handling phdthesis: " << phd);
 
@@ -310,7 +386,7 @@ void Indexer::onPhdThesis(const DblpPhdThesis &phd, qint64 pos)
 	elementHandled();
 }
 
-void Indexer::onMasterThesis(const DblpMasterThesis &master, qint64 pos)
+void Indexer::handleMasterThesis(const DblpMasterThesis &master, qint64 pos)
 {
 	dd("Handling masterthesis: " << master);
 
@@ -337,14 +413,13 @@ void Indexer::onMasterThesis(const DblpMasterThesis &master, qint64 pos)
 	elementHandled();
 }
 
-
 // For each term inside a field among the fields of the dblp entity we
 // have to insert a "post" inside the map (indexed with the term as key)
 // that keep tracks of the current element serial, the field number (necessary
 // for distinguish multiple field (e.g. <author>), and the position
 // of the term within the field.
 void Indexer::addTermsOfFields(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),
-							   const QList<QString> &fieldsContent)
+							   const QVector<QString> &fieldsContent)
 {
 	int fieldsCount = fieldsContent.size();
 

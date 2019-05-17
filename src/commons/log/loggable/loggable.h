@@ -18,8 +18,8 @@
 
 // Active log levels (SILENT must be 0)
 #define TRACE	(0 && !SILENT)
-#define DEBUG	(1 && !SILENT)
-#define VERBOSE (1 && !SILENT)
+#define DEBUG	(0 && !SILENT)
+#define VERBOSE (0 && !SILENT)
 #define INFO	(1 && !SILENT)
 #define WARN	(1 && !SILENT)
 #define ERROR	(1 && !SILENT)

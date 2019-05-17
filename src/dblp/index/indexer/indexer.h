@@ -6,27 +6,23 @@
 #include <commons/file/filestream/data/data_stream_file.h>
 #include <commons/file/filestream/text/text_stream_file.h>
 #include <commons/log/loggable/loggable.h>
+#include <dblp/index/models/entities/index_entities.h>
 #include "dblp/index/models/term/index_term.h"
-#include "dblp/xml/models/entities/xml_entities.h"
-#include "dblp/xml/handler/xml_parse_handler.h"
+//#include "dblp/xml/models/entities/xml_entities.h"
+//#include "dblp/xml/handler/xml_parse_handler.h"
+#include "dblp/xml/handler/dblp_xml_parse_handler.h"
 #include "dblp/shared/defs/defs.h"
+#include <QtGlobal>
 
-class Indexer : public XmlParseHandler, protected Loggable
+class Indexer : public DblpXmlParseHandler,  protected Loggable
 {
 public:
 	Indexer(const QString &indexPath, const QString &baseName);
 
 	// DblpXmlParseHandler interface
-	void onStart() override;
-	void onEnd() override;
-	void onArticle(const DblpArticle &article, qint64 pos) override;
-	void onJournal(const DblpJournal &journal, qint64 pos) override;
-	void onIncollection(const DblpIncollection &incollection, qint64 pos) override;
-	void onBook(const DblpBook &book, qint64 pos) override;
-	void onInproceedings(const DblpInproceedings &inproc, qint64 pos) override;
-	void onProceedings(const DblpProceedings &proc, qint64 pos) override;
-	void onPhdThesis(const DblpPhdThesis &phd, qint64 pos) override;
-	void onMasterThesis(const DblpMasterThesis &master, qint64 pos) override;
+	void onParseStart() override;
+	void onParseEnd() override;
+	void onElement(const DblpXmlElement &element, qint64 pos) override;
 
 protected:
 	LOGGING_OVERRIDE
@@ -179,12 +175,23 @@ private:
 	elem_serial mCurrentSerial = 0;
 
 
+	// XML INTERNAL SHORTCUTS
+
+	void handleArticle(const DblpArticle &article, qint64 pos);
+	void handleJournal(const DblpJournal &journal, qint64 pos);
+	void handleIncollection(const DblpIncollection &incollection, qint64 pos);
+	void handleBook(const DblpBook &book, qint64 pos);
+	void handleInproceedings(const DblpInproceedings &inproc, qint64 pos);
+	void handleProceedings(const DblpProceedings &proc, qint64 pos);
+	void handlePhdThesis(const DblpPhdThesis &phd, qint64 pos);
+	void handleMasterThesis(const DblpMasterThesis &master, qint64 pos);
+
 	// DATA STRUCTURES ADDITIONS
 
 	// To mIndexTerms
 
 	void addTermsOfFields(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),
-				   const QList<QString> &fieldsContent);
+				   const QVector<QString> &fieldsContent);
 	void addTermsOfField(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),
 				  const QString &fieldContent, field_num fieldNumber = 0);
 	void addTerm(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),

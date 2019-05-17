@@ -3,12 +3,10 @@
 
 #include <QString>
 
-
+#define STRING_TYPE
 class StringType {
 public:
 	const char * string() const;
-
-//	operator QString() const;
 	operator const char *();
 
 protected:
