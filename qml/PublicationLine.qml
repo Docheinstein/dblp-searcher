@@ -5,15 +5,13 @@ import DblpSearcher 1.0
 Row {
     id: xmlLine
 
-    readonly property string linkColor: "#52BAE4"
-
     property QtObject parentRef; // Bound from outside
 
     width: parentRef.width
 
     Text {
+        color: "steelblue"
         text:  identifier
-        color: linkColor
         font.italic: true
         font.underline: true
 

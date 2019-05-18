@@ -8,7 +8,7 @@
 #include "commons/profiler/profiler.h"
 #include <QMutex>
 
-LOGGING(IndexHandler, true);
+LOGGING(IndexHandler, false);
 
 IndexHandler::IndexHandler(const QString &indexPath, const QString &baseName,
 						   bool loadPositions)
@@ -489,8 +489,6 @@ void IndexHandler::init()
 	ii("Opening crossrefs index file at: " << crossrefsPath);
 	if (!mCrossrefsStream.openRead(crossrefsPath))
 		QUIT(INDEX_READ_ERROR);
-
-	ii("Started parsing of XML file...");
 }
 
 bool IndexHandler::findPosts(const QString &term,
@@ -692,16 +690,19 @@ void IndexHandler::loadIdentifiers()
 
 	emit keysLoadStarted();
 
-	const qint64 keysFileSize = mIdentifiersStream.fileSize();
+	const qint64 identifiersFileSize = mIdentifiersStream.fileSize();
 
 	while (!mIdentifiersStream.stream.atEnd()) {
 		QString key = mIdentifiersStream.stream.readLine();
 		mIdentifiers.append({key});
 
-		double progress = DOUBLE(mIdentifiersStream.filePosition()) / keysFileSize;
+		double progress = DOUBLE(mIdentifiersStream.filePosition()) / identifiersFileSize;
 		vv1("Keys file load progress: " << progress);
 		emit keysLoadProgress(progress);
 	}
+
+	ii("Finished loading of identifiers file" <<
+	   Util::File::humanSize(mIdentifiersStream.file));
 
 	emit keysLoadEnded();
 }
@@ -833,6 +834,9 @@ void IndexHandler::loadVocabulary()
 		i++;
 	}
 
+	ii("Finished loading of vocabulary file" <<
+	   Util::File::humanSize(mVocabularyStream.file));
+
 	emit vocabularyLoadEnded();
 }
 
@@ -870,6 +874,9 @@ void IndexHandler::loadCrossrefs()
 		emit crossrefsLoadProgress(progress);
 	}
 
+	ii("Finished loading of crossrefs file" <<
+	   Util::File::humanSize(mCrossrefsStream.file));
+
 	emit crossrefsLoadEnded();
 }
 
@@ -900,6 +907,9 @@ void IndexHandler::loadPositions()
 		vv1("Positions file load progress: " << progress);
 		emit positionsLoadProgress(progress);
 	}
+
+	ii("Finished loading of positions file (" <<
+	   Util::File::humanSize(mElementsPositionsStream.file));
 
 	emit positionsLoadEnded();
 }

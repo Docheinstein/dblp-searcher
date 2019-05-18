@@ -23,6 +23,40 @@ ColumnLayout {
     ElementDetails {
         id: elementDetailsModel
         serial: elementSerial // Create with the bound serial
+
+        onHasXmlChanged: {
+            console.log('Has xml changed: ' + hasXml)
+            const tabCount = elementDetailsTabBar.count
+            if (hasXml) {
+                elementDetailsTabBar.addItem(
+                            elementDetailsXmlTabComponent
+                            .createObject(elementDetailsTabBar,
+                                          {"index": tabCount})
+                );
+//                elementDetailsStack.addItem(
+//                            elementDetailsXmlViewComponent
+//                            .createObject(elementDetailsStack,
+//                                          {"index": tabCount})
+//                );
+            }
+        }
+
+        onHasPublicationsChanged: {
+            console.log('Has publications changed: ' + hasPublications)
+            const tabCount = elementDetailsTabBar.count
+            if (hasPublications) {
+                elementDetailsTabBar.addItem(
+                            elementDetailsPublicationsTabComponent
+                            .createObject(elementDetailsTabBar,
+                                          {"index": tabCount})
+                );
+//                elementDetailsStack.insert(
+//                            elementDetailsPublicationsViewComponent
+//                            .createObject(elementDetailsStack,
+//                                          {"index": tabCount})
+//                );
+            }
+        }
     }
 
     Button {
@@ -59,66 +93,83 @@ ColumnLayout {
     TabBar {
         id: elementDetailsTabBar
 
+        width: parent.width
         Layout.topMargin: 8
         height: 40
         Layout.fillWidth: true
 
-        TabButton {
-            id: elementDetailsXmlTab
-            text: "XML"
 
-            readonly property bool selected: elementDetailsTabBar.currentIndex === 0
+        Component {
+            id: elementDetailsXmlTabComponent
 
-            background: Rectangle {
-                color: elementDetailsXmlTab.selected ?
-                           tabSelectedColor : tabUnselectedColor
-            }
+            TabButton {
+                readonly property bool selected: elementDetailsTabBar.currentIndex
+                                                 === index
 
-            contentItem: Text {
-                color: elementDetailsXmlTab.selected ?
-                           tabSelectedTextColor : tabUnselectedTextColor
-                text: elementDetailsXmlTab.text
-                horizontalAlignment: Text.AlignHCenter
+                property int index;
+
+                id: elementDetailsXmlTab
+                text: "XML"
+
+                background: Rectangle {
+                    color: elementDetailsXmlTab.selected ?
+                               tabSelectedColor : tabUnselectedColor
+                }
+
+                contentItem: Text {
+                    color: elementDetailsXmlTab.selected ?
+                               tabSelectedTextColor : tabUnselectedTextColor
+                    text: elementDetailsXmlTab.text
+                    horizontalAlignment: Text.AlignHCenter
+                }
             }
         }
-        TabButton {
-            readonly property bool selected: elementDetailsTabBar.currentIndex === 1
+        Component {
+            id: elementDetailsPublicationsTabComponent
 
-            id: elementDetailsVenuesTab
-            text: "Publications"
+            TabButton {
+                readonly property bool selected: elementDetailsTabBar.currentIndex
+                                                 === index
 
-            visible: elementDetailsModel.hasPublications
+                property int index;
 
-            background: Rectangle {
-                color: elementDetailsVenuesTab.selected ?
-                           tabSelectedColor : tabUnselectedColor
-            }
-            contentItem: Text {
-                color: elementDetailsVenuesTab.selected ?
-                           tabSelectedTextColor : tabUnselectedTextColor
-                text: elementDetailsVenuesTab.text
-                horizontalAlignment: Text.AlignHCenter
+                id: elementDetailsPublicationsTab
+                text: "Publications"
+
+                background: Rectangle {
+                    color: elementDetailsPublicationsTab.selected ?
+                               tabSelectedColor : tabUnselectedColor
+                }
+                contentItem: Text {
+                    color: elementDetailsPublicationsTab.selected ?
+                               tabSelectedTextColor : tabUnselectedTextColor
+                    text: elementDetailsPublicationsTab.text
+                    horizontalAlignment: Text.AlignHCenter
+                }
             }
         }
     }
 
     StackLayout {
+        id: elementDetailsStack
+
         Layout.fillHeight: true
         Layout.fillWidth: true
 
         currentIndex: elementDetailsTabBar.currentIndex
-//        currentIndex: 1
 
         Item {
             id: elementDetailsXmlView
             Layout.bottomMargin: 10
             Layout.fillHeight: true
             Layout.fillWidth: true
+            visible: elementDetailsModel.hasXml
 
             Rectangle {
                 width: parent.width
                 height: parent.height
                 color: xmlBackgroundColor
+                visible: elementDetailsModel.hasXml
             }
 
             ListView {
@@ -170,8 +221,7 @@ ColumnLayout {
 
         Item {
             id: elementDetailsPublicationsView
-
-            visible: elementDetailsModel.hasPublications
+            visible: elementDetailsModel.publications
 
             Layout.bottomMargin: 10
             Layout.fillHeight: true
@@ -212,7 +262,7 @@ ColumnLayout {
 //                    }
 //                }
             }
-        }
+         }
     }
 
 }

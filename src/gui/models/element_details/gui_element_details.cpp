@@ -9,16 +9,6 @@
 #include "gui/main/gui_main_window.h"
 #include "dblp/query/resolver/query_resolver.h"
 
-const char * const XML_EXAMPLE = R"#(
-<article key="journals/it/hackaton-sols" mdate="2019-05-27"\>$$
-^^<author>Amarjon Singh</author>$$
-^^<author>Lorenzo Miniero</author>$$
-^^<title>Hackaton solutions for information retrieval</title>$$
-^^<year>2019</year>$$
-^^<journal>Computer Science (IT)</journal>$$
-</article>
-)#";
-
 LOGGING(GuiElementDetails, true)
 
 DblpElementXmlRetrieverHandler::~DblpElementXmlRetrieverHandler() {}
@@ -58,6 +48,9 @@ void GuiElementDetails::setSerial(int serial)
 	if (!arguments.dblpXmlFilePath.isEmpty()) {
 		QFuture<void> xmlLoadingFuture =
 				QtConcurrent::run(this, &GuiElementDetails::loadXml);
+		mHasXml = true;
+		emit hasXmlChanged();
+		// GUI hack: notify now so that the XML tab will have position 0
 	}
 
 	//  Load publications, if those are available for the element (only for venues)
@@ -77,11 +70,10 @@ void GuiElementDetails::setSerial(int serial)
 
 		mPublications.addPublications(guiPublications);
 
-		emit publicationsChanged();
-	}
-
-	if (mPublications.size() > 0) {
+		mHasPublications = true;
 		emit hasPublicationsChanged();
+
+		emit publicationsChanged();
 	}
 }
 
@@ -100,9 +92,14 @@ QObject *GuiElementDetails::publications()
 	return &mPublications;
 }
 
+bool GuiElementDetails::hasXml()
+{
+	return mHasXml;
+}
+
 bool GuiElementDetails::hasPublications()
 {
-	return mPublications.size() > 0;
+	return mHasPublications;
 }
 
 void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
@@ -162,6 +159,9 @@ void GuiElementDetails::xmlLoadingFinished()
 	// Push the raw lines to the real gui lines
 	mLines.addLines(mLinesRaw);
 	emit xmlLinesChanged();
+
+	// Already fired
+	// emit hasXmlChanged();
 }
 
 void GuiElementDetails::loadXml()
@@ -182,7 +182,7 @@ void GuiElementDetails::loadXml()
 
 	DblpElementXmlRetriever retriever(mSerial, *this);
 	DblpXmlParser parser(arguments.dblpXmlFilePath, retriever,
-						 elementPosition.first);
+						 elementPosition.first, elementPosition.second);
 	parser.parse();
 }
 

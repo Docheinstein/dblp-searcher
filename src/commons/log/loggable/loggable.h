@@ -18,7 +18,7 @@
 	bool clazz::canLog() const { return CAN_LOG; }
 
 // Shut up every log level
-#define SILENT 1
+#define SILENT 0
 
 // Active log levels (SILENT must be 0)
 #define TRACE	(0 && !SILENT)
