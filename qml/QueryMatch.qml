@@ -11,10 +11,6 @@ Rectangle {
 
     property QtObject parentRef; // Bound from outside
 
-    function openElementDetails(serial) {
-        MainWindow.openElementDetails(serial)
-    }
-
     id: queryMatch
     height: queryMatchLayout.implicitHeight
     width: parentRef.width
@@ -95,7 +91,7 @@ Rectangle {
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: openElementDetails(model.publicationSerial)
+                        onClicked: MainWindow.openElementDetails(model.publicationSerial)
                     }
                 }
 
@@ -122,7 +118,7 @@ Rectangle {
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: openElementDetails(model.venueSerial)
+                        onClicked: MainWindow.openElementDetails(model.venueSerial)
                     }
                 }
 

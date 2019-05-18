@@ -22,6 +22,8 @@
 #include "dblp/xml/models/element/dblp_xml_element.h"
 #include "dblp/xml/handler/dblp_xml_parse_handler.h"
 #include "dblp/xml/parser/dblp_xml_parser.h"
+#include "commons/log/loggable/loggable.h"
+#include "main/args.h"
 
 #define QML_URI				"DblpSearcher"
 #define QML_VERSION_MAJOR	1
@@ -29,6 +31,7 @@
 
 #define QML_REGISTRAR QML_URI, QML_VERSION_MAJOR, QML_REVISION
 
+STATIC_LOGGING(Main, true)
 
 static const char * const HELP =
 R"#(NAME
@@ -57,63 +60,39 @@ SEARCH MODE
 		Requires two additional arguments, the path where to load the index
 		files and the base name of those.
 		e.g. --search /tmp/dblp-index/ indexname
+
+	OPTIONALS
+		--xml, -X <dblp_xml_file>
+		Use the original XML for show the original content of the query matches.
+		Must obviously be the same file used for the indexing.
 )#";
 
-enum class Mode {
-	Index,
-	Search
-};
-
-class Arguments {
-public:
-	Mode mode;
-	QString dblpFilePath;
-	QString indexFolderPath;
-	QString baseIndexName;
-
-	int argc;
-	char **argv;
-};
+Arguments arguments;
 
 [[noreturn]] static void dblpSearcherAbort(const char *message = HELP) {
 	qCritical() << message;
 	exit(-1);
 }
 
-class DblpXmlParseHandlerImpl : public DblpXmlParseHandler {
-
-	// DblpXmlParseHandler interface
-public:
-	void onParseStart();
-	void onParseEnd();
-	void onElement(const DblpXmlElement &element, qint64 pos);
-};
-
-void DblpXmlParseHandlerImpl::onParseStart() {}
-void DblpXmlParseHandlerImpl::onParseEnd() {}
-void DblpXmlParseHandlerImpl::onElement(const DblpXmlElement &element, qint64 pos) {
-	qInfo() << "ON ELEMENT: " <<  element.name;
+[[noreturn]] static void dblpSearcherAbort(const QString &message) {
+	dblpSearcherAbort(message.toStdString().c_str());
 }
 
-static int startIndexMode(Arguments args) {
-	Q_ASSERT(args.mode == Mode::Index);
+static int startIndexMode() {
+	Q_ASSERT(arguments.mode == DblpSearcherMode::Index);
 
-	Indexer indexer(args.indexFolderPath, args.baseIndexName);
-	DblpXmlParser parser(args.dblpFilePath, indexer);
-//	XmlParser2 parser(args.dblpFilePath, indexer);
-//	DblpXmlParseHandlerImpl handler;
-//	QFile inFile(args.dblpFilePath);
-//	DblpXmlParser parser(inFile, handler);
+	Indexer indexer(arguments.indexFolderPath, arguments.baseIndexName);
+	DblpXmlParser parser(arguments.dblpXmlFilePath, indexer);
 	parser.parse();
 
 	return 0;
 }
 
-static int startSearchMode(Arguments args) {
-	Q_ASSERT(args.mode == Mode::Search);
+static int startSearchMode() {
+	Q_ASSERT(arguments.mode == DblpSearcherMode::Search);
 
 	// Gui application (must be before everything else)
-	QGuiApplication guiApp(args.argc, args.argv);
+	QGuiApplication guiApp(arguments.argc, arguments.argv);
 
 	// Global qml engine
 	QQmlEngine *engine = new QQmlEngine;
@@ -156,11 +135,17 @@ static int startSearchMode(Arguments args) {
 	if (!guiMainWindow.create())
 		dblpSearcherAbort("Error occurred while creating SplashWindow");
 
+	guiMainWindow.setShown(false);
 	guiSplashWindow.setShown(true);
 
 	// Load async
-	QtConcurrent::run([&args, &guiSplashWindow, &guiMainWindow,
-					  &indexHandler, &irmodel, &queryResolver]() {
+	QFutureWatcher<void> indexLoadingWatcher;
+
+	QFuture<void> indexLoadingFuture =
+			QtConcurrent::run([&guiSplashWindow, &guiMainWindow,
+								&indexHandler, &irmodel, &queryResolver]() {
+
+		bool loadPositions = !arguments.dblpXmlFilePath.isEmpty();
 
 		auto splashProgressor = [&guiSplashWindow](double progress) {
 			guiSplashWindow.setProgress(progress);
@@ -168,7 +153,8 @@ static int startSearchMode(Arguments args) {
 
 		// INDEX HANDLER
 
-		indexHandler = new IndexHandler(args.indexFolderPath, args.baseIndexName);
+		indexHandler = new IndexHandler(arguments.indexFolderPath, arguments.baseIndexName,
+										loadPositions);
 
 		// Connect to signals for detect progress
 
@@ -184,13 +170,21 @@ static int startSearchMode(Arguments args) {
 		});
 		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadProgress, splashProgressor);
 
-		// Crossrefs & Articles journals
-		// Do both on the same status
+		// Crossrefs
 		QObject::connect(indexHandler, &IndexHandler::crossrefsLoadStarted, [&guiSplashWindow]() {
 			guiSplashWindow.setStatus("Loading index file: crossrefs");
 		});
 		QObject::connect(indexHandler, &IndexHandler::crossrefsLoadProgress,
 						 splashProgressor);
+
+		if (loadPositions) {
+			// Positions
+			QObject::connect(indexHandler, &IndexHandler::positionsLoadStarted, [&guiSplashWindow]() {
+				guiSplashWindow.setStatus("Loading index file: positions");
+			});
+			QObject::connect(indexHandler, &IndexHandler::positionsLoadProgress,
+							 splashProgressor);
+		}
 
 		indexHandler->load();
 
@@ -210,58 +204,20 @@ static int startSearchMode(Arguments args) {
 
 		// Set the resolver
 		guiMainWindow.setResolver(queryResolver);
+	});
 
+	QObject::connect(&indexLoadingWatcher,
+					 &QFutureWatcher<void>::finished,
+					 [&guiSplashWindow, &guiMainWindow]() {
 		// Load of everything finished, show main window
-		qDebug() << ">>> Going to HIDE splash and show main window";
+		_dd(">>> Going to HIDE splash and show main window");
 		guiSplashWindow.setShown(false);
 		guiMainWindow.setShown(true);
 	});
 
+	indexLoadingWatcher.setFuture(indexLoadingFuture);
+
 	return guiApp.exec();
-}
-
-#define LOG_TAG "main"
-#define CAN_LOG true
-
-static Arguments parseArguments(int argc, char *argv[]) {
-	Arguments args;
-	args.argc = argc;
-	args.argv = argv;
-
-	_tt("Ehy there!");
-
-	for (int i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-
-		auto readNextParam = [argc, argv, &i](QString &str, QString failReason) {
-			i++;
-			if (i >= argc) {
-				qCritical() << failReason;
-				dblpSearcherAbort();
-			}
-			str = argv[i];
-		};
-
-		auto readModeParams = [&readNextParam, &args]() {
-			readNextParam(args.indexFolderPath, "Missing mode parameter: index folder path");
-			readNextParam(args.baseIndexName, "Missing mode parameter: index base name");
-		};
-
-		// Mode
-		if (streq(arg, "--index") || streq(arg, "-I")) {
-			args.mode = Mode::Index;
-			readNextParam(args.dblpFilePath, "Missing mode parameter: dblp file path");
-			readModeParams();
-		}
-		else if (streq(arg, "--search") || streq(arg, "-S")) {
-			args.mode = Mode::Search;
-			readModeParams();
-		}
-
-		// Other options
-	}
-
-	return args;
 }
 
 int main(int argc, char *argv[])
@@ -276,14 +232,16 @@ int main(int argc, char *argv[])
 	}
 	try {
 		// Parse the arguments
-		Arguments args = parseArguments(argc, argv);
-		if (args.mode == Mode::Index) {
+		parseArguments(argc, argv);
+		printArguments();
+
+		if (arguments.mode == DblpSearcherMode::Index) {
 			qInfo() << "Starting in INDEX mode";
-			startIndexMode(args);
+			startIndexMode();
 		}
-		else if (args.mode == Mode::Search) {
+		else if (arguments.mode == DblpSearcherMode::Search) {
 			qInfo() << "Starting in SEARCH mode";
-			startSearchMode(args);
+			startSearchMode();
 		}
 		else {
 			qWarning() << "Arguments parsing faile; please provide a valid mode.";

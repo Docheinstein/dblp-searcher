@@ -10,8 +10,7 @@ public:
 
 	virtual void onParseStart() = 0;
 	virtual void onParseEnd() = 0;
-
-	virtual void onElement(const DblpXmlElement &element, qint64 pos) = 0;
+	virtual bool onElement(const DblpXmlElement &element, qint64 pos) = 0;
 };
 
 #endif // DBLP_XML_PARSE_HANDLER_H

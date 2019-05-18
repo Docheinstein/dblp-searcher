@@ -17,15 +17,13 @@ void GuiDblpXmlLines::addLine(const GuiDblpXmlLine &line)
 	beginInsertRows(QModelIndex(), rowCount(), rowCount());
 	mLines.append(line);
 	endInsertRows();
-
 }
 
 void GuiDblpXmlLines::addLines(const QVector<GuiDblpXmlLine> &lines)
 {
 	beginInsertRows(QModelIndex(), rowCount(), rowCount() + lines.size() - 1);
-	for (const GuiDblpXmlLine& line : lines) {
+	for (const GuiDblpXmlLine& line : lines)
 		mLines.append(line);
-	}
 	endInsertRows();
 }
 

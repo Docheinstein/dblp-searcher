@@ -22,7 +22,7 @@ public:
 	// DblpXmlParseHandler interface
 	void onParseStart() override;
 	void onParseEnd() override;
-	void onElement(const DblpXmlElement &element, qint64 pos) override;
+	bool onElement(const DblpXmlElement &element, qint64 pos) override;
 
 protected:
 	LOGGING_OVERRIDE

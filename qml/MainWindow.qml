@@ -63,7 +63,7 @@ ApplicationWindow {
     // View
 
     id: main
-    visible: true
+    visible: MainWindow.shown
     minimumWidth: 600
     minimumHeight: 480
     width: 800

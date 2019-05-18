@@ -6,6 +6,7 @@
 		<file alias="QueryMatch.qml">qml/QueryMatch.qml</file>
 		<file alias="ElementDetails.qml">qml/ElementDetails.qml</file>
 		<file alias="DblpXmlLine.qml">qml/DblpXmlLine.qml</file>
+		<file alias="PublicationLine.qml">qml/PublicationLine.qml</file>
     </qresource>
     <qresource prefix="/img">
         <file alias="search.png">res/images/search.png</file>

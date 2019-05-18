@@ -22,7 +22,8 @@ class IndexHandler : public QObject, protected Loggable
 	Q_OBJECT
 
 public:
-	IndexHandler(const QString &indexPath, const QString &baseName);
+	IndexHandler(const QString &indexPath, const QString &baseName,
+				 bool loadPositions = false);
 
 	void load();
 
@@ -61,7 +62,7 @@ public:
 				   ElementFieldType fieldType,
 				   QVector<IndexPost> &posts);
 
-	const QList<QString> identifiers() const;
+	const QVector<QString> identifiers() const;
 	bool identifier(elem_serial serial, QString &identifier) const;
 
 	const QMap<QString, IndexTermRef> vocabulary() const;
@@ -69,6 +70,12 @@ public:
 
 	const QHash<elem_serial, elem_serial> crossrefs() const;
 	bool crossref(elem_serial publicationSerial, elem_serial &venueSerial) const;
+
+	const QHash<elem_serial, QVector<elem_serial>> inverseCrossrefs() const;
+	bool inverseCrossref(elem_serial venueSerial, QVector<elem_serial> &publicationSerials) const;
+
+	const QVector<elem_pos> positions() const;
+	bool positionRange(elem_serial serial, QPair<elem_pos, elem_pos> &range) const;
 
 signals:
 	void vocabularyLoadStarted();
@@ -83,41 +90,26 @@ signals:
 	void crossrefsLoadProgress(double progress);
 	void crossrefsLoadEnded();
 
-//	void articlesJournalsLoadStarted();
-//	void articlesJournalsLoadProgress(double progress);
-//	void articlesJournalsLoadEnded();
+	void positionsLoadStarted();
+	void positionsLoadProgress(double progress);
+	void positionsLoadEnded();
 
 protected:
 	LOGGING_OVERRIDE
 
 private:
-	// Use the token list
-//	bool findMatchesSingleType(
-//						const QStringList &tokens,
-//						ElementFieldType fieldType,
-//						QSet<IndexMatch> &matches);
-
-//	bool findMatchesSingleTypeWord(
-//						const QString &token,
-//						ElementFieldType fieldType,
-//						QSet<IndexMatch> &matches);
-
-//	bool findMatchesSingleTypePhrase(
-//						const QStringList &tokens,
-//						ElementFieldType fieldType,
-//						QSet<IndexMatch> &matches);
-
 	void init();
 
 	void loadIdentifiers();
 	void loadVocabulary();
 	void loadCrossrefs();
-//	void loadPositions();
+	void loadPositions();
 	// ...
 
 	void printIdentifiers();
 	void printVocabulary();
 	void printCrossrefs();
+	void printPositions();
 
 	// ===================
 	// PATHS
@@ -142,7 +134,7 @@ private:
 
 	// Contains all the elements identifiers (with the implicit association
 	// to their serial, which are equals to the in-list position)
-	QList<QString> mIdentifiers;
+	QVector<QString> mIdentifiers;
 
 	// A QHash would be enough, but since the iefs computation is done
 	// scanning the vocabulary, its better if we store the terms in alphabetic
@@ -155,6 +147,19 @@ private:
 	// Contains the crossrefs from publications to venues
 	// for inproc => proc, incollection => book, article => journal
 	QHash<elem_serial, elem_serial> mCrossrefs;
+
+	// Contains the inverse crossrefs from venues to publications
+	// Doesn't reflect an index file, but is automatically generated during
+	// the construction of the direct crossrefs, for convenience
+	QHash<elem_serial, QVector<elem_serial>> mInverseCrossrefs;
+
+	// Contains the elements positions in the original XML file, one for each element
+	QVector<elem_pos> mElementsPositions;
+
+	// ====================
+	// MISC
+	// ====================
+	bool mLoadPositions;
 };
 
 #endif // INDEX_HANDLER_H

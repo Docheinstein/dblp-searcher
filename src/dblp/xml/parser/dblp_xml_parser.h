@@ -9,7 +9,8 @@
 class DblpXmlParser : protected Loggable
 {
 public:
-	DblpXmlParser(const QString &inputFilePath, DblpXmlParseHandler &parseHandler);
+	DblpXmlParser(const QString &inputFilePath, DblpXmlParseHandler &parseHandler,
+				  qint64 startingPosition = 0);
 	bool parse();
 
 protected:
@@ -17,6 +18,7 @@ protected:
 
 private:
 	QFile mInput;
+	qint64 mStartingPosition;
 	DblpXmlParseHandler &mHandler;
 	QXmlStreamReader mReader;
 
@@ -26,9 +28,9 @@ private:
 
 	int mLastNotifiedPercentage = 0;
 
-	void handleStartElement();
-	void handleStartField(const QString &field);
-	void handleEndElement(bool resetState = true);
+	bool handleStartElement();
+	bool handleStartField(const QString &field);
+	bool handleEndElement(bool resetState = true);
 
 	void resetParserState();
 

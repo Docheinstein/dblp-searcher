@@ -7,4 +7,6 @@ typedef quint32 elem_serial; // Max 2^23
 typedef quint16 field_num; // Max 2^9
 typedef quint8 term_pos; // Max 2^8
 
+typedef quint32 elem_pos;
+
 #endif // DBLP_DEFS_H

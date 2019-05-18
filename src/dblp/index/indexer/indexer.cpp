@@ -98,7 +98,7 @@ void Indexer::onParseEnd()
 }
 
 
-void Indexer::onElement(const DblpXmlElement &element, qint64 pos)
+bool Indexer::onElement(const DblpXmlElement &element, qint64 pos)
 {
 	PROF_FUNC_BEGIN
 
@@ -163,8 +163,9 @@ void Indexer::onElement(const DblpXmlElement &element, qint64 pos)
 	}
 
 	PROF_FUNC_END
-}
 
+	return true; // always go ahead to the rescue!
+}
 
 void Indexer::handleArticle(const DblpArticle &article, qint64 pos)
 {
@@ -758,7 +759,7 @@ void Indexer::writePositionsFile()
 	foreach (qint64 pos, mPositions) {
 		vv2("Writing position for element = " << i << ": " << pos);
 
-		quint32 P = UINT32(pos);
+		elem_pos P = static_cast<elem_pos>(pos);
 		mElementsPositionsStream.stream << P;
 
 		i++;

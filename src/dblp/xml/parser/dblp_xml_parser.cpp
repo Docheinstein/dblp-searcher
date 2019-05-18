@@ -12,10 +12,12 @@ namespace DblpXmlElements = Const::Dblp::Xml::Elements;
 namespace DblpXmlFields = Const::Dblp::Xml::Fields;
 namespace DblpXmlAttributes = Const::Dblp::Xml::Attributes;
 
-DblpXmlParser::DblpXmlParser(const QString &inputFilePath, DblpXmlParseHandler &parseHandler)
+DblpXmlParser::DblpXmlParser(const QString &inputFilePath, DblpXmlParseHandler &parseHandler,
+							 qint64 startingPosition)
 	: mHandler(parseHandler)
 {
 	mInput.setFileName(inputFilePath);
+	mStartingPosition = startingPosition;
 }
 
 bool DblpXmlParser::parse()
@@ -23,6 +25,7 @@ bool DblpXmlParser::parse()
 	PROF_FUNC_BEGIN
 
 	const qint64 INPUT_FILE_SIZE = mInput.size();
+	bool continueParsing = true;
 
 	ii("Starting XML file parsing of: " << mInput.fileName());
 
@@ -31,11 +34,19 @@ bool DblpXmlParser::parse()
 		return false;
 	}
 
+	// Go the the specified position, if required
+	if (mStartingPosition > 0) {
+		dd("Seeking on input file to position: " << mStartingPosition);
+		mInput.seek(mStartingPosition);
+	}
+
 	mReader.setDevice(&mInput);
 
 	mHandler.onParseStart();
 
-	while (!mReader.atEnd() && !mReader.hasError()) {
+	while (!mReader.atEnd() && !mReader.hasError() &&
+		   continueParsing /* stopped by the handler? */) {
+//		dd("bytesAvailable: " << mInput.bytesAvailable());
 		mReader.readNext();
 
 #if DUMP_XML
@@ -43,14 +54,11 @@ bool DblpXmlParser::parse()
 #endif
 		switch (mReader.tokenType()) {
 		case QXmlStreamReader::StartElement:
-			handleStartElement();
+			continueParsing &= handleStartElement();
 			break;
 		case QXmlStreamReader::EndElement:
-			handleEndElement();
+			continueParsing &= handleEndElement();
 			break;
-//		case QXmlStreamReader::Characters:
-//			dd4(mReader.text());
-//			break;
 		default:
 			break;
 		}
@@ -70,6 +78,10 @@ bool DblpXmlParser::parse()
 		return false;
 	}
 
+	if (!continueParsing) {
+		dd("Parser has been stopped by the handler");
+	}
+
 	mHandler.onParseEnd();
 
 	PROF_FUNC_END
@@ -77,8 +89,9 @@ bool DblpXmlParser::parse()
 	return true;
 }
 
-void DblpXmlParser::handleStartElement()
+bool DblpXmlParser::handleStartElement()
 {
+	bool continueParsing = true;
 	const QString &token = mReader.name().toString();
 
 #if DUMP_XML
@@ -105,11 +118,13 @@ void DblpXmlParser::handleStartElement()
 		token == DblpXmlFields::CROSSREF ||
 		token == DblpXmlFields::JOURNAL) {
 
-		handleStartField(token);
+		continueParsing &= handleStartField(token);
 	}
+
+	return continueParsing;
 }
 
-void DblpXmlParser::handleStartField(const QString &field)
+bool DblpXmlParser::handleStartField(const QString &field)
 {
 	QString innerToken;
 	QString fieldContent;
@@ -140,11 +155,12 @@ void DblpXmlParser::handleStartField(const QString &field)
 		case QXmlStreamReader::EndElement:
 			if (mReader.name() == field)
 				fieldContentRead = true; // ok, found expected end tag
-			else
+			else {
 				#if DUMP_XML
 					ww("Unexpected tag found for field '" + field + "'");
 				#endif
 				// Go on and hope...
+			}
 			break;
 		default:
 			break;
@@ -165,10 +181,14 @@ void DblpXmlParser::handleStartField(const QString &field)
 		// Retrieve the string list and add it
 		fieldIt.value().append(fieldContent);
 	}
+
+	return true;
 }
 
-void DblpXmlParser::handleEndElement(bool resetState)
+bool DblpXmlParser::handleEndElement(bool resetState)
 {
+	bool continueParsing = true;
+
 	const QString &token = mReader.name().toString();
 
 #if DUMP_XML
@@ -189,10 +209,12 @@ void DblpXmlParser::handleEndElement(bool resetState)
 		elem.attributes = mElementAttributes;
 		elem.fields = mElementFields;
 
-		mHandler.onElement(elem, mInput.pos());
+		continueParsing = mHandler.onElement(elem, mInput.pos());
 		if (resetState)
 			resetParserState();
 	}
+
+	return continueParsing;
 }
 
 void DblpXmlParser::resetParserState()

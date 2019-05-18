@@ -9,9 +9,12 @@ ColumnLayout {
     readonly property string tabUnselectedColor: "#d7dfed"
     readonly property string tabSelectedTextColor: "#f9f9f9"
     readonly property string tabUnselectedTextColor: "#27282a"
+    readonly property string xmlBackgroundColor: "#353742"
 
     property int elementSerial;
 
+//    width: 800
+//    height: 600
     spacing: 0
     // Bound from outside
 
@@ -26,7 +29,6 @@ ColumnLayout {
         id: elementDetailsBackButton
 
         width: 60
-        Layout.bottomMargin: 8
         Layout.topMargin: 8
 
         icon.source: "qrc:/img/back.png"
@@ -43,9 +45,21 @@ ColumnLayout {
         }
     }
 
+    Label {
+        id: elementDetailsIdentifier
+        text: elementDetailsModel.identifier
+        Layout.topMargin: 8
+        verticalAlignment: Text.AlignVCenter
+        font.bold: true
+        font.pointSize: 11
+        Layout.fillWidth: true
+        horizontalAlignment: Text.AlignHCenter
+    }
+
     TabBar {
         id: elementDetailsTabBar
 
+        Layout.topMargin: 8
         height: 40
         Layout.fillWidth: true
 
@@ -68,10 +82,12 @@ ColumnLayout {
             }
         }
         TabButton {
+            readonly property bool selected: elementDetailsTabBar.currentIndex === 1
+
             id: elementDetailsVenuesTab
             text: "Publications"
 
-            readonly property bool selected: elementDetailsTabBar.currentIndex === 1
+            visible: elementDetailsModel.hasPublications
 
             background: Rectangle {
                 color: elementDetailsVenuesTab.selected ?
@@ -87,23 +103,32 @@ ColumnLayout {
     }
 
     StackLayout {
-        Layout.rightMargin: 5
-        Layout.leftMargin: 5
-        Layout.topMargin: 20
         Layout.fillHeight: true
         Layout.fillWidth: true
 
-//        currentIndex: elementDetailsTabBar.currentIndex
-        currentIndex: 0
+        currentIndex: elementDetailsTabBar.currentIndex
+//        currentIndex: 1
 
         Item {
             id: elementDetailsXmlView
+            Layout.bottomMargin: 10
             Layout.fillHeight: true
             Layout.fillWidth: true
 
+            Rectangle {
+                width: parent.width
+                height: parent.height
+                color: xmlBackgroundColor
+            }
+
             ListView {
                 id: elementDetailsXmlListView
+                anchors.rightMargin: 12
+                anchors.leftMargin: 12
+                anchors.bottomMargin: 12
+                anchors.topMargin: 12
                 anchors.fill: parent
+
                 clip: true
 
                 delegate: Loader {
@@ -145,6 +170,49 @@ ColumnLayout {
 
         Item {
             id: elementDetailsPublicationsView
+
+            visible: elementDetailsModel.hasPublications
+
+            Layout.bottomMargin: 10
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+
+            ListView {
+                id: elementDetailsPublicationsListView
+                anchors.rightMargin: 12
+                anchors.leftMargin: 12
+                anchors.bottomMargin: 12
+                anchors.topMargin: 12
+                anchors.fill: parent
+
+                clip: true
+
+                delegate: Loader {
+                    id: elementDetailsPublicationLineLoader
+                    source: "PublicationLine.qml"
+
+                    Binding {
+                        target: elementDetailsPublicationLineLoader.item
+                        property: "parentRef"
+                        value: elementDetailsPublicationsListView
+                    }
+                }
+
+                model: elementDetailsModel.publications
+
+//                model: ListModel {
+//                    ListElement {
+//                        identifier: "/key/journal/BDT19"
+//                    }
+//                    ListElement {
+//                        identifier: "/key/journal/BDT19"
+//                    }
+//                    ListElement {
+//                        identifier: "/key/journal/BDT29"
+//                    }
+//                }
+            }
         }
     }
+
 }

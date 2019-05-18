@@ -3,6 +3,10 @@
 
 #include "commons/log/logger/logger.h"
 
+#define STATIC_LOGGING(clazz, enabled) \
+	static bool CAN_LOG = enabled; \
+	static const char * const LOG_TAG = #clazz; \
+
 #define LOGGING_OVERRIDE \
 	const char *logTag() const override; \
 	bool canLog() const override;
@@ -14,12 +18,12 @@
 	bool clazz::canLog() const { return CAN_LOG; }
 
 // Shut up every log level
-#define SILENT 0
+#define SILENT 1
 
 // Active log levels (SILENT must be 0)
 #define TRACE	(0 && !SILENT)
-#define DEBUG	(0 && !SILENT)
-#define VERBOSE (0 && !SILENT)
+#define DEBUG	(1 && !SILENT)
+#define VERBOSE (1 && !SILENT)
 #define INFO	(1 && !SILENT)
 #define WARN	(1 && !SILENT)
 #define ERROR	(1 && !SILENT)

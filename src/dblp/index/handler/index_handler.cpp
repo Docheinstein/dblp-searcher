@@ -8,16 +8,18 @@
 #include "commons/profiler/profiler.h"
 #include <QMutex>
 
-LOGGING(IndexHandler, false);
+LOGGING(IndexHandler, true);
 
-IndexHandler::IndexHandler(const QString &indexPath, const QString &baseName)
+IndexHandler::IndexHandler(const QString &indexPath, const QString &baseName,
+						   bool loadPositions)
 {
 	mIndexPath = indexPath;
 	mBaseIndexName = baseName;
+	mLoadPositions = loadPositions;
 	init();
 }
 
-const QList<QString> IndexHandler::identifiers() const
+const QVector<QString> IndexHandler::identifiers() const
 {
 	return mIdentifiers;
 }
@@ -61,17 +63,65 @@ bool IndexHandler::crossref(elem_serial publicationSerial, elem_serial &venueSer
 	return true;
 }
 
+const QHash<elem_serial, QVector<elem_serial> > IndexHandler::inverseCrossrefs() const
+{
+	return mInverseCrossrefs;
+}
+
+bool IndexHandler::inverseCrossref(elem_serial venueSerial,
+								   QVector<elem_serial> &publicationSerials) const
+{
+	auto inverseCrossrefIt = mInverseCrossrefs.find(venueSerial);
+	if (inverseCrossrefIt == mInverseCrossrefs.end())
+		return false;
+	publicationSerials = inverseCrossrefIt.value();
+	return true;
+}
+
+const QVector<elem_pos> IndexHandler::positions() const
+{
+	return mElementsPositions;
+}
+
+bool IndexHandler::positionRange(elem_serial serial, QPair<elem_pos, elem_pos> &range) const
+{
+	int ix = INT(serial);
+	if (ix >= mElementsPositions.size())
+		return false;
+
+	range.first = 0; // lower bound (default value: start of file)
+	range.second = mElementsPositions.at(ix); // upper bound
+
+	// For find the lower bound we have to scan the vector backward in order
+	// to find a different position; this is not ideal but is not dramatic
+	// since there should be not many items with the same file position
+
+	for (int i = ix - 1; i >= 0; i--) {
+		if (mElementsPositions.at(i) != range.second) {
+			// Found a different position
+			range.first = mElementsPositions.at(i);
+			break; // No need to search anymore backward, lower bound found
+		}
+	}
+
+	// Even if not different position has been found, we have set 0 as fallback
+
+	return true;
+}
+
 void IndexHandler::load()
 {
 	// Load indexes into runtime data structures
 	loadIdentifiers();
 	loadVocabulary();
 	loadCrossrefs();
+	loadPositions();
 
 	// Print for debug
 	printIdentifiers();
 	printVocabulary();
 	printCrossrefs();
+	printPositions();
 }
 
 bool IndexHandler::findMatches(const QString &phrase,
@@ -802,7 +852,18 @@ void IndexHandler::loadCrossrefs()
 
 		vv1("Loaded crossref " << pubElementSerial << " => " << venueElementSerial);
 
+		// Push the direct crossref
 		mCrossrefs.insert(pubElementSerial, venueElementSerial);
+
+		// Push the reverse crossref
+		auto inverseCrossrefIt = mInverseCrossrefs.find(venueElementSerial);
+		if (inverseCrossrefIt == mInverseCrossrefs.end()) {
+			// Push for the first time
+			mInverseCrossrefs.insert(venueElementSerial, {pubElementSerial});
+		} else {
+			// Append to the existing vector
+			inverseCrossrefIt.value().append(pubElementSerial);
+		}
 
 		double progress = DOUBLE(mCrossrefsStream.filePosition()) / crossrefsFileSize;
 		vv1("Crossrefs file load progress: " << progress);
@@ -810,6 +871,37 @@ void IndexHandler::loadCrossrefs()
 	}
 
 	emit crossrefsLoadEnded();
+}
+
+void IndexHandler::loadPositions()
+{
+	if (!mLoadPositions) {
+		dd("Not loading positions since not required (XML path not specified)");
+		return;
+	}
+	// The format is
+	// <pos_0>
+	// <pos_1>
+	// ...
+	// <pos_0>
+
+	vv("Loading positions file index");
+
+	emit positionsLoadStarted();
+
+	const qint64 posFileSize = mElementsPositionsStream.fileSize();
+
+	while (!mElementsPositionsStream.stream.atEnd()) {
+		elem_pos pos;
+		mElementsPositionsStream.stream >> pos;
+		mElementsPositions.append(pos);
+
+		double progress = DOUBLE(mElementsPositionsStream.filePosition()) / posFileSize;
+		vv1("Positions file load progress: " << progress);
+		emit positionsLoadProgress(progress);
+	}
+
+	emit positionsLoadEnded();
 }
 
 void IndexHandler::printIdentifiers()
@@ -844,6 +936,22 @@ void IndexHandler::printCrossrefs()
 		vv1(it.key() << " => " << it.value());
 	}
 	vv("==== CROSSREFS END ====");
+#endif
+}
+
+void IndexHandler::printPositions()
+{
+	if (!mLoadPositions)
+		return;
+
+#if VERBOSE
+	vv("==== POSITIONS ====");
+	elem_serial i = 0;
+	for (const elem_pos pos : mElementsPositions) {
+		vv1("[" << i << "] : " << pos);
+		i++;
+	}
+	vv("==== POSITIONS END ====");
 #endif
 }
 

@@ -13,10 +13,8 @@ public:
 	GuiDblpXmlLines(QObject *parent = nullptr);
 
 	void addLine(const GuiDblpXmlLine &line);
-	void addLines(const QVector<GuiDblpXmlLine> &line);
+	void addLines(const QVector<GuiDblpXmlLine> &lines);
 	void clearLines();
-
-	void notifyDataChanged();
 
 	int size();
 
@@ -38,4 +36,5 @@ private:
 
 	QVector<GuiDblpXmlLine> mLines;
 };
+
 #endif // GUI_DBLP_XML_LINES_H
