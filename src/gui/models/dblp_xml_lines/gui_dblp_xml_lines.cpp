@@ -6,6 +6,7 @@ QHash<int, QByteArray> GuiDblpXmlLines::GUI_DBLP_XML_LINE_ROLES = {
 	{GuiDblpXmlLineRoleContent, "content"},
 	{GuiDblpXmlLineRoleTagAttributes, "attributes"},
 	{GuiDblpXmlLineRoleTagIndent, "indent"},
+	{GuiDblpXmlLineRoleTagCrossref, "crossref"},
 };
 
 GuiDblpXmlLines::GuiDblpXmlLines(QObject *parent) : QAbstractListModel (parent)
@@ -63,6 +64,8 @@ QVariant GuiDblpXmlLines::data(const QModelIndex &index, int role) const
 		return line.attributes();
 	case GuiDblpXmlLineRoleTagIndent:
 		return line.indent();
+	case GuiDblpXmlLineRoleTagCrossref:
+		return line.crossref();
 	}
 
 	return QVariant();

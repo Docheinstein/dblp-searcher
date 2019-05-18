@@ -3,6 +3,7 @@
 QHash<int, QByteArray> GuiElementPublications::GUI_ELEMENT_PUBLICATION_ROLES = {
 	{GuiElementPublicationRoleSerial, "serial"},
 	{GuiElementPublicationRoleIdentifier, "identifier"},
+	{GuiElementPublicationRoleRank, "rank"},
 };
 
 GuiElementPublications::GuiElementPublications(QObject *parent)
@@ -53,6 +54,8 @@ QVariant GuiElementPublications::data(const QModelIndex &index, int role) const
 		return pub.serial();
 	case GuiElementPublicationRoleIdentifier:
 		return pub.identifier();
+	case GuiElementPublicationRoleRank:
+		return index.row() + 1;
 	}
 
 	return QVariant();

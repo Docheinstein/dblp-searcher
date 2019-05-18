@@ -14,7 +14,6 @@
 #include <QFile>
 
 #include <dblp/xml/models/element/dblp_xml_element.h>
-
 #include <dblp/xml/handler/dblp_xml_parse_handler.h>
 
 
@@ -50,9 +49,11 @@ class GuiElementDetails : public DblpElementXmlRetrieverHandler, Loggable {
 	Q_OBJECT
 
 	Q_PROPERTY(int serial READ serial WRITE setSerial NOTIFY serialChanged)
+//	Q_PROPERTY(int crossrefSerial READ crossrefSerial NOTIFY crossrefSerialChanged)
 	Q_PROPERTY(QString identifier READ identifier NOTIFY identifierChanged)
 	Q_PROPERTY(QObject * xmlLines READ xmlLines NOTIFY xmlLinesChanged)
 	Q_PROPERTY(QObject * publications READ publications NOTIFY publicationsChanged)
+	Q_PROPERTY(int publicationsCount READ publicationsCount NOTIFY publicationsCountChanged)
 
 	Q_PROPERTY(bool hasXml READ hasXml NOTIFY hasXmlChanged)
 	Q_PROPERTY(bool hasPublications READ hasPublications NOTIFY hasPublicationsChanged)
@@ -64,11 +65,15 @@ public:
 	int serial();
 	void setSerial(int serial);
 
+//	int crossrefSerial();
+
 	QString identifier();
 
 	QObject * xmlLines();
 
 	QObject * publications();
+
+	int publicationsCount();
 
 	bool hasXml();
 	bool hasPublications();
@@ -80,9 +85,11 @@ public slots:
 
 signals:
 	void serialChanged();
+//	void crossrefSerialChanged();
 	void identifierChanged();
 	void xmlLinesChanged();
 	void publicationsChanged();
+	void publicationsCountChanged();
 	void hasXmlChanged();
 	void hasPublicationsChanged();
 
@@ -91,6 +98,8 @@ protected:
 
 private:
 	elem_serial mSerial;
+	bool mHasCrossref;
+	elem_serial mCrossrefSerial;
 	QString mIdentifier;
 
 	bool mHasXml = false;

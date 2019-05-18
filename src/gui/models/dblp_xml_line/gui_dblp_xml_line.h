@@ -27,6 +27,7 @@ public:
 		Builder & tag(QString tag);
 		Builder & attributes(QString attrs);
 		Builder & content(QString content);
+		Builder & crossref(int crossref);
 
 		GuiDblpXmlLine build();
 
@@ -36,6 +37,7 @@ public:
 		QString mTag;
 		QString mAttributes;
 		QString mContent;
+		int mCrossref;
 	};
 
 	bool indent() const;
@@ -43,12 +45,14 @@ public:
 	QString tag() const;
 	QString attributes() const;
 	QString content() const;
+	int crossref() const;
 
 private:
-	bool mIndent;
+	bool mIndent = false;
 	GuiDblpXmlLineType::Type mType;
 	QString mTag;
 	QString mAttributes;
 	QString mContent;
+	int mCrossref = -1;
 };
 #endif // GUI_DBLP_XML_LINE_H

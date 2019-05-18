@@ -30,6 +30,7 @@ private:
 		GuiDblpXmlLineRoleContent,
 		GuiDblpXmlLineRoleTagAttributes,
 		GuiDblpXmlLineRoleTagIndent,
+		GuiDblpXmlLineRoleTagCrossref,
 	};
 
 	static QHash<int, QByteArray> GUI_DBLP_XML_LINE_ROLES;

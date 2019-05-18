@@ -27,6 +27,7 @@ private:
 	enum GuiElementPublicationRole {
 		GuiElementPublicationRoleSerial = Qt::UserRole + 1,
 		GuiElementPublicationRoleIdentifier,
+		GuiElementPublicationRoleRank,
 	};
 
 	static QHash<int, QByteArray> GUI_ELEMENT_PUBLICATION_ROLES;

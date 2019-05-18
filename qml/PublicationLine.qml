@@ -10,8 +10,12 @@ Row {
     width: parentRef.width
 
     Text {
+        text: rank + ". "
+    }
+
+    Text {
         color: "steelblue"
-        text:  identifier
+        text: identifier
         font.italic: true
         font.underline: true
 

@@ -11,7 +11,7 @@
 #include <QElapsedTimer>
 #include "commons/profiler/profiler.h"
 
-LOGGING(GuiMainWindow, true)
+LOGGING(GuiMainWindow, false)
 
 GuiMainWindow::~GuiMainWindow() {}
 

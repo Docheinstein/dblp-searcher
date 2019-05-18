@@ -157,6 +157,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         currentIndex: elementDetailsTabBar.currentIndex
+//        currentIndex: 1
 
         Item {
             id: elementDetailsXmlView
@@ -176,9 +177,14 @@ ColumnLayout {
                 id: elementDetailsXmlListView
                 anchors.rightMargin: 12
                 anchors.leftMargin: 12
-                anchors.bottomMargin: 12
                 anchors.topMargin: 12
                 anchors.fill: parent
+
+                ScrollBar.vertical: ScrollBar {
+                    active: true
+                    minimumSize: 0.1
+                    policy: ScrollBar.AsNeeded
+                }
 
                 clip: true
 
@@ -227,41 +233,63 @@ ColumnLayout {
             Layout.fillHeight: true
             Layout.fillWidth: true
 
-            ListView {
-                id: elementDetailsPublicationsListView
-                anchors.rightMargin: 12
-                anchors.leftMargin: 12
-                anchors.bottomMargin: 12
-                anchors.topMargin: 12
+            ColumnLayout {
                 anchors.fill: parent
 
-                clip: true
-
-                delegate: Loader {
-                    id: elementDetailsPublicationLineLoader
-                    source: "PublicationLine.qml"
-
-                    Binding {
-                        target: elementDetailsPublicationLineLoader.item
-                        property: "parentRef"
-                        value: elementDetailsPublicationsListView
-                    }
+                Text {
+                    text: "Publications: " + elementDetailsModel.publicationsCount
+                    font.bold: true
+                    Layout.topMargin: 12
+                    Layout.rightMargin: 12
+                    Layout.leftMargin: 12
+                    Layout.fillWidth: true
                 }
 
-                model: elementDetailsModel.publications
+                ListView {
+                    id: elementDetailsPublicationsListView
+                    Layout.leftMargin: 12
+                    Layout.rightMargin: 12
+                    Layout.topMargin: 12
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                    height: 20
 
-//                model: ListModel {
-//                    ListElement {
-//                        identifier: "/key/journal/BDT19"
+                    ScrollBar.vertical: ScrollBar {
+                        active: true
+                        minimumSize: 0.1
+                        policy: ScrollBar.AsNeeded
+                    }
+
+                    clip: true
+
+                    delegate: Loader {
+                        id: elementDetailsPublicationLineLoader
+                        source: "PublicationLine.qml"
+
+                        Binding {
+                            target: elementDetailsPublicationLineLoader.item
+                            property: "parentRef"
+                            value: elementDetailsPublicationsListView
+                        }
+                    }
+
+                    model: elementDetailsModel.publications
+
+//                    model: ListModel {
+//                        ListElement {
+//                            identifier: "/key/journal/BDT19"
+//                        }
+//                        ListElement {
+//                            identifier: "/key/journal/BDT19"
+//                        }
+//                        ListElement {
+//                            identifier: "/key/journal/BDT29"
+//                        }
 //                    }
-//                    ListElement {
-//                        identifier: "/key/journal/BDT19"
-//                    }
-//                    ListElement {
-//                        identifier: "/key/journal/BDT29"
-//                    }
-//                }
+                }
             }
+
+
          }
     }
 

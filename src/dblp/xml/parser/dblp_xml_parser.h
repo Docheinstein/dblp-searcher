@@ -33,6 +33,8 @@ private:
 	bool handleStartField(const QString &field);
 	bool handleEndElement(bool resetState = true);
 
+	void notifyProgress();
+
 	bool setParserDevice();
 	bool setParserDeviceFile();
 	bool setParserDeviceBuffer();

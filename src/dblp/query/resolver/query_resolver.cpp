@@ -10,7 +10,7 @@
 #include <QMutex>
 #include <QThread>
 
-LOGGING(QueryResolver, true);
+LOGGING(QueryResolver, false);
 
 QueryResolver::QueryResolver(IRModel *irmodel)
 {

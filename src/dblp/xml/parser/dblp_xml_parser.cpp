@@ -9,11 +9,10 @@ LOGGING(DblpXmlParser, true)
 
 #define DUMP_XML 1
 
-static const char * const DBLP_XML_START_OF_DOCUMENT =
+static const QString DBLP_XML_START_OF_DOCUMENT =
 R"#(<?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE dblp SYSTEM "dblp.dtd">
-<dblp>
-)#";
+<dblp>)#";
 
 namespace DblpXmlElements = Const::Dblp::Xml::Elements;
 namespace DblpXmlFields = Const::Dblp::Xml::Fields;
@@ -37,7 +36,6 @@ bool DblpXmlParser::parse()
 {
 	PROF_FUNC_BEGIN
 
-	const qint64 INPUT_FILE_SIZE = mInput.size();
 	bool continueParsing = true;
 
 	if (!setParserDevice()) {
@@ -52,12 +50,13 @@ bool DblpXmlParser::parse()
 	while (!mReader.atEnd() &&
 		   !mReader.hasError() &&
 		   continueParsing /* stopped by the handler? */) {
-//		dd("bytesAvailable: " << mInput.bytesAvailable());
+
 		mReader.readNext();
 
 #if DUMP_XML
 		dd(mReader.tokenString());
 #endif
+
 		switch (mReader.tokenType()) {
 		case QXmlStreamReader::StartElement:
 			continueParsing &= handleStartElement();
@@ -65,19 +64,17 @@ bool DblpXmlParser::parse()
 		case QXmlStreamReader::EndElement:
 			continueParsing &= handleEndElement();
 			break;
+		case QXmlStreamReader::Characters:
+#if DUMP_XML
+			dd1(mReader.text());
+#endif
+			break;
 		default:
-//			QThread::sleep(1);
 			break;
 		}
 
 		// Notify progress
-
-		int perc = INT((DOUBLE(mInput.pos()) / INPUT_FILE_SIZE) * 100);
-
-		if (perc > mLastNotifiedPercentage) {
-			mLastNotifiedPercentage = perc;
-			ii("Parsing progress: " << mLastNotifiedPercentage << "%");
-		}
+		notifyProgress();
 	}
 
 	if (mReader.hasError()) {
@@ -159,8 +156,9 @@ bool DblpXmlParser::handleStartField(const QString &field)
 			fieldContent += Util::Html::entityNameToString(mReader.name().toString());
 			break;
 		case QXmlStreamReader::EndElement:
-			if (mReader.name() == field)
+			if (mReader.name() == field) {
 				fieldContentRead = true; // ok, found expected end tag
+			}
 			else {
 				#if DUMP_XML
 					ww("Unexpected tag found for field '" + field + "'");
@@ -170,14 +168,15 @@ bool DblpXmlParser::handleStartField(const QString &field)
 			break;
 		case QXmlStreamReader::Invalid:
 			#if DUMP_XML
-				dd4(mReader.text());
+				ww("Invalid; error: " << mReader.errorString());
 			#endif
-//				QThread::sleep(1);
 			break;
 		default:
 			break;
 		}
-	} while(!fieldContentRead);
+	} while(!mReader.atEnd() &&
+			!mReader.hasError() &&
+			!fieldContentRead);
 
 	// Save the token
 #if DUMP_XML
@@ -194,7 +193,7 @@ bool DblpXmlParser::handleStartField(const QString &field)
 		fieldIt.value().append(fieldContent);
 	}
 
-	return true;
+	return !mReader.hasError();
 }
 
 bool DblpXmlParser::handleEndElement(bool resetState)
@@ -221,12 +220,28 @@ bool DblpXmlParser::handleEndElement(bool resetState)
 		elem.attributes = mElementAttributes;
 		elem.fields = mElementFields;
 
-		continueParsing = mHandler.onElement(elem, mInput.pos());
+		continueParsing = mHandler.onElement(elem, mInput.pos()
+								/* Upper bound, who knows the exact pos...*/);
 		if (resetState)
 			resetParserState();
 	}
 
 	return continueParsing;
+}
+
+void DblpXmlParser::notifyProgress()
+{
+	if (mStartingPosition != 0 || mEndingPosition != 0)
+		return; // Nothing to notify for buffer parsing
+
+	const qint64 INPUT_FILE_SIZE = mInput.size();
+
+	int perc = INT((DOUBLE(mInput.pos()) / INPUT_FILE_SIZE) * 100);
+
+	if (perc > mLastNotifiedPercentage) {
+		mLastNotifiedPercentage = perc;
+		ii("Parsing progress: " << mLastNotifiedPercentage << "%");
+	}
 }
 
 bool DblpXmlParser::setParserDevice()
@@ -270,78 +285,56 @@ bool DblpXmlParser::setParserDeviceBuffer()
 	char * data = new char[BUF_SIZE];
 	mInput.read(data, BUF_SIZE);
 
-	dd("Read raw data from file: " << data);
+	QString qdata = QString::fromUtf8(data);
+
+	dd("Read raw data from file: " << qdata);
 
 	// Found the first token that delimits a start of tag for a known element
 
 	// Where are them?
-	char * articlePos = strstr(data,
-			QString("<" + DblpXmlElements::ARTICLE).toStdString().c_str());
-	char * incollectionPos = strstr(data,
-			QString("<" + DblpXmlElements::INCOLLECTION).toStdString().c_str());
-	char * bookPos = strstr(data,
-			QString("<" + DblpXmlElements::BOOK).toStdString().c_str());
-	char * inprocPos = strstr(data,
-			QString("<" + DblpXmlElements::INPROCEEDINGS).toStdString().c_str());
-	char * procPos = strstr(data,
-			QString("<" + DblpXmlElements::PROCEEDINGS).toStdString().c_str());
-	char * phdPos = strstr(data,
-			QString("<" + DblpXmlElements::PHDTHESIS).toStdString().c_str());
-	char * masterPos = strstr(data,
-			QString("<" + DblpXmlElements::MASTERTHESIS).toStdString().c_str());
+	int debrisMinSize = INT_MAX;
+	int articleOffset = qdata.indexOf("<" + DblpXmlElements::ARTICLE);
+	int incollectionOffset = qdata.indexOf("<" + DblpXmlElements::INCOLLECTION);
+	int bookOffset = qdata.indexOf("<" + DblpXmlElements::BOOK);
+	int inprocOffset = qdata.indexOf("<" + DblpXmlElements::INPROCEEDINGS);
+	int procOffset = qdata.indexOf("<" + DblpXmlElements::PROCEEDINGS);
+	int phdOffset = qdata.indexOf("<" + DblpXmlElements::PHDTHESIS);
+	int masterOffset = qdata.indexOf("<" + DblpXmlElements::MASTERTHESIS);
 
-	// What's the offset with the beginning of the chunk?
-	long articleOffset = articlePos ? (articlePos - data) : LONG_MAX;
-	long incollectionOffset = incollectionPos ? (incollectionPos - data) : LONG_MAX;
-	long bookOffset = bookPos ? (bookPos - data) : LONG_MAX;
-	long inprocOffset = inprocPos ? (inprocPos - data) : LONG_MAX;
-	long procOffset = procPos ? (procPos - data) : LONG_MAX;
-	long phdOffset = phdPos ? (phdPos - data) : LONG_MAX;
-	long masterOffset = masterPos ? (masterPos - data) : LONG_MAX;
 
-	// Which one comes first?
-	long debrisMinSize = articleOffset;
-	debrisMinSize = debrisMinSize < incollectionOffset ? debrisMinSize : incollectionOffset;
-	debrisMinSize = debrisMinSize < bookOffset ? debrisMinSize : bookOffset;
-	debrisMinSize = debrisMinSize < inprocOffset ? debrisMinSize : inprocOffset;
-	debrisMinSize = debrisMinSize < procOffset ? debrisMinSize : procOffset;
-	debrisMinSize = debrisMinSize < phdOffset ? debrisMinSize : phdOffset;
-	debrisMinSize = debrisMinSize < masterOffset ? debrisMinSize : masterOffset;
+	if (articleOffset >= 0)
+		debrisMinSize = MIN(debrisMinSize, articleOffset);
+	if (incollectionOffset >= 0)
+		debrisMinSize = MIN(debrisMinSize, incollectionOffset);
+	if (bookOffset >= 0)
+		debrisMinSize = MIN(debrisMinSize, bookOffset);
+	if (inprocOffset >= 0)
+		debrisMinSize = MIN(debrisMinSize, inprocOffset);
+	if (procOffset >= 0)
+		debrisMinSize = MIN(debrisMinSize, procOffset);
+	if (phdOffset >= 0)
+		debrisMinSize = MIN(debrisMinSize, phdOffset);
+	if (masterOffset >= 0)
+		debrisMinSize = MIN(debrisMinSize, masterOffset);
 
-	if (debrisMinSize == LONG_MAX) {
+	if (debrisMinSize == INT_MAX) {
 		ww("Cannot find valid element's open tag within " << BUF_SIZE << " bytes ");
 		return false;
 	}
 
-	dd("Skipping debris bytes: " << debrisMinSize);
+	dd("Skipping debris bytes (chars): " << debrisMinSize);
 
 	// Ok, now we have to read starting from the right position and we have
 	// to prepend a valid start of document to the read string
 
-	mInput.seek(mStartingPosition + debrisMinSize);
+	QString validXml = DBLP_XML_START_OF_DOCUMENT + qdata.mid(debrisMinSize);
 
-	char * exactData = new char[BUF_SIZE];
-	mInput.read(exactData, BUF_SIZE);
+	mReader.addData(validXml);
 
-	QString dummyXml = DBLP_XML_START_OF_DOCUMENT + QString(exactData);
-
-	mReader.addData(dummyXml);
+	delete[] data;
 
 	return true;
 }
-
-//void DblpXmlParser::skipStartingDebris()
-//{
-//	static const int ALLOWED_DEBRIS_MAX_SIZE = 4096;
-
-//	// Start from the starting position
-//	if (mStartingPosition > 0) {
-//		mInput.seek(mStartingPosition);
-//	}
-
-	// Read a chunk from the file
-
-//}
 
 void DblpXmlParser::resetParserState()
 {

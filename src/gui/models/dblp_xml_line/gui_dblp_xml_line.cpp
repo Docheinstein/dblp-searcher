@@ -30,6 +30,12 @@ GuiDblpXmlLine::Builder &GuiDblpXmlLine::Builder::content(QString content)
 	return *this;
 }
 
+GuiDblpXmlLine::Builder &GuiDblpXmlLine::Builder::crossref(int crossref)
+{
+	mCrossref = crossref;
+	return *this;
+}
+
 GuiDblpXmlLine GuiDblpXmlLine::Builder::build()
 {
 	GuiDblpXmlLine line;
@@ -38,6 +44,7 @@ GuiDblpXmlLine GuiDblpXmlLine::Builder::build()
 	line.mTag = mTag;
 	line.mAttributes = mAttributes;
 	line.mContent = mContent;
+	line.mCrossref = mCrossref;
 	return line;
 }
 
@@ -64,4 +71,9 @@ QString GuiDblpXmlLine::attributes() const
 QString GuiDblpXmlLine::content() const
 {
 	return mContent;
+}
+
+int GuiDblpXmlLine::crossref() const
+{
+	return mCrossref;
 }

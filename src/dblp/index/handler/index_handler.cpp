@@ -95,16 +95,27 @@ bool IndexHandler::positionRange(elem_serial serial, QPair<elem_pos, elem_pos> &
 	// For find the lower bound we have to scan the vector backward in order
 	// to find a different position; this is not ideal but is not dramatic
 	// since there should be not many items with the same file position
+	// Furthermore I've figured out that for some element having a lower
+	// bound equals to the end of the previous element is not enough,
+	// for this reason, check for two different values
 
-	for (int i = ix - 1; i >= 0; i--) {
-		if (mElementsPositions.at(i) != range.second) {
+	static const int LB_DIFFERENT_POSITIONS_REQUIRED = 2;
+	elem_pos lastDifferentPos = range.second;
+	int differentPosCount = 0;
+
+	for (int i = ix - 1; i >= 0 &&
+		differentPosCount < LB_DIFFERENT_POSITIONS_REQUIRED; i--) {
+
+		if (mElementsPositions.at(i) != lastDifferentPos) {
 			// Found a different position
-			range.first = mElementsPositions.at(i);
-			break; // No need to search anymore backward, lower bound found
+			differentPosCount++;
+			lastDifferentPos = mElementsPositions.at(i);
 		}
 	}
 
-	// Even if not different position has been found, we have set 0 as fallback
+	if (differentPosCount == LB_DIFFERENT_POSITIONS_REQUIRED)
+		range.first = lastDifferentPos;
+	// else: pos 0 as fallback
 
 	return true;
 }

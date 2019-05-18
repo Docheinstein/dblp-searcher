@@ -44,6 +44,13 @@ void GuiElementDetails::setSerial(int serial)
 
 	emit identifierChanged();
 
+	// Load crossref
+
+	mHasCrossref = GuiMainWindow::instance().resolver()->irModel()->index()
+			.crossref(mSerial, mCrossrefSerial);
+
+//	emit crossrefSerialChanged();
+
 	// Load XML
 	if (!arguments.dblpXmlFilePath.isEmpty()) {
 		QFuture<void> xmlLoadingFuture =
@@ -71,11 +78,18 @@ void GuiElementDetails::setSerial(int serial)
 		mPublications.addPublications(guiPublications);
 
 		mHasPublications = true;
+
+		emit publicationsCountChanged();
 		emit hasPublicationsChanged();
 
 		emit publicationsChanged();
 	}
 }
+
+//int GuiElementDetails::crossrefSerial()
+//{
+//	return INT(mCrossrefSerial);
+//}
 
 QString GuiElementDetails::identifier()
 {
@@ -90,6 +104,11 @@ QObject * GuiElementDetails::xmlLines()
 QObject *GuiElementDetails::publications()
 {
 	return &mPublications;
+}
+
+int GuiElementDetails::publicationsCount()
+{
+	return mPublications.size();
 }
 
 bool GuiElementDetails::hasXml()
@@ -126,16 +145,26 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 
 	// Fields
 	for (auto it = elem.fields.cbegin(); it != elem.fields.cend(); it++) {
+		const QString fieldName = it.key();
 		const QVector<QString> fieldValues = it.value();
 		for (const QString & fieldValue : fieldValues) {
-			mLinesRaw.append(
-				GuiDblpXmlLine::Builder()
-						.tag(it.key())
-						.indent(true)
-						.type(GuiDblpXmlLineType::Inline)
-						.content(fieldValue)
-						.build()
-			);
+			GuiDblpXmlLine::Builder lineBuilder;
+			lineBuilder
+				.tag(fieldName)
+				.indent(true)
+				.type(GuiDblpXmlLineType::Inline)
+				.content(fieldValue)
+				.crossref(-1);
+
+
+			// Mark the crossrefs rows
+
+			if (mHasCrossref &&
+				(fieldName == Const::Dblp::Xml::Fields::CROSSREF ||
+				fieldName == Const::Dblp::Xml::Fields::JOURNAL))
+				lineBuilder.crossref(INT(mCrossrefSerial));
+
+			mLinesRaw.append(lineBuilder.build());
 		}
 	}
 

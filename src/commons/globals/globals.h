@@ -37,6 +37,11 @@
 
 #define streq(a, b) (strcmp(a, b) == 0)
 
+// Min/Max
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 // Handly enum macros
 
 #define ENUM_STRING(...) \
