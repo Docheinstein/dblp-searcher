@@ -7,6 +7,7 @@
 #include "commons/log/loggable/loggable.h"
 #include "gui/models/dblp_xml_lines/gui_dblp_xml_lines.h"
 #include "gui/models/element_publications/gui_element_publications.h"
+#include "commons/config/config.h"
 
 #include <QFutureWatcher>
 #include <QObject>
@@ -97,7 +98,7 @@ protected:
 	LOGGING_OVERRIDE
 
 private:
-	elem_serial mSerial;
+	elem_serial mSerial = UINT_MAX;
 	bool mHasCrossref;
 	elem_serial mCrossrefSerial;
 	QString mIdentifier;
@@ -110,6 +111,7 @@ private:
 	QVector<GuiElementPublication> mPublicationsRaw; // Temporary, before push to mPublications
 	GuiElementPublications mPublications;
 
+	void init();
 	void loadXml();
 	void handleXmlRetrived(const DblpXmlElement &element);
 

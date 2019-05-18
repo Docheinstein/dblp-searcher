@@ -398,5 +398,14 @@ QVector<QueryMatch> QueryResolver::resolveQuery(const Query &query) {
 
 	PROF_FUNC_END
 
+	// Print those for debug
+#if VERBOSE
+	int i = 0;
+	for (const QueryMatch &match : queryMatches) {
+		vv(i << "° MATCH === " << endl << match);
+		i++;
+	}
+#endif
+
 	return queryMatches;
 }

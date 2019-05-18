@@ -42,6 +42,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
+
 // Handly enum macros
 
 #define ENUM_STRING(...) \
@@ -115,5 +116,11 @@
 		QString(what5) + QString(what6) +\
 		QString(what7) + QString(what8) \
 	).toStdString().c_str())
+
+// Misc
+
+#define __FILENAME__ (__builtin_strrchr(__FILE__, '/') ? \
+	__builtin_strrchr(__FILE__, '/') + 1 :  \
+	__FILE__)
 
 #endif // GLOBALS_H

@@ -22,6 +22,11 @@ GuiQueryMatches::GuiQueryMatches(QObject *parent) : QAbstractListModel (parent)
 
 }
 
+QVector<GuiQueryMatch> GuiQueryMatches::matches()
+{
+	return mMatches;
+}
+
 void GuiQueryMatches::addMatch(const QueryMatch &match)
 {
 	beginInsertRows(QModelIndex(), rowCount(), rowCount());

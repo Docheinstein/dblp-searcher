@@ -157,7 +157,6 @@ typedef struct ElementSerial_FieldNumber {
 bool IndexHandler::findMatches(const QStringList &tokens,
 								ElementFieldTypes fieldTypes,
 								QVector<IndexMatch> &matches) {
-
 	PROF_FUNC_BEGIN4
 
 	bool phrasal = tokens.size() > 1;
@@ -556,9 +555,9 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 	case ElementFieldType::IncollectionYear:
 		refPost = &ref.incollection.year;
 		break;
-	case ElementFieldType::IncollectionBooktitle:
-		refPost = &ref.incollection.booktitle;
-		break;
+//	case ElementFieldType::IncollectionBooktitle:
+//		refPost = &ref.incollection.booktitle;
+//		break;
 
 	case ElementFieldType::InproceedingsAuthor:
 		refPost = &ref.inproceedings.author;
@@ -569,9 +568,9 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 	case ElementFieldType::InproceedingsYear:
 		refPost = &ref.inproceedings.year;
 		break;
-	case ElementFieldType::InproceedingsBooktitle:
-		refPost = &ref.inproceedings.booktitle;
-		break;
+//	case ElementFieldType::InproceedingsBooktitle:
+//		refPost = &ref.inproceedings.booktitle;
+//		break;
 
 	case ElementFieldType::PhdthesisAuthor:
 		refPost = &ref.phdthesis.author;
@@ -615,9 +614,9 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 	case ElementFieldType::ProceedingsPublisher:
 		refPost = &ref.proceedings.publisher;
 		break;
-	case ElementFieldType::ProceedingsBooktitle:
-		refPost = &ref.proceedings.booktitle;
-		break;
+//	case ElementFieldType::ProceedingsBooktitle:
+//		refPost = &ref.proceedings.booktitle;
+//		break;
 	default:
 		refPost = nullptr;
 	}
@@ -636,6 +635,7 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 			<< " and term '" << vocabularyEntry.key() << "'");
 	}
 
+
 	for (quint32 i = 0; i < refPost->count; i++) {
 
 		// Figure out the position of the posts in the posting list (of the first one)
@@ -644,7 +644,7 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 
 #if DEBUG
 		const QString &term = vocabularyEntry.key();
-		dd1(i << "° post pos: " << postPos << " of term (" << term << ")");
+		dd1(i << "°; post pos: " << postPos << " of term (" << term << ")");
 #endif
 		// 5 Bytes that will be read
 		quint32 P32;
@@ -712,8 +712,8 @@ void IndexHandler::loadIdentifiers()
 		emit keysLoadProgress(progress);
 	}
 
-	ii("Finished loading of identifiers file" <<
-	   Util::File::humanSize(mIdentifiersStream.file));
+	ii("Finished loading of identifiers file (" <<
+	   Util::File::humanSize(mIdentifiersStream.file) + ")");
 
 	emit keysLoadEnded();
 }
@@ -793,12 +793,12 @@ void IndexHandler::loadVocabulary()
 
 		// <art.a> <art.t> <art.y>
 		// <jou>
-		// <inc.a> <inc.t> <inc.y> <inc.b>
-		// <inp.a> <inp.t> <inp.y> <inp.b>
+		// <inc.a> <inc.t> <inc.y> // <inc.b>
+		// <inp.a> <inp.t> <inp.y> // <inp.b>
 		// <phd.a> <phd.t> <phd.y>
 		// <mas.a> <mas.t> <mas.y>
 		// <bok.a> <bok.t> <bok.y> <bok.p>
-		// <pro.t> <pro.y> <pro.p> <pro.b>
+		// <pro.t> <pro.y> <pro.p> // <pro.b>
 
 		incrementalOffset += loadIndexTermReference(ref.article.author, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.article.title, incrementalOffset);
@@ -809,12 +809,12 @@ void IndexHandler::loadVocabulary()
 		incrementalOffset += loadIndexTermReference(ref.incollection.author, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.incollection.title, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.incollection.year, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.incollection.booktitle, incrementalOffset);
+//		incrementalOffset += loadIndexTermReference(ref.incollection.booktitle, incrementalOffset);
 
 		incrementalOffset += loadIndexTermReference(ref.inproceedings.author, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.inproceedings.title, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.inproceedings.year, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.inproceedings.booktitle, incrementalOffset);
+//		incrementalOffset += loadIndexTermReference(ref.inproceedings.booktitle, incrementalOffset);
 
 		incrementalOffset += loadIndexTermReference(ref.phdthesis.author, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.phdthesis.title, incrementalOffset);
@@ -832,7 +832,7 @@ void IndexHandler::loadVocabulary()
 		incrementalOffset += loadIndexTermReference(ref.proceedings.title, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.proceedings.year, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.proceedings.publisher, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.proceedings.booktitle, incrementalOffset);
+//		incrementalOffset += loadIndexTermReference(ref.proceedings.booktitle, incrementalOffset);
 
 		vv2("Term reference has been loaded into vocabulary: " << ref);
 
@@ -845,8 +845,8 @@ void IndexHandler::loadVocabulary()
 		i++;
 	}
 
-	ii("Finished loading of vocabulary file" <<
-	   Util::File::humanSize(mVocabularyStream.file));
+	ii("Finished loading of vocabulary file (" <<
+	   Util::File::humanSize(mVocabularyStream.file) + ")");
 
 	emit vocabularyLoadEnded();
 }
@@ -885,8 +885,8 @@ void IndexHandler::loadCrossrefs()
 		emit crossrefsLoadProgress(progress);
 	}
 
-	ii("Finished loading of crossrefs file" <<
-	   Util::File::humanSize(mCrossrefsStream.file));
+	ii("Finished loading of crossrefs file (" <<
+	   Util::File::humanSize(mCrossrefsStream.file) + ")");
 
 	emit crossrefsLoadEnded();
 }
@@ -920,7 +920,7 @@ void IndexHandler::loadPositions()
 	}
 
 	ii("Finished loading of positions file (" <<
-	   Util::File::humanSize(mElementsPositionsStream.file));
+	   Util::File::humanSize(mElementsPositionsStream.file) + ")");
 
 	emit positionsLoadEnded();
 }
@@ -1009,11 +1009,11 @@ uint qHash(const ElementSerial_FieldNumber &ef)
 
 // ---
 
-IndexMatch::operator QString()
-{
-	return
-			"{serial = " + DEC(elementSerial) + "; field = " +
-			elementFieldTypeString(fieldType) + "; field_num = " +
-			DEC(fieldNumber) + "; match_pos = " + DEC(matchPosition) +
-			"; (phrase = '" + matchedTokens.join(" ") + "}";
-}
+//IndexMatch::operator QString() const
+//{
+//	return
+//			"{serial = " + DEC(elementSerial) + "; field = " +
+//			elementFieldTypeString(fieldType) + "; field_num = " +
+//			DEC(fieldNumber) + "; match_pos = " + DEC(matchPosition) +
+//			"; (phrase = '" + matchedTokens.join(" ") + "}";
+//}

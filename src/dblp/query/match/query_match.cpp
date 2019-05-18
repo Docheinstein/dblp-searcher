@@ -21,6 +21,23 @@ QVector<IndexMatch> QueryMatchComponent::matches() const
 	return mMatches;
 }
 
+QueryMatchComponent::operator QString() const
+{
+	QString s;
+
+	s += "Serial: " + DEC(mSerial) + "\n";
+	s += "Type: " + elementTypeString(mType) + "\n";
+
+	int i = 1;
+	for (const IndexMatch & match: mMatches) {
+		s += DEC(i) + ". match: " + match + "\n";
+		i++;
+	}
+
+	return s;
+
+}
+
 ElementType QueryMatchComponent::elementType() const
 {
 	return mType;
@@ -64,12 +81,12 @@ void QueryMatchComponent::finalize()
 	// and belong to the same element type
 }
 
-QueryMatchComponent::operator QString() const
-{
-	return QString("{serial = ") + DEC(mSerial) + "; type = " +
-			elementTypeString(mType) + "; # matches = " +
-			DEC(mMatches.size()) + "}";
-}
+//QueryMatchComponent::operator QString() const
+//{
+//	return QString("{serial = ") + DEC(mSerial) + "; type = " +
+//			elementTypeString(mType) + "; # matches = " +
+//			DEC(mMatches.size()) + "}";
+//}
 
 
 QueryMatch QueryMatch::forPublication(const QVector<IndexMatch> &pubMatches, float score)
@@ -125,6 +142,24 @@ QueryMatchComponent QueryMatch::venue() const
 	return mVenue;
 }
 
+QueryMatch::operator QString() const
+{
+	QString s;
+	s += "Match type: " + queryMatchTypeString(mMatchType) + "\n";
+
+	if (mMatchType == QueryMatchType::Publication ||
+		mMatchType == QueryMatchType::PublicationVenue) {
+		s += mPublication + "\n";
+	}
+
+	if (mMatchType == QueryMatchType::Venue ||
+		mMatchType == QueryMatchType::PublicationVenue) {
+		s += mVenue + "\n";
+	}
+
+	return s;
+}
+
 void QueryMatch::finalize()
 {
 	// Check the the underlying element type of the components matches
@@ -146,5 +181,17 @@ void QueryMatch::finalize()
 				"querying",
 				"Underlying query match venue omponent matches "
 				"type do not satisfy declared query match type");
+	}
+}
+
+QString queryMatchTypeString(QueryMatchType type)
+{
+	switch (type) {
+	case QueryMatchType::Publication:
+		return "publication";
+	case QueryMatchType::Venue:
+		return "venue";
+	case QueryMatchType::PublicationVenue:
+		return "pub+venue";
 	}
 }

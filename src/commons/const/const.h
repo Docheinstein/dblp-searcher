@@ -36,6 +36,8 @@ namespace Const {
 		}
 
 		namespace Xml {
+			const QString DBLP = "dblp";
+
 			namespace Elements {
 				const QString ARTICLE = "article";
 				const QString INCOLLECTION = "incollection";

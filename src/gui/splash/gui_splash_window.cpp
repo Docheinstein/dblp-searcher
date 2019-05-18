@@ -38,12 +38,14 @@ double GuiSplashWindow::progress()
 
 void GuiSplashWindow::setProgress(double progress)
 {
-	if (progress - mLastNotifiedProgress > PROGRESS_NOTIFICATION_THRESHOLD) {
-		// Do not notify too many times
+	mProgress = progress;
+
+	if (progress < mProgress) {
 		mLastNotifiedProgress = progress;
 		emit progressChanged();
+	} else if (progress - mLastNotifiedProgress > PROGRESS_NOTIFICATION_THRESHOLD) {
+		// Do not notify too many times
+		mLastNotifiedProgress = progress;
 	}
-
-	mProgress = progress;
 }
 

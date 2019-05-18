@@ -141,6 +141,8 @@ float IRModelIef::computeIef(const QString &term)
 
 float IRModelIef::computeIef(const QMap<QString, IndexTermRef>::const_iterator &vocabularyEntry)
 {
+	vv("Computing ief for term: " << vocabularyEntry.key());
+
 	static const double E = mIndex.identifiers().size();
 
 	// We have to invoke findPosts() for each possible field

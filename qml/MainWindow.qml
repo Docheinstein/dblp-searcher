@@ -223,10 +223,14 @@ ApplicationWindow {
                         text: "Publication & Venue"
                     }
                 }
+
             }
+
         }
     }
 }
+
+
 
 
 

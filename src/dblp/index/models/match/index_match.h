@@ -17,7 +17,7 @@ typedef struct IndexMatch {
 	ElementFieldType fieldType;	// field type
 	QStringList matchedTokens;
 
-	operator QString();
+	operator QString() const;
 } IndexMatch;
 
 inline bool operator==(const IndexMatch &efm1, const IndexMatch &efm2) {

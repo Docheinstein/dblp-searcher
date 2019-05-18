@@ -14,6 +14,7 @@ class GuiQueryMatches : public QAbstractListModel {
 public:
 	GuiQueryMatches(QObject *parent = nullptr);
 
+	QVector<GuiQueryMatch> matches();
 	void addMatch(const QueryMatch &match);
 	void addMatches(const QVector<QueryMatch> &matches);
 	void clearMatches();

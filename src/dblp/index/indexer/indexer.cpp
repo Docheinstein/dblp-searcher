@@ -139,14 +139,17 @@ bool Indexer::onElement(const DblpXmlElement &element, qint64 pos)
 	} else if (element.name == DblpXmlElements::INCOLLECTION) {
 		DblpIncollection incollection;
 		fillPublicationCrossref(incollection, element);
+//		incollection.booktitle = element.fields.value(DblpXmlFields::BOOKTITLE, {""}).at(0);
 		handleIncollection(incollection, pos);
 	} else if (element.name == DblpXmlElements::BOOK) {
 		DblpBook book;
 		fillVenue(book, element);
+//		book.authors = element.fields.value(DblpXmlFields::BOOKTITLE);
 		handleBook(book, pos);
 	} else if (element.name == DblpXmlElements::INPROCEEDINGS) {
 		DblpInproceedings inproc;
 		fillPublicationCrossref(inproc, element);
+//		inproc.booktitle = element.fields.value(DblpXmlFields::BOOKTITLE, {""}).at(0);
 		handleInproceedings(inproc, pos);
 	} else if (element.name == DblpXmlElements::PROCEEDINGS) {
 		DblpProceedings proc;
@@ -268,11 +271,11 @@ void Indexer::handleBook(const DblpBook &book, qint64 pos)
 {
 	vv("Handling book: " << book);
 
-//	vv1("Adding terms of book.authors");
-//	addTermsOfFields([](IndexTerm &term, const IndexPost &post)
-//		{ term.book.author.append(post); },
-//		book.authors
-//	);
+	vv1("Adding terms of book.authors");
+	addTermsOfFields([](IndexTerm &term, const IndexPost &post)
+		{ term.book.author.append(post); },
+		book.authors
+	);
 
 	vv1("Adding terms of book.title");
 	addTermsOfField([](IndexTerm &term, const IndexPost &post)
@@ -348,11 +351,11 @@ void Indexer::handleProceedings(const DblpProceedings &proc, qint64 pos)
 		proc.year
 	);
 
-	vv1("Adding terms of proc.publisher");
-	addTermsOfField([](IndexTerm &term, const IndexPost &post)
-		{ term.proceedings.booktitle.append(post); },
-		proc.publisher
-	);
+//	vv1("Adding terms of proc.publisher");
+//	addTermsOfField([](IndexTerm &term, const IndexPost &post)
+//		{ term.proceedings.booktitle.append(post); },
+//		proc.publisher
+//	);
 
 	addIdentifier(proc.key);
 	addPosition(pos);
@@ -563,12 +566,12 @@ void Indexer::writePostingListAndVocabularyFiles()
 
 			// <art.a> <art.t> <art.y>
 			// <jou>
-			// <inc.a> <inc.t> <inc.y> <inc.b>
-			// <inp.a> <inp.t> <inp.y> <inp.b>
+			// <inc.a> <inc.t> <inc.y> // <inc.b>
+			// <inp.a> <inp.t> <inp.y> // <inp.b>
 			// <phd.a> <phd.t> <phd.y>
 			// <mas.a> <mas.t> <mas.y>
 			// <bok.a> <bok.t> <bok.y> <bok.p>
-			// <pro.t> <pro.y> <pro.p> <pro.b>
+			// <pro.t> <pro.y> <pro.p> // <pro.b>
 
 			vv3("Writing posts for term: " << term);
 
@@ -594,7 +597,7 @@ void Indexer::writePostingListAndVocabularyFiles()
 			writeField(termEntity.incollection.author);
 			writeField(termEntity.incollection.title);
 			writeField(termEntity.incollection.year);
-			writeField(termEntity.incollection.booktitle);
+//			writeField(termEntity.incollection.booktitle);
 
 			// inproceedings
 			// - author
@@ -605,7 +608,7 @@ void Indexer::writePostingListAndVocabularyFiles()
 			writeField(termEntity.inproceedings.author);
 			writeField(termEntity.inproceedings.title);
 			writeField(termEntity.inproceedings.year);
-			writeField(termEntity.inproceedings.booktitle);
+//			writeField(termEntity.inproceedings.booktitle);
 
 			// phdthesis
 			// - author
@@ -645,7 +648,7 @@ void Indexer::writePostingListAndVocabularyFiles()
 			writeField(termEntity.proceedings.title);
 			writeField(termEntity.proceedings.year);
 			writeField(termEntity.proceedings.publisher);
-			writeField(termEntity.proceedings.booktitle);
+//			writeField(termEntity.proceedings.booktitle);
 		}
 }
 

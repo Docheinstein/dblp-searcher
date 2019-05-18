@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QVector>
+#include <QHash>
 #include <QFutureWatcher>
 #include "dblp/query/match/query_match.h"
 #include "gui/base/component/gui_component.h"
@@ -49,6 +50,8 @@ public:
 	int matchesCount();
 	QObject * matches();
 
+	QVector<IndexMatch> elementMatches(elem_serial serial);
+
 
 public slots:
 	void doSearch(const QString &query);
@@ -85,6 +88,7 @@ private:
 	QueryStatus mQueryStatus = QueryStatus::None;
 	int mQueryTime = 0;
 	GuiQueryMatches mMatches;
+	QHash<elem_serial, QVector<IndexMatch>> mMatchesHash;
 };
 
 #endif // GUI_MAIN_WINDOW_H

@@ -29,60 +29,15 @@ int GuiElementDetails::serial()
 
 void GuiElementDetails::setSerial(int serial)
 {
-	ASSERT(serial >= 0, "gui",
-		   "Cannot instantiate element details for serial < 0");
-
-	dd("Creating element details component for serial: " << serial);
+	bool toInit = static_cast<elem_serial>(serial) != mSerial;
 
 	mSerial = static_cast<elem_serial>(serial);
-
 	emit serialChanged();
 
-	// Load identifier
-	GuiMainWindow::instance().resolver()->irModel()->index()
-			.identifier(mSerial, mIdentifier);
-
-	emit identifierChanged();
-
-	// Load crossref
-
-	mHasCrossref = GuiMainWindow::instance().resolver()->irModel()->index()
-			.crossref(mSerial, mCrossrefSerial);
-
-//	emit crossrefSerialChanged();
-
-	// Load XML
-	if (!arguments.dblpXmlFilePath.isEmpty()) {
-		QFuture<void> xmlLoadingFuture =
-				QtConcurrent::run(this, &GuiElementDetails::loadXml);
-		mHasXml = true;
-		emit hasXmlChanged();
-		// GUI hack: notify now so that the XML tab will have position 0
-	}
-
-	//  Load publications, if those are available for the element (only for venues)
-	QVector<elem_serial> publications;
-	if (GuiMainWindow::instance().resolver()->irModel()->index()
-			.inverseCrossref(static_cast<elem_serial>(serial), publications)) {
-
-		QVector<GuiElementPublication> guiPublications;
-
-		for (elem_serial &pubSerial : publications) {
-			guiPublications.append(
-						GuiElementPublication::Builder()
-						.serial(pubSerial)
-						.build()
-			);
-		}
-
-		mPublications.addPublications(guiPublications);
-
-		mHasPublications = true;
-
-		emit publicationsCountChanged();
-		emit hasPublicationsChanged();
-
-		emit publicationsChanged();
+	if (toInit) {
+		init();
+	} else {
+		dd("Skipping creation of element details for serial: " << serial);
 	}
 }
 
@@ -125,6 +80,158 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 {
 	vv1("Retrieved XML element from original dblp file: " << endl << elem);
 
+	// Retrieve the matches (for highlight, later)
+	QVector<IndexMatch> indexMatches =
+			GuiMainWindow::instance().elementMatches(mSerial);
+
+	auto highlightedFieldValue = [&indexMatches, this]
+			(const QString &fieldName, const QString &fieldValue,
+			int fieldNum) -> QString /* eventually highlighted fieldValue */ {
+
+		_dd("Checking highlighting for field: " << fieldNum
+			 << "[" << fieldNum << "]: " << fieldValue);
+
+#define HIGHLIGHTED(term) "<span style='color: red'>" + term + "</span>"
+
+		// Highlight the query matches, we just have a vector, so scan all the
+		// vector and eventually highlight the matches
+		QStringList fieldTerms = fieldValue
+				.split(" ", QString::SplitBehavior::SkipEmptyParts);
+
+		QStringList highlightedFieldValues;
+
+		auto fieldHasIndexMatches =
+				[&fieldName](const IndexMatch &indexMatch) {
+				ElementFieldTypes fieldTypeFlag = indexMatch.fieldType;
+
+				return (fieldName == Const::Dblp::Xml::Fields::AUTHOR &&
+						(fieldTypeFlag & ElementFieldType::Author) == fieldTypeFlag) ||
+						(fieldName == Const::Dblp::Xml::Fields::YEAR &&
+						(fieldTypeFlag & ElementFieldType::Year) == fieldTypeFlag) ||
+						(fieldName == Const::Dblp::Xml::Fields::TITLE &&
+						(fieldTypeFlag & ElementFieldType::Title) == fieldTypeFlag) ||
+	//					(fieldName == Const::Dblp::Xml::Fields::BOOKTITLE &&
+	//					fieldTypeFlag.testFlag(ElementFieldType::Booktitle) ||
+						(fieldName == Const::Dblp::Xml::Fields::PUBLISHER &&
+						(fieldTypeFlag & ElementFieldType::Publisher) == fieldTypeFlag);
+		};
+
+		for (int termPos = 0; termPos < fieldTerms.size();) {
+			_dd1("Scanning field term: " << fieldTerms.at(termPos));
+
+			bool highlighted = false;
+
+			for (const IndexMatch & indexMatch : indexMatches) {
+				_dd3("Match term pos: " << indexMatch.matchPosition);
+				_dd3("Match field num: " << indexMatch.fieldNumber);
+
+				if (/* mSerial == indexMatch.elementSerial && */
+					termPos == indexMatch.matchPosition &&
+					fieldNum == indexMatch.fieldNumber &&
+					fieldHasIndexMatches(indexMatch)) {
+					// This field is the one referred by the IndexMatch, highlight
+					// the words in the positions of the matches
+					// Since the matches could be phrasal, highlight
+					// a count of terms equals to the matches tokens length
+					int termPosBegin = termPos;
+
+					_dd4("Highlighting streak of terms from: " <<
+						 fieldTerms.at(termPos) << " w/ length: " <<
+						 indexMatch.matchedTokens.size());
+
+					while (	termPos - termPosBegin < indexMatch.matchedTokens.size() &&
+							termPos < fieldTerms.size()) // theorically not needed...
+					{
+						_dd5("Highlighting term: " << fieldTerms.at(termPos));
+						highlightedFieldValues.append(HIGHLIGHTED(fieldTerms.at(termPos)));
+						++termPos;
+					};
+
+					highlighted = true;
+					break;
+			}
+
+//			for (const GuiQueryMatch & match : matches) {
+//				_dd2("Scanning match of type: " <<
+//					(match.model().matchType() == QueryMatchType::Publication ? "pub" : "venue"));
+
+//				if (match.model().matchType() ==
+//						QueryMatchType::Publication ||
+//					match.model().matchType() ==
+//						QueryMatchType::PublicationVenue) {
+//					for (const IndexMatch & indexMatch : match.model().publication().matches()) {
+//						_dd3("Match term pos: " << indexMatch.matchPosition);
+//						_dd3("Match field num: " << indexMatch.fieldNumber);
+
+//						if (mSerial == indexMatch.elementSerial &&
+//							termPos == indexMatch.matchPosition &&
+//							fieldNum == indexMatch.fieldNumber &&
+//							fieldHasIndexMatches(indexMatch)) {
+//							// This field is the one referred by the IndexMatch, highlight
+//							// the words in the positions of the matches
+//							// Since the matches could be phrasal, highlight
+//							// a count of terms equals to the matches tokens length
+//							int termPosBegin = termPos;
+
+//							_dd4("Highlighting streak of terms from: " << fieldTerms.at(termPos));
+
+//							while (	termPos - termPosBegin < indexMatch.matchedTokens.size() &&
+//									termPos < fieldTerms.size()) // theorically not needed...
+//							{
+//								_dd5("Highlighting term: " << fieldTerms.at(termPos));
+//								highlightedFieldValues.append(HIGHLIGHTED(fieldTerms.at(termPos)));
+//								++termPos;
+//							};
+
+//							highlighted = true;
+//							goto highlightMatchFinished;
+//						}
+//					}
+//				}
+
+//				if (match.model().matchType() ==
+//						QueryMatchType::Venue ||
+//					match.model().matchType() ==
+//						QueryMatchType::PublicationVenue) {
+
+//					for (const IndexMatch & indexMatch : match.model().venue().matches()) {
+//						if (mSerial == indexMatch.elementSerial &&
+//							termPos == indexMatch.matchPosition &&
+//							fieldNum == indexMatch.fieldNumber &&
+//							fieldHasIndexMatches(indexMatch)) {
+//							// This field is the one referred by the IndexMatch, highlight
+//							// the words in the positions of the matches
+//							// Since the matches could be phrasal, highlight
+//							// a count of terms equals to the matches tokens length
+//							int termPosBegin = termPos;
+
+//							_dd4("Highlighting streak of terms from: " << fieldTerms.at(termPos));
+
+//							while (	termPos - termPosBegin < indexMatch.matchedTokens.size() &&
+//									termPos < fieldTerms.size()) // theorically not needed...
+//							{
+//								_dd5("Highlighting term: " << fieldTerms.at(termPos));
+//								highlightedFieldValues.append(HIGHLIGHTED(fieldTerms.at(termPos)));
+//								++termPos;
+//							};
+
+//							highlighted = true;
+//							goto highlightMatchFinished;
+//						}
+//					}
+//				}
+			}
+
+			if (!highlighted) {
+				_dd3("Non highlithed term: " << fieldTerms.at(termPos));
+				highlightedFieldValues.append(fieldTerms.at(termPos));
+				++termPos;
+			}
+		}
+
+		return highlightedFieldValues.join(" ");
+	};
+
 	// Push the element as XML lines
 
 	// Compute attributes
@@ -147,13 +254,16 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 	for (auto it = elem.fields.cbegin(); it != elem.fields.cend(); it++) {
 		const QString fieldName = it.key();
 		const QVector<QString> fieldValues = it.value();
+
+		int fieldNum = 0;
+
 		for (const QString & fieldValue : fieldValues) {
 			GuiDblpXmlLine::Builder lineBuilder;
 			lineBuilder
 				.tag(fieldName)
 				.indent(true)
 				.type(GuiDblpXmlLineType::Inline)
-				.content(fieldValue)
+				.content(highlightedFieldValue(fieldName, fieldValue, fieldNum))
 				.crossref(-1);
 
 
@@ -165,6 +275,8 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 				lineBuilder.crossref(INT(mCrossrefSerial));
 
 			mLinesRaw.append(lineBuilder.build());
+
+			++fieldNum;
 		}
 	}
 
@@ -191,6 +303,61 @@ void GuiElementDetails::xmlLoadingFinished()
 
 	// Already fired
 	// emit hasXmlChanged();
+}
+
+void GuiElementDetails::init()
+{
+	ASSERT(mSerial >= 0, "gui",
+		   "Cannot instantiate element details for serial < 0");
+
+	dd("Creating element details component for serial: " << mSerial);
+
+	// Load identifier
+	GuiMainWindow::instance().resolver()->irModel()->index()
+			.identifier(mSerial, mIdentifier);
+
+	emit identifierChanged();
+
+	// Load crossref
+
+	mHasCrossref = GuiMainWindow::instance().resolver()->irModel()->index()
+			.crossref(mSerial, mCrossrefSerial);
+
+//	emit crossrefSerialChanged();
+
+	// Load XML
+	if (!arguments.dblpXmlFilePath.isEmpty()) {
+		QFuture<void> xmlLoadingFuture =
+				QtConcurrent::run(this, &GuiElementDetails::loadXml);
+		mHasXml = true;
+		emit hasXmlChanged();
+		// GUI hack: notify now so that the XML tab will have position 0
+	}
+
+	//  Load publications, if those are available for the element (only for venues)
+	QVector<elem_serial> publications;
+	if (GuiMainWindow::instance().resolver()->irModel()->index()
+			.inverseCrossref(mSerial, publications)) {
+
+		QVector<GuiElementPublication> guiPublications;
+
+		for (elem_serial &pubSerial : publications) {
+			guiPublications.append(
+						GuiElementPublication::Builder()
+						.serial(pubSerial)
+						.build()
+			);
+		}
+
+		mPublications.addPublications(guiPublications);
+
+		mHasPublications = true;
+
+		emit publicationsCountChanged();
+		emit hasPublicationsChanged();
+
+		emit publicationsChanged();
+	}
 }
 
 void GuiElementDetails::loadXml()

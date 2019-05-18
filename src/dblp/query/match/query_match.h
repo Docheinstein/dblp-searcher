@@ -15,6 +15,8 @@ enum class QueryMatchType {
 	PublicationVenue
 };
 
+QString queryMatchTypeString(QueryMatchType type);
+
 class QueryMatchComponent {
 public:
 	static const elem_serial NO_ELEMENT = ~static_cast<elem_serial>(0);
@@ -49,6 +51,8 @@ public:
 
 	QueryMatchComponent publication() const;
 	QueryMatchComponent venue() const;
+
+	operator QString() const;
 
 private:
 	void finalize();

@@ -37,14 +37,14 @@ public:
 		IndexTermRefPostMeta author;
 		IndexTermRefPostMeta title;
 		IndexTermRefPostMeta year;
-		IndexTermRefPostMeta booktitle;
+//		IndexTermRefPostMeta booktitle;
 	} incollection;
 
 	struct {
 		IndexTermRefPostMeta author;
 		IndexTermRefPostMeta title;
 		IndexTermRefPostMeta year;
-		IndexTermRefPostMeta booktitle;
+//		IndexTermRefPostMeta booktitle;
 	} inproceedings;
 
 	struct {
@@ -70,7 +70,7 @@ public:
 		IndexTermRefPostMeta title;
 		IndexTermRefPostMeta year;
 		IndexTermRefPostMeta publisher;
-		IndexTermRefPostMeta booktitle;
+//		IndexTermRefPostMeta booktitle;
 	} proceedings;
 
 //	int positionOf();

@@ -11,16 +11,16 @@ QDebug operator<<(QDebug stream, const IndexTermRef &tr) {
 		  tr.article.author << ",\t" <<
 		  tr.article.title << ",\t" <<
 		  tr.article.year << endl <<
-	   "inc (a, t, y, b):\t" <<
+	   "inc (a, t, y):\t" <<
 		  tr.incollection.author << ",\t" <<
 		  tr.incollection.title << ",\t" <<
-		  tr.incollection.year << ",\t" <<
-		  tr.incollection.booktitle << endl <<
-	   "inp (a, t, y, b):\t" <<
+		  tr.incollection.year << ",\t" << endl <<
+//		  tr.incollection.booktitle << endl <<
+	   "inp (a, t, y):\t" <<
 		  tr.inproceedings.author << ",\t" <<
 		  tr.inproceedings.title << ",\t" <<
-		  tr.inproceedings.year << ",\t" <<
-		  tr.inproceedings.booktitle << endl <<
+		  tr.inproceedings.year << ",\t" << endl <<
+//		  tr.inproceedings.booktitle << endl <<
 	   "phd (a, t, y):\t" <<
 		  tr.phdthesis.author << ",\t" <<
 		  tr.phdthesis.title << ",\t" <<
@@ -34,11 +34,11 @@ QDebug operator<<(QDebug stream, const IndexTermRef &tr) {
 		  tr.book.title << ",\t" <<
 		  tr.book.year << ",\t" <<
 		  tr.book.publisher << endl <<
-		"pro (t, y, p, b):\t" <<
+		"pro (t, y, p):\t" <<
 		  tr.proceedings.title << ",\t" <<
 		  tr.proceedings.year << ",\t" <<
-		  tr.proceedings.publisher << ",\t" <<
-		  tr.proceedings.booktitle;
+		  tr.proceedings.publisher;
+//		  tr.proceedings.booktitle;
 
 	return stream;
 }

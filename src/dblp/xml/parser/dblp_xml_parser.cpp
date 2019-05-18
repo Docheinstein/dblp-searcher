@@ -113,13 +113,18 @@ bool DblpXmlParser::handleStartElement()
 		mElementName = token;
 		mElementAttributes = mReader.attributes();
 
-	} else if (
-		token == DblpXmlFields::AUTHOR ||
-		token == DblpXmlFields::TITLE ||
-		token == DblpXmlFields::YEAR ||
-		token == DblpXmlFields::PUBLISHER ||
-		token == DblpXmlFields::CROSSREF ||
-		token == DblpXmlFields::JOURNAL) {
+	} else if (token != Const::Dblp::Xml::DBLP){
+		// Read every possible field, so that even for purpose different from
+		// indexing the entire XML element could be figured out again
+
+//		if (
+//		token == DblpXmlFields::AUTHOR ||
+//		token == DblpXmlFields::TITLE ||
+//		token == DblpXmlFields::YEAR ||
+//		token == DblpXmlFields::PUBLISHER ||
+//		token == DblpXmlFields::CROSSREF ||
+//		token == DblpXmlFields::BOOKTITLE ||
+//		token == DblpXmlFields::JOURNAL) {
 
 		continueParsing &= handleStartField(token);
 	}
@@ -160,9 +165,9 @@ bool DblpXmlParser::handleStartField(const QString &field)
 				fieldContentRead = true; // ok, found expected end tag
 			}
 			else {
-				#if DUMP_XML
-					ww("Unexpected tag found for field '" + field + "'");
-				#endif
+//				#if DUMP_XML
+//					ww("Unexpected tag found for field '" + field + "'");
+//				#endif
 				// Go on and hope...
 			}
 			break;

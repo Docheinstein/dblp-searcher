@@ -98,12 +98,12 @@ private:
 	 *
 	 * The complete element.field list is the following:
 	 * <art.a> <art.t> <art.y>
-	 * <inc.a> <inc.t> <inc.y> <inc.b>
-	 * <inp.a> <inp.t> <inp.y> <inp.b>
+	 * <inc.a> <inc.t> <inc.y> // <inc.b>
+	 * <inp.a> <inp.t> <inp.y> // <inp.b>
 	 * <phd.a> <phd.t> <phd.y>
 	 * <mas.a> <mas.t> <mas.y>
 	 * <bok.a> <bok.t> <bok.y> <bok.p>
-	 * <pro.t> <pro.y> <pro.p> <pro.b>
+	 * <pro.t> <pro.y> <pro.p> // <pro.b>
 	 *
 	 * The size of each element.field is variable, if the count is lower than
 	 * 2^15 it will be 16 bit, otherwise it will be 32 with the lefter most

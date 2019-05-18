@@ -39,10 +39,18 @@ struct DblpJournal {
 	QString name;
 };
 
-struct DblpIncollection :  DblpPublicationCrossref {}; 	// -> book
-struct DblpBook :  DblpVenue {};
+struct DblpIncollection :  DblpPublicationCrossref {
+	QString booktitle;
+}; 	// -> book
 
-struct DblpInproceedings :  DblpPublicationCrossref {}; // -> proceedings
+struct DblpBook :  DblpVenue {
+	QVector<QString> authors;
+};
+
+struct DblpInproceedings :  DblpPublicationCrossref {
+	QString booktitle;
+}; // -> proceedings
+
 struct DblpProceedings :  DblpVenue {};
 
 struct DblpPhdThesis :  DblpPublication {};

@@ -66,24 +66,24 @@ enum class ElementFieldType {
 	IncollectionAuthor = Journal << 1,
 	IncollectionTitle = IncollectionAuthor << 1,
 	IncollectionYear = IncollectionTitle << 1,
-	IncollectionBooktitle = IncollectionYear << 1,
+//	IncollectionBooktitle = IncollectionYear << 1,
 
 	Incollection =	IncollectionAuthor | IncollectionTitle |
-					IncollectionYear | IncollectionBooktitle,
+					IncollectionYear, // | IncollectionBooktitle,
 
 	// Inproceedings
 
-	InproceedingsAuthor = IncollectionBooktitle << 1,
+	InproceedingsAuthor = IncollectionYear << 1,
 	InproceedingsTitle = InproceedingsAuthor << 1,
 	InproceedingsYear = InproceedingsTitle << 1,
-	InproceedingsBooktitle = InproceedingsYear << 1,
+//	InproceedingsBooktitle = InproceedingsYear << 1,
 
 	Inproceedings = InproceedingsAuthor | InproceedingsTitle |
-					InproceedingsYear | InproceedingsBooktitle,
+					InproceedingsYear, //| InproceedingsBooktitle,
 
 	// Phdthesis
 
-	PhdthesisAuthor = InproceedingsBooktitle << 1,
+	PhdthesisAuthor = InproceedingsYear << 1,
 	PhdthesisTitle = PhdthesisAuthor << 1,
 	PhdthesisYear = PhdthesisTitle << 1,
 
@@ -111,19 +111,36 @@ enum class ElementFieldType {
 	ProceedingsTitle = BookPublisher << 1,
 	ProceedingsYear = ProceedingsTitle << 1,
 	ProceedingsPublisher = ProceedingsYear << 1,
-	ProceedingsBooktitle = ProceedingsPublisher << 1,
+//	ProceedingsBooktitle = ProceedingsPublisher << 1,
 
 	Proceedings = ProceedingsTitle | ProceedingsYear |
-				  ProceedingsPublisher | ProceedingsBooktitle,
+				  ProceedingsPublisher, // | ProceedingsBooktitle,
 
-	_End = ProceedingsBooktitle,
+	_End = ProceedingsPublisher,
 
-	// Extra
+	// Extra: element
 
 	Publication = Article | Incollection | Inproceedings |
 				  Phdthesis | Masterthesis,
 
 	Venue = Book | Proceedings | Journal,
+
+	// Extra: field
+
+	Author = ArticleAuthor | IncollectionAuthor | InproceedingsAuthor |
+			PhdthesisAuthor | PhdthesisAuthor | MasterthesisAuthor | BookAuthor,
+
+	Title = ArticleTitle | IncollectionTitle | InproceedingsTitle |
+			PhdthesisTitle | PhdthesisTitle | MasterthesisTitle | BookTitle |
+			ProceedingsTitle,
+
+	Year = ArticleYear | IncollectionYear | InproceedingsYear |
+			PhdthesisYear | PhdthesisYear | MasterthesisYear | BookYear |
+			ProceedingsYear,
+
+//	Booktitle = IncollectionBooktitle | ProceedingsBooktitle,
+
+	Publisher = BookPublisher | ProceedingsPublisher,
 
 	All = Publication | Venue,
 };

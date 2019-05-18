@@ -64,6 +64,10 @@ QObject *GuiMainWindow::matches()
 	return &mMatches;
 }
 
+QVector<IndexMatch> GuiMainWindow::elementMatches(elem_serial serial)
+{
+	return mMatchesHash.value(serial, {});
+}
 
 int GuiMainWindow::matchesCount()
 {
@@ -180,6 +184,7 @@ void GuiMainWindow::searchStarted()
 {
 	setQueryStatus(QueryStatus::Resolving);
 	mMatches.clearMatches();
+	mMatchesHash.clear();
 }
 
 void GuiMainWindow::searchFinished()
@@ -187,6 +192,37 @@ void GuiMainWindow::searchFinished()
 	const QVector<QueryMatch> &matches = mQueryWatcher.result();
 
 	ii("Search done; # results = " << matches.size());
+
+	PROF_BEGIN(matchesToHash)
+	for (const QueryMatch &match : matches) {
+		// Push the index matches to the hash for fast retrieval for specific element
+		if (match.matchType() == QueryMatchType::Publication ||
+			match.matchType() == QueryMatchType::PublicationVenue) {
+			for (const IndexMatch & indexMatch : match.publication().matches()) {
+				auto it = mMatchesHash.find(indexMatch.elementSerial);
+				if (it == mMatchesHash.end()) {
+					mMatchesHash.insert(indexMatch.elementSerial, {indexMatch});
+				} else {
+					it.value().append(indexMatch);
+				}
+			}
+		}
+		if (match.matchType() == QueryMatchType::Venue ||
+			match.matchType() == QueryMatchType::PublicationVenue) {
+			for (const IndexMatch & indexMatch : match.venue().matches()) {
+				auto it = mMatchesHash.find(indexMatch.elementSerial);
+				if (it == mMatchesHash.end()) {
+					mMatchesHash.insert(indexMatch.elementSerial, {indexMatch});
+				} else {
+					it.value().append(indexMatch);
+				}
+			}
+		}
+	}
+	PROF_END(matchesToHash)
+#if PROFILER
+	prof_print();
+#endif
 
 	mMatches.addMatches(matches);
 
