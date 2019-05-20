@@ -1,12 +1,12 @@
-#include <QMap>
-#include <math.h>
 #include "index_handler.h"
+
+#include <math.h>
+
 #include "commons/config/config.h"
 #include "commons/util/util.h"
 #include "commons/const/const.h"
 #include "commons/globals/globals.h"
 #include "commons/profiler/profiler.h"
-#include <QMutex>
 
 LOGGING(IndexHandler, false);
 
@@ -15,7 +15,7 @@ IndexHandler::IndexHandler(const QString &indexPath, const QString &baseName,
 {
 	mIndexPath = indexPath;
 	mBaseIndexName = baseName;
-	mLoadPositions = loadPositions;
+	mLoadPositionsFeature = loadPositions;
 	init();
 }
 
@@ -94,10 +94,10 @@ bool IndexHandler::positionRange(elem_serial serial, QPair<elem_pos, elem_pos> &
 
 	// For find the lower bound we have to scan the vector backward in order
 	// to find a different position; this is not ideal but is not dramatic
-	// since there should be not many items with the same file position
+	// since there should be not many items with the same file position.
 	// Furthermore I've figured out that for some element having a lower
 	// bound equals to the end of the previous element is not enough,
-	// for this reason, check for two different values
+	// for this reason, check for two different values (again, not ideal...)
 
 	static const int LB_DIFFERENT_POSITIONS_REQUIRED = 2;
 	elem_pos lastDifferentPos = range.second;
@@ -274,7 +274,8 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 		if (!findPosts(term, fieldType, termPosts))
 			continue; // nothing found
 
-		foreach (IndexPost post, termPosts) {
+		for (const IndexPost & post : termPosts) {
+
 			// Check if this field has already been found
 			ElementSerial_FieldNumber ef {post.elementSerial, post.fieldNumber};
 
@@ -326,29 +327,10 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 
 	PROF_BEGIN6(findPhraseMatchesParallelCheck)
 
-	// Eventually perform phrasal check if the tokens are > 1, otherwise
-	// skip it.
-
-//	if (tokens.size() <= 1) {
-//		dd("Skipping phrasal check since only one token has been provided");
-
-//		for (auto it = categorizedTermsByElementField.begin();
-//			 it != categorizedTermsByElementField.end();
-//			 it++) {
-
-//		}
-//		// Let's push this match
-//		IndexMatch match;
-//		match.matchedTokens = tokens;
-//		match.elementSerial = ef.elementSerial;
-//		match.fieldType = fieldType;
-//		match.fieldNumber = ef.fieldNumber;
-//		match.matchPosition = ps0_pos;
-
-//		vv1("Pushing a match: " << match);
-
-//		matches.insert(match);
-//	}
+	// Eventually perform phrasal check if the tokens are > 1
+	// Actually there is not a separated case for phrasal or single words, since
+	// benchmarks reported a good speed even if single words pass through
+	// this amass of code
 
 	// 2) For each element/field retrieved do the following
 	// - for each term of the phrase, do a parallel scan between the terms'
@@ -356,7 +338,8 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 	//   according to the phrase order
 
 	for (auto it = categorizedTermsByElementField.begin();
-			it != categorizedTermsByElementField.end(); it++) {
+		it != categorizedTermsByElementField.end();
+		it++) {
 
 		const ElementSerial_FieldNumber &ef = it.key();
 		const QHash<QString, QVector<term_pos>> &termsPositions = it.value();
@@ -364,7 +347,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 		// Potentially we have a match, but first check for consecutiveness
 		// of the phrase terms within the element/field
 
-		// TODO: start from the term with the smallest position list size
+		// TODO: start from the term with the smallest position list size...
 
 		// Take the first positions list (in the future: the smallest one)
 		auto ps0It = termsPositions.find(tokens.at(0));
@@ -376,13 +359,8 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 
 		const QVector<term_pos> &ps0 = ps0It.value();
 
-		// How many times the phrase (or the word) matches within the element/field
-		// This is useful just for figure out the tf and perform ranking over
-		// the elements, otherwise it won't be needed since if the elemenet/field
-		// contains the phrase it would be enough to present it as a match
-//		quint8 phrasalMatchesCount = 0;
+		for (term_pos ps0_pos : ps0) {
 
-		foreach (term_pos ps0_pos, ps0) {
 			dd1("ps0_pos: " << ps0_pos);
 
 			// ps0: positions of the first term
@@ -555,9 +533,6 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 	case ElementFieldType::IncollectionYear:
 		refPost = &ref.incollection.year;
 		break;
-//	case ElementFieldType::IncollectionBooktitle:
-//		refPost = &ref.incollection.booktitle;
-//		break;
 
 	case ElementFieldType::InproceedingsAuthor:
 		refPost = &ref.inproceedings.author;
@@ -568,9 +543,6 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 	case ElementFieldType::InproceedingsYear:
 		refPost = &ref.inproceedings.year;
 		break;
-//	case ElementFieldType::InproceedingsBooktitle:
-//		refPost = &ref.inproceedings.booktitle;
-//		break;
 
 	case ElementFieldType::PhdthesisAuthor:
 		refPost = &ref.phdthesis.author;
@@ -614,9 +586,7 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 	case ElementFieldType::ProceedingsPublisher:
 		refPost = &ref.proceedings.publisher;
 		break;
-//	case ElementFieldType::ProceedingsBooktitle:
-//		refPost = &ref.proceedings.booktitle;
-//		break;
+
 	default:
 		refPost = nullptr;
 	}
@@ -665,24 +635,7 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 		dd2("(Identifier)		= " << mIdentifiers.at(INT(elementSerial)));
 
 		// Push the post
-		posts.append(IndexPost {
-			 elementSerial, fieldNumber,  inFieldPos
-		});
-
-		// Position...
-#if 0
-		qint64 elementPos =
-			elementSerial * Shared::Index::ElementsPosition::ELEMENT_POS_BYTES;
-
-		mElementsPosFile.seek(elementPos);
-
-		quint32 originalFilePos;
-
-		mElementsPosStream >> originalFilePos;
-
-		ii("Original file position = " << originalFilePos);
-#endif
-
+		posts.append(IndexPost { elementSerial, fieldNumber,  inFieldPos });
 	}
 
 	PROF_FUNC_END
@@ -793,12 +746,12 @@ void IndexHandler::loadVocabulary()
 
 		// <art.a> <art.t> <art.y>
 		// <jou>
-		// <inc.a> <inc.t> <inc.y> // <inc.b>
-		// <inp.a> <inp.t> <inp.y> // <inp.b>
+		// <inc.a> <inc.t> <inc.y>
+		// <inp.a> <inp.t> <inp.y>
 		// <phd.a> <phd.t> <phd.y>
 		// <mas.a> <mas.t> <mas.y>
 		// <bok.a> <bok.t> <bok.y> <bok.p>
-		// <pro.t> <pro.y> <pro.p> // <pro.b>
+		// <pro.t> <pro.y> <pro.p>
 
 		incrementalOffset += loadIndexTermReference(ref.article.author, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.article.title, incrementalOffset);
@@ -809,12 +762,10 @@ void IndexHandler::loadVocabulary()
 		incrementalOffset += loadIndexTermReference(ref.incollection.author, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.incollection.title, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.incollection.year, incrementalOffset);
-//		incrementalOffset += loadIndexTermReference(ref.incollection.booktitle, incrementalOffset);
 
 		incrementalOffset += loadIndexTermReference(ref.inproceedings.author, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.inproceedings.title, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.inproceedings.year, incrementalOffset);
-//		incrementalOffset += loadIndexTermReference(ref.inproceedings.booktitle, incrementalOffset);
 
 		incrementalOffset += loadIndexTermReference(ref.phdthesis.author, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.phdthesis.title, incrementalOffset);
@@ -832,7 +783,6 @@ void IndexHandler::loadVocabulary()
 		incrementalOffset += loadIndexTermReference(ref.proceedings.title, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.proceedings.year, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.proceedings.publisher, incrementalOffset);
-//		incrementalOffset += loadIndexTermReference(ref.proceedings.booktitle, incrementalOffset);
 
 		vv2("Term reference has been loaded into vocabulary: " << ref);
 
@@ -893,7 +843,7 @@ void IndexHandler::loadCrossrefs()
 
 void IndexHandler::loadPositions()
 {
-	if (!mLoadPositions) {
+	if (!mLoadPositionsFeature) {
 		dd("Not loading positions since not required (XML path not specified)");
 		return;
 	}
@@ -930,7 +880,7 @@ void IndexHandler::printIdentifiers()
 #if VERBOSE
 	vv("==== IDENTIFIERS ====");
 	elem_serial i = 0;
-	foreach(QString id, mIdentifiers) {
+	for (const QString &id : mIdentifiers) {
 		vv1("[" << i << "] : " << id);
 		i++;
 	}
@@ -942,7 +892,7 @@ void IndexHandler::printVocabulary()
 {
 #if VERBOSE
 	vv("==== VOCABULARY ====");
-	for (auto it = mVocabulary.begin(); it != mVocabulary.end(); it++) {
+	for (auto it = mVocabulary.cbegin(); it != mVocabulary.cend(); it++) {
 		vv1("'" << it.key() << "' : " << it.value());
 	}
 	vv("==== VOCABULARY END ====");
@@ -953,7 +903,7 @@ void IndexHandler::printCrossrefs()
 {
 #if VERBOSE
 	vv("==== CROSSREFS ====");
-	for (auto it = mCrossrefs.begin(); it != mCrossrefs.end(); it++) {
+	for (auto it = mCrossrefs.cbegin(); it != mCrossrefs.cend(); it++) {
 		vv1(it.key() << " => " << it.value());
 	}
 	vv("==== CROSSREFS END ====");
@@ -962,7 +912,8 @@ void IndexHandler::printCrossrefs()
 
 void IndexHandler::printPositions()
 {
-	if (!mLoadPositions)
+	if (!mLoadPositionsFeature)
+		// Not using position feature
 		return;
 
 #if VERBOSE
@@ -989,31 +940,3 @@ uint qHash(const ElementSerial_FieldNumber &ef)
 {
 	return (ef.elementSerial * 71881) ^ ef.fieldNumber;
 }
-
-//inline bool operator==(const IndexMatch &efm1, const IndexMatch &efm2)
-//{
-//	return
-//			efm1.elementSerial == efm2.elementSerial
-//			//&&
-////			efm1.fieldType == efm2.fieldType &&
-////			efm1.fieldNumber == efm2.fieldNumber &&
-////			efm1.matchPosition == efm2.matchPosition
-//	;
-//}
-
-//uint qHash(const IndexMatch &efm, uint seed)
-//{
-//	return qHash(efm.elementSerial * efm.fieldNumber * efm.matchPosition, seed)
-//		^ UINT32(efm.fieldType);
-//}
-
-// ---
-
-//IndexMatch::operator QString() const
-//{
-//	return
-//			"{serial = " + DEC(elementSerial) + "; field = " +
-//			elementFieldTypeString(fieldType) + "; field_num = " +
-//			DEC(fieldNumber) + "; match_pos = " + DEC(matchPosition) +
-//			"; (phrase = '" + matchedTokens.join(" ") + "}";
-//}

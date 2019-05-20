@@ -1,4 +1,5 @@
 #include "indexer.h"
+
 #include <QDir>
 
 #include "commons/const/const.h"
@@ -75,8 +76,6 @@ void Indexer::onParseEnd()
 	ii("Finished parsing of XML file");
 	ii("Actually writing index files...");
 
-//	debug_printIndexTerms();
-
 	vv("Writing index files");
 
 	writeIdentifiersFile();
@@ -103,6 +102,9 @@ bool Indexer::onElement(const DblpXmlElement &element, qint64 pos)
 	PROF_FUNC_BEGIN
 
 	dd("On element: " << endl << QString(element));
+
+	// Create the right dblp entity accordingly to the xml element
+	// and deliver it to the right handler
 
 	auto fillWork = [](DblpWork &work, const DblpXmlElement xmlElement) {
 		work.key = xmlElement.attributes.value(DblpXmlAttributes::KEY).toString();
@@ -139,17 +141,14 @@ bool Indexer::onElement(const DblpXmlElement &element, qint64 pos)
 	} else if (element.name == DblpXmlElements::INCOLLECTION) {
 		DblpIncollection incollection;
 		fillPublicationCrossref(incollection, element);
-//		incollection.booktitle = element.fields.value(DblpXmlFields::BOOKTITLE, {""}).at(0);
 		handleIncollection(incollection, pos);
 	} else if (element.name == DblpXmlElements::BOOK) {
 		DblpBook book;
 		fillVenue(book, element);
-//		book.authors = element.fields.value(DblpXmlFields::BOOKTITLE);
 		handleBook(book, pos);
 	} else if (element.name == DblpXmlElements::INPROCEEDINGS) {
 		DblpInproceedings inproc;
 		fillPublicationCrossref(inproc, element);
-//		inproc.booktitle = element.fields.value(DblpXmlFields::BOOKTITLE, {""}).at(0);
 		handleInproceedings(inproc, pos);
 	} else if (element.name == DblpXmlElements::PROCEEDINGS) {
 		DblpProceedings proc;
@@ -204,8 +203,9 @@ void Indexer::handleJournal(const DblpJournal &journal, qint64 pos)
 
 	// Unluckily we cannot add the journal name as identifier since onJournal
 	// is triggered for each <journal> match inside the articles
-	// Instead we have to:
-	// Check if it has already been added (to mVenueSerialByVenueIdentifier)
+	// Instead we have to check if it has already been added
+	// (to mVenueSerialByVenueIdentifier); if not we can handle it as any
+	// other element, otherwise we have to skip it.
 
 	auto journalIdentifierIt = mVenueSerialByVenueIdentifier.find(journal.name);
 
@@ -214,6 +214,8 @@ void Indexer::handleJournal(const DblpJournal &journal, qint64 pos)
 		// Already added, do not add again
 		return;
 	}
+
+	// Treat it as any other element
 
 	vv1("Adding journal for the first time: " << journal.name);
 
@@ -226,9 +228,8 @@ void Indexer::handleJournal(const DblpJournal &journal, qint64 pos)
 	// This journal has never been added, add it for the first time as
 	// a new (and unique) identifier
 	addIdentifier(journal.name);
-	addPosition(pos); // probably useless and will be discarded in index handling
-					  // but must be called for aligned the identifiers
-					  // with the positions arrays
+	addPosition(pos); // this actually refers to the position of the
+					  // article that embeds this journal
 	addVenue(journal.name);
 	elementHandled();
 }
@@ -237,7 +238,7 @@ void Indexer::handleIncollection(const DblpIncollection &incollection, qint64 po
 {
 	vv("Handling incollection: " << incollection);
 
-	vv1("Adding terms of incollection.year");
+	vv1("Adding terms of incollection.author");
 	addTermsOfFields([](IndexTerm &term, const IndexPost &post)
 		{ term.incollection.author.append(post); },
 		incollection.authors
@@ -254,12 +255,6 @@ void Indexer::handleIncollection(const DblpIncollection &incollection, qint64 po
 		{ term.incollection.year.append(post); },
 		incollection.year
 	);
-
-//	vv1("Adding terms of incollection.booktitle");
-//	addTermsOfField([](IndexTerm &term, const IndexPost &post)
-//		{ term.incollection.booktitle.append(post); },
-//		incollection.booktitle
-//	);
 
 	addIdentifier(incollection.key);
 	addPosition(pos);
@@ -323,12 +318,6 @@ void Indexer::handleInproceedings(const DblpInproceedings &inproc, qint64 pos)
 		inproc.year
 	);
 
-//	vv1("Adding terms of inproc.booktitle");
-//	addTermsOfField([](IndexTerm &term, const IndexPost &post)
-//		{ term.inproceedings.booktitle.append(post); },
-//		inproc.booktitle
-//	);
-
 	addIdentifier(inproc.key);
 	addPosition(pos);
 	addCrossref(inproc.crossref);
@@ -350,12 +339,6 @@ void Indexer::handleProceedings(const DblpProceedings &proc, qint64 pos)
 		{ term.proceedings.year.append(post); },
 		proc.year
 	);
-
-//	vv1("Adding terms of proc.publisher");
-//	addTermsOfField([](IndexTerm &term, const IndexPost &post)
-//		{ term.proceedings.booktitle.append(post); },
-//		proc.publisher
-//	);
 
 	addIdentifier(proc.key);
 	addPosition(pos);
@@ -431,7 +414,7 @@ void Indexer::addTermsOfFields(void (*indexTermPostAdder)(IndexTerm &, const Ind
 		   "Found an element with more fields than the index's allowed number");
 
 	for (int i = 0; i < fieldsCount; i++) {
-		QString fieldContent = fieldsContent.at(i);
+		const QString &fieldContent = fieldsContent.at(i);
 		addTermsOfField(indexTermPostAdder, fieldContent, static_cast<field_num>(i));
 	}
 }
@@ -448,14 +431,15 @@ void Indexer::addTermsOfField(void (*indexTermPostAdder)(IndexTerm &, const Inde
 			 "indexing", "Found a field with more terms than the index's allowed number");
 
 	for (int i = 0; i < termsCount; i++) {
-		QString term = terms.at(i);
+		const QString &term = terms.at(i);
 		vv3("Adding term: '" << term << "'");
 		addTerm(indexTermPostAdder, term, fieldNumber, static_cast<term_pos>(i));
 	}
 }
 
 void Indexer::addTerm(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),
-					  const QString &term, field_num fieldNumber,
+					  const QString &term,
+					  field_num fieldNumber,
 					  term_pos termPosition)
 {
 	// Sanitize term (lowercase, no punctuation, trim, ...)
@@ -484,6 +468,7 @@ void Indexer::addTerm(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &)
 
 	vv3("Adding post for term '" << indexTerm << "' : " << post);
 
+	// Add the post to the dblp entity as wanted by the caller
 	indexTermPostAdder(termEntity, post);
 
 	termEntity.stats.postsCount++;
@@ -535,7 +520,7 @@ void Indexer::writeIdentifiersFile()
 		<< mIdentifiers.size() << " elements)");
 
 	elem_serial i = 0;
-	foreach (QString key, mIdentifiers) {
+	for (const QString &key : mIdentifiers) {
 		vv2("Writing identifier for element = " << i << ": " << key);
 		mIdentifiersStream.stream << key << '\n';
 		i++;
@@ -547,7 +532,7 @@ void Indexer::writePostingListAndVocabularyFiles()
 	vv1("Writing vocabulary and posting list index files ("
 		<< mIndexTerms.size() << " terms)");
 
-	for (auto it = mIndexTerms.begin(); it != mIndexTerms.end(); it++) {
+	for (auto it = mIndexTerms.cbegin(); it != mIndexTerms.cend(); it++) {
 			const QString &term = it.key();
 			const IndexTerm &termEntity = it.value();
 
@@ -558,20 +543,20 @@ void Indexer::writePostingListAndVocabularyFiles()
 
 			vv2("Handling term: " << term);
 
-			// Write term and
+			// Write term metas: (term as string and term's starting posting list position)
 			writeTermMetas(term);
 
 			// Write the term posts to the posting list,
 			// one for each field of the elements
 
-			// <art.a> <art.t> <art.y>
-			// <jou>
-			// <inc.a> <inc.t> <inc.y> // <inc.b>
-			// <inp.a> <inp.t> <inp.y> // <inp.b>
-			// <phd.a> <phd.t> <phd.y>
-			// <mas.a> <mas.t> <mas.y>
-			// <bok.a> <bok.t> <bok.y> <bok.p>
-			// <pro.t> <pro.y> <pro.p> // <pro.b>
+			// * <art.a> <art.t> <art.y>
+			// * <jou>
+			// * <inc.a> <inc.t> <inc.y>
+			// * <inp.a> <inp.t> <inp.y>
+			// * <phd.a> <phd.t> <phd.y>
+			// * <mas.a> <mas.t> <mas.y>
+			// * <bok.a> <bok.t> <bok.y> <bok.p>
+			// * <pro.t> <pro.y> <pro.p>
 
 			vv3("Writing posts for term: " << term);
 
@@ -592,23 +577,19 @@ void Indexer::writePostingListAndVocabularyFiles()
 			// - author
 			// - title
 			// - year
-			// - booktitle
 
 			writeField(termEntity.incollection.author);
 			writeField(termEntity.incollection.title);
 			writeField(termEntity.incollection.year);
-//			writeField(termEntity.incollection.booktitle);
 
 			// inproceedings
 			// - author
 			// - title
 			// - year
-			// - booktitle
 
 			writeField(termEntity.inproceedings.author);
 			writeField(termEntity.inproceedings.title);
 			writeField(termEntity.inproceedings.year);
-//			writeField(termEntity.inproceedings.booktitle);
 
 			// phdthesis
 			// - author
@@ -643,12 +624,10 @@ void Indexer::writePostingListAndVocabularyFiles()
 			// - title
 			// - year
 			// - publisher
-			// - booktitle
 
 			writeField(termEntity.proceedings.title);
 			writeField(termEntity.proceedings.year);
 			writeField(termEntity.proceedings.publisher);
-//			writeField(termEntity.proceedings.booktitle);
 		}
 }
 
@@ -695,6 +674,8 @@ void Indexer::writeTermFieldPostsCount(quint32 count)
 			dd4("Writing posts count: " << count);
 
 		mVocabularyStream.stream <<
+			// In order to distinguish this from the < 16 bit case, add a
+			// flag (1) to the left of the byte
 			(count | Config::Index::Vocabulary::REF_EXTENDED_FLAG);
 	}
 }
@@ -703,14 +684,10 @@ void Indexer::writePosts(const IndexPosts &posts)
 {
 	// Write the posts to the posting list
 
-	foreach(IndexPost post, posts) {
+	for (const IndexPost & post : posts) {
 		dd4("Writing post: " << post);
 		writePost(post);
 	}
-
-	// Just write the count of the posts
-
-//	writeVocabularyTermFieldPostsCount(static_cast<quint32>(posts.size()));
 }
 
 void Indexer::writePost(const IndexPost &post)
@@ -724,7 +701,7 @@ void Indexer::writePost(const IndexPost &post)
 	ASSERT(post.fieldNumber < Config::Index::PostingList::FIELD_NUM_THRESHOLD,
 			 "indexing", "There are more equals fields per element than the index's allowed number");
 
-	// Implicit
+	// Implicit since inFieldTermPosition type is exactly the same size of IN_FIELD_POS_THRESHOLD
 //	Q_ASSERT_X(post.inFieldTermPosition < Config::Index::PostingList::IN_FIELD_POS_THRESHOLD,
 //			 "indexing", "There are more terms per field than the index's allowed number");
 
@@ -759,7 +736,7 @@ void Indexer::writePositionsFile()
 
 	elem_serial i = 0;
 
-	foreach (qint64 pos, mPositions) {
+	for (qint64 pos : mPositions) {
 		vv2("Writing position for element = " << i << ": " << pos);
 
 		elem_pos P = static_cast<elem_pos>(pos);
@@ -774,10 +751,10 @@ void Indexer::writeCrossrefsFile()
 	vv1("Writing crossrefs index file");
 
 	// The format is <pub_element_id><venue_element_id>
-	// But we don't have it directly, we have to do a double lookup
+	// But we can't do it directly, we have to do a double lookup
 
-	for (auto it = mVenueIdentifierByPublicationSerial.begin();
-		 it != mVenueIdentifierByPublicationSerial.end();
+	for (auto it = mVenueIdentifierByPublicationSerial.cbegin();
+		 it != mVenueIdentifierByPublicationSerial.cend();
 		 it++) {
 
 		// For each publication element id retrieve the element
@@ -796,18 +773,22 @@ void Indexer::writeCrossrefsFile()
 
 		vv2("Writing crossref " << publicationSerial << " => " << venueSerial);
 
-		// We have everything, really write these
+		// We have everything, really write this pair of <pub> => <venue>
 		mCrossrefsStream.stream << publicationSerial << venueSerial;
 	}
 }
 
 void Indexer::printStats()
 {
+	// Skip if INFO is not enabled
+
+#if INFO
 	ii("========================");
 	ii("==== INDEXING STATS ====");
 	ii("========================");
 
 	// Count
+
 	ii("## Elements: " <<  mCurrentSerial);
 	ii("## Terms: " << mIndexTerms.size());
 	ii("## Posts: " << mStats.postsCount);
@@ -827,7 +808,7 @@ void Indexer::printStats()
 	QString maxPostsCountTerm = "";
 	quint64 maxPostCount = 0;
 
-	for (auto it = mIndexTerms.begin(); it != mIndexTerms.end(); it++) {
+	for (auto it = mIndexTerms.cbegin(); it != mIndexTerms.cend(); it++) {
 		quint64 postsCount = it.value().stats.postsCount;
 		if (postsCount > maxPostCount) {
 			maxPostCount = postsCount;
@@ -835,6 +816,7 @@ void Indexer::printStats()
 		}
 	}
 
-	ii("MAX posts count belongs to " << "term: '" << maxPostsCountTerm << "' " <<
+	ii("MAX posts count belongs to term '" << maxPostsCountTerm << "' " <<
 	   " (" << maxPostCount << ")");
+#endif
 }

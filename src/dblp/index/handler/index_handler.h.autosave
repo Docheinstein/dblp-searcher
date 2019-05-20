@@ -107,7 +107,6 @@ protected:
 	LOGGING_OVERRIDE
 
 private:
-
 	void init();
 
 	void loadIdentifiers();

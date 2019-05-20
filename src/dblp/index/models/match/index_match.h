@@ -8,13 +8,20 @@
 #include "commons/config/config.h"
 
 typedef struct IndexMatch {
-//	IndexMatch() {}
-	elem_serial elementSerial; // element id
-	term_pos matchPosition; // where the tokens matches within
-							// the fieldType + fieldNumber
-							// starting position, in case of phrases
-	field_num fieldNumber; // field number for the fieldType
-	ElementFieldType fieldType;	// field type
+	// Element serial
+	elem_serial elementSerial;
+
+	// Where the tokens matches within the fieldType + fieldNumber.
+	// In case of phrases, is the position of the first token that matches
+	term_pos matchPosition;
+
+	// Number of field of the same fieldType (e.g. for multiple author)
+	field_num fieldNumber;
+
+	// Field type
+	ElementFieldType fieldType;
+
+	// Token that matches (the given query) within this elementSerial+fieldType+fieldNumber
 	QStringList matchedTokens;
 
 	operator QString() const;

@@ -2,7 +2,7 @@
 #define INDEX_ENTITIES_H
 
 #include <QString>
-#include <QList>
+#include <QVector>
 
 // Base entities
 

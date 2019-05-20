@@ -4,24 +4,24 @@
 #include <QtGlobal>
 
 typedef struct IndexTermRefPostMeta {
-	quint32 count;  // Loaded (will be quint32)
-	quint32 offset; // Generated
+	quint32 count;  // Loaded from file
+	quint32 offset; // Generated accordingly to the previously loaded count(s)
 } IndexTermRefPostMeta;
 
 class IndexTermRef {
 public:
 
-	// Position of the first post in the posting list for the term (actually <art.a>
+	// Position of the first post in the posting list for the term (actually <art.a>)
 	qint64 postingListPosition;
 
 	// <art.a> <art.t> <art.y>
 	// <jou>
-	// <inc.a> <inc.t> <inc.y> <inc.b>
-	// <inp.a> <inp.t> <inp.y> <inp.b>
+	// <inc.a> <inc.t> <inc.y>
+	// <inp.a> <inp.t> <inp.y>
 	// <phd.a> <phd.t> <phd.y>
 	// <mas.a> <mas.t> <mas.y>
 	// <bok.a> <bok.t> <bok.y> <bok.p>
-	// <pro.t> <pro.y> <pro.p> <pro.b>
+	// <pro.t> <pro.y> <pro.p>
 
 	struct {
 		IndexTermRefPostMeta author;
@@ -37,14 +37,12 @@ public:
 		IndexTermRefPostMeta author;
 		IndexTermRefPostMeta title;
 		IndexTermRefPostMeta year;
-//		IndexTermRefPostMeta booktitle;
 	} incollection;
 
 	struct {
 		IndexTermRefPostMeta author;
 		IndexTermRefPostMeta title;
 		IndexTermRefPostMeta year;
-//		IndexTermRefPostMeta booktitle;
 	} inproceedings;
 
 	struct {
@@ -70,10 +68,7 @@ public:
 		IndexTermRefPostMeta title;
 		IndexTermRefPostMeta year;
 		IndexTermRefPostMeta publisher;
-//		IndexTermRefPostMeta booktitle;
 	} proceedings;
-
-//	int positionOf();
 };
 
 QDebug operator<<(QDebug stream, const IndexTermRef &termref);

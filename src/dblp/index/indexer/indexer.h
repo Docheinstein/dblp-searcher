@@ -2,17 +2,12 @@
 #define INDEXER_H
 
 #include <QString>
-#include <QXmlContentHandler>
-#include <commons/file/filestream/data/data_stream_file.h>
-#include <commons/file/filestream/text/text_stream_file.h>
-#include <commons/log/loggable/loggable.h>
-#include <dblp/index/models/entities/index_entities.h>
+#include "commons/file/filestream/data/data_stream_file.h"
+#include "commons/file/filestream/text/text_stream_file.h"
+#include "commons/log/loggable/loggable.h"
+#include "dblp/index/models/entities/index_entities.h"
 #include "dblp/index/models/term/index_term.h"
-//#include "dblp/xml/models/entities/xml_entities.h"
-//#include "dblp/xml/handler/xml_parse_handler.h"
 #include "dblp/xml/handler/dblp_xml_parse_handler.h"
-#include "dblp/shared/defs/defs.h"
-#include <QtGlobal>
 
 class Indexer : public DblpXmlParseHandler,  protected Loggable
 {
@@ -29,6 +24,76 @@ protected:
 
 private:
 	// ===================
+	// XML INTERNAL SHORTCUTS
+	// ===================
+
+	void handleArticle(const DblpArticle &article, qint64 pos);
+	void handleJournal(const DblpJournal &journal, qint64 pos);
+	void handleIncollection(const DblpIncollection &incollection, qint64 pos);
+	void handleBook(const DblpBook &book, qint64 pos);
+	void handleInproceedings(const DblpInproceedings &inproc, qint64 pos);
+	void handleProceedings(const DblpProceedings &proc, qint64 pos);
+	void handlePhdThesis(const DblpPhdThesis &phd, qint64 pos);
+	void handleMasterThesis(const DblpMasterThesis &master, qint64 pos);
+
+
+	// ===================
+	// DATA STRUCTURES ADDITIONS
+	// ===================
+
+	// To mIndexTerms
+
+	void addTermsOfFields(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),
+				   const QVector<QString> &fieldsContent);
+	void addTermsOfField(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),
+				  const QString &fieldContent, field_num fieldNumber = 0);
+	void addTerm(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),
+				 const QString &term, field_num fieldNumber, term_pos termPosition);
+
+
+	void addIdentifier(const QString &key); // to mIdentifiers
+	void addPosition(qint64 pos); // to mPositions
+	void addCrossref(const QString &externalVenueIdentifier); // to mVenueIdentifierByPublicationSerial
+	void addVenue(const QString &venueIdentifier); // to mVenueSerialByVenueIdentifier
+
+
+	// ===================
+	// MISC
+	// ===================
+
+	void elementHandled();
+
+
+	// ===================
+	// INDEX FILES CREATIONS
+	// ===================
+
+	void writeIdentifiersFile();
+
+	void writePostingListAndVocabularyFiles();
+	void writeTermMetas(const QString &term); // to vocabulary
+	void writeTermFieldPostsCount(quint32 count); // to vocabulary
+
+	void writePosts(const IndexPosts &posts);
+	void writePost(const IndexPost &post);
+
+	void writePositionsFile();
+
+	void writeCrossrefsFile();
+
+	// ===================
+	// STATS/DEBUG
+	// ===================
+
+	void printStats();
+
+	struct {
+		quint64 postsCount = 0;
+		quint32 highestFieldNumber = 0;
+		quint32 highestInFieldPosition = 0;
+	} mStats;
+
+	// ===================
 	// PATHS
 	// ===================
 
@@ -38,6 +103,7 @@ private:
 	// Base name assign to each each index file
 	// The only thing that changes between index files is the extension.
 	QString mBaseIndexName;
+
 
 	// ===================
 	// INDEX FILES STREAMS
@@ -98,12 +164,13 @@ private:
 	 *
 	 * The complete element.field list is the following:
 	 * <art.a> <art.t> <art.y>
-	 * <inc.a> <inc.t> <inc.y> // <inc.b>
-	 * <inp.a> <inp.t> <inp.y> // <inp.b>
+	 * <jou>
+	 * <inc.a> <inc.t> <inc.y>
+	 * <inp.a> <inp.t> <inp.y>
 	 * <phd.a> <phd.t> <phd.y>
 	 * <mas.a> <mas.t> <mas.y>
 	 * <bok.a> <bok.t> <bok.y> <bok.p>
-	 * <pro.t> <pro.y> <pro.p> // <pro.b>
+	 * <pro.t> <pro.y> <pro.p>
 	 *
 	 * The size of each element.field is variable, if the count is lower than
 	 * 2^15 it will be 16 bit, otherwise it will be 32 with the lefter most
@@ -168,71 +235,13 @@ private:
 	 */
 	QList<qint64> mPositions;
 
+
 	// ===================
 	// INDEXING/PARSING STATE
 	// ===================
 
 	elem_serial mCurrentSerial = 0;
 
-
-	// XML INTERNAL SHORTCUTS
-
-	void handleArticle(const DblpArticle &article, qint64 pos);
-	void handleJournal(const DblpJournal &journal, qint64 pos);
-	void handleIncollection(const DblpIncollection &incollection, qint64 pos);
-	void handleBook(const DblpBook &book, qint64 pos);
-	void handleInproceedings(const DblpInproceedings &inproc, qint64 pos);
-	void handleProceedings(const DblpProceedings &proc, qint64 pos);
-	void handlePhdThesis(const DblpPhdThesis &phd, qint64 pos);
-	void handleMasterThesis(const DblpMasterThesis &master, qint64 pos);
-
-	// DATA STRUCTURES ADDITIONS
-
-	// To mIndexTerms
-
-	void addTermsOfFields(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),
-				   const QVector<QString> &fieldsContent);
-	void addTermsOfField(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),
-				  const QString &fieldContent, field_num fieldNumber = 0);
-	void addTerm(void (*indexTermPostAdder)(IndexTerm &, const IndexPost &),
-				 const QString &term, field_num fieldNumber, term_pos termPosition);
-
-	void addIdentifier(const QString &key); // to mIdentifiers
-	void addPosition(qint64 pos); // to mPositions
-
-	void addCrossref(const QString &externalVenueIdentifier); // to mVenueIdentifierByPublicationSerial
-	void addVenue(const QString &venueIdentifier); // to mVenueSerialByVenueIdentifier
-
-	// MISC
-
-	void elementHandled();
-
-	// INDEX FILES CREATIONS
-
-	void writeIdentifiersFile();
-
-	void writePostingListAndVocabularyFiles();
-	void writeTermMetas(const QString &term); // to vocabulary
-	void writeTermFieldPostsCount(quint32 count); // to vocabulary
-
-	void writePosts(const IndexPosts &posts);
-	void writePost(const IndexPost &post);
-
-	void writePositionsFile();
-
-	void writeCrossrefsFile();
-
-	// ===================
-	// STATS/DEBUG
-	// ===================
-
-	struct {
-		quint64 postsCount = 0;
-		quint32 highestFieldNumber = 0;
-		quint32 highestInFieldPosition = 0;
-	} mStats;
-
-	void printStats();
 };
 
 #endif // INDEXER_H
