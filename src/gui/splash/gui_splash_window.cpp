@@ -1,4 +1,5 @@
 #include "gui_splash_window.h"
+#include <QThread>
 
 #define PROGRESS_NOTIFICATION_THRESHOLD 0.01
 
@@ -38,14 +39,20 @@ double GuiSplashWindow::progress()
 
 void GuiSplashWindow::setProgress(double progress)
 {
-	mProgress = progress;
+//	emit progressChanged();
 
 	if (progress < mProgress) {
+		qInfo() << "Setting splash progress (" << progress << ") on thread: " << QThread::currentThreadId();
 		mLastNotifiedProgress = progress;
 		emit progressChanged();
 	} else if (progress - mLastNotifiedProgress > PROGRESS_NOTIFICATION_THRESHOLD) {
 		// Do not notify too many times
+		qInfo() << "Setting splash progress (" << progress << ") on thread: " << QThread::currentThreadId();
 		mLastNotifiedProgress = progress;
+		emit progressChanged();
 	}
+
+	mProgress = progress;
+
 }
 

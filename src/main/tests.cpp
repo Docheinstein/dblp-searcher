@@ -7,9 +7,94 @@
 #include <omp.h>
 #include <QMutex>
 #include <QHash>
+#include <QObject>
+#include "tests.h"
+#include <QGuiApplication>
+#include "args.h"
+
+//#define CURTHREAD QThread::currentThreadId()
 
 #define N        1000000
 int data[N];
+
+//void backgroundThread() {
+//	qInfo() << "Doing first job on background thread: " << QThread::currentThreadId();
+//	QThread::sleep(1);
+//	emit firstJobFinished();
+//	qInfo() << "Doing second job on background thread: " << QThread::currentThreadId();
+//	QThread::sleep(2);
+//	emit secondJobFinished();
+//}
+
+void thread_tests() {
+	QCoreApplication app(arguments.argc, arguments.argv);
+
+
+//	QFutureWatcher<void> indexLoadingWatcher;
+
+//	QObject::connect(&indexLoadingWatcher,
+//					 &QFutureWatcher<void>::finished,
+//					 [&guiSplashWindow, &guiMainWindow]() {
+//		// Load of everything finished, show main window
+//		guiSplashWindow.setShown(false);
+//		guiMainWindow.setShown(true);
+//		_dd("Going to hide splash and show main window on thread: "
+//			<< QThread::currentThread());
+//	});
+
+//	QObject::connect(&indexLoadingWatcher)
+
+//	QObject::connect(future, &QFuture::)
+
+//	QObject::connect(&futureWatcher, SLOT(slotFunc()),
+//					 SIGNAL(firstJobFinished()),
+//					 Qt::QueuedConnection);
+
+//	QFuture<void> future = QtConcurrent::run(backgroundThread);
+//	QFutureWatcher<void> futureWatcher;
+	BackgroundThreadSender backgroundThreadSend;
+	BackgroundThreadReceiver *backgroundThreadRecv = new BackgroundThreadReceiver();
+	qInfo() << "Main thread: " << QThread::currentThreadId();
+
+//	bool ok = QObject::connect(&backgroundThreadSend, &BackgroundThreadSender::firstJobFinished,
+//					 [&backgroundThreadRecv]() {
+//		qInfo() << "Ehy from: " << QThread::currentThreadId();
+//		qInfo() << "I want: " << backgroundThreadRecv.thread();
+//		;
+//	});
+
+//	qInfo() << "Connection 1 ok: " << ok;
+
+//	bool ok = QObject::connect(&backgroundThreadSend, &BackgroundThreadSender::secondJobFinished,
+//					 backgroundThreadRecv, &BackgroundThreadReceiver::onSecondJobFinished,
+//					 Qt::QueuedConnection);
+	bool ok = QObject::connect(&backgroundThreadSend, &BackgroundThreadSender::secondJobFinished,
+					 backgroundThreadRecv, &BackgroundThreadReceiver::onSecondJobFinished,
+					 Qt::QueuedConnection);
+
+	qInfo() << "Connection 2 ok: " << ok;
+
+
+//	backgroundThreadSend.dumpObjectInfo();
+//	backgroundThreadRecv.dumpObjectInfo();
+//	QFuture<void> future = QtConcurrent::run(&backgroundThreadSend,
+//											 &BackgroundThreadSender::doJob);
+//	futureWatcher.setFuture(future);
+
+	backgroundThreadSend.start();
+
+	app.exec();
+}
+
+
+//void BackgroundThreadSender::doJob() {
+//	qInfo() << "Doing first job on background thread: " << QThread::currentThreadId();
+//	QThread::sleep(1);
+//	emit BackgroundThreadSender::firstJobFinished();
+//	qInfo() << "Doing second job on background thread: " << QThread::currentThreadId();
+//	QThread::sleep(2);
+//	emit BackgroundThreadSender::secondJobFinished();
+//}
 
 
 typedef struct Element {
@@ -235,15 +320,28 @@ void reduce_func(double &reduceResult, const int &mapResult) {
 }
 
 
+void BackgroundThreadReceiver::onFirstJobFinished()
+{
+	qInfo() << "Notified about first job finished on thread: " << QThread::currentThreadId();
+}
 
+void BackgroundThreadReceiver::onSecondJobFinished()
+{
+	qInfo() << "Invoked...";
+	qInfo() << "Notified about second job finished on thread: " << QThread::currentThreadId();
+}
 
+void BackgroundThreadSender::doJob()
+{
+	qInfo() << "Doing first job on background thread: " << QThread::currentThreadId();
+	QThread::sleep(1);
+	emit firstJobFinished();
+	qInfo() << "Doing second job on background thread: " << QThread::currentThreadId();
+	QThread::sleep(2);
+	emit secondJobFinished();
+}
 
-
-
-
-
-
-
-
-
-
+void BackgroundThreadSender::run()
+{
+	doJob();
+}

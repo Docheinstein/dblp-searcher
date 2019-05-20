@@ -15,6 +15,13 @@ Window {
     width: 480
     height: 360
     title: "Dblp Searcher"
+//    Connections {
+//        target: SplashWindow
+//        onProgressChanged: {
+//            console.log("Awere of splash progress change; to: " + SplashWindow.progress)
+//            splashProgress.value = SplashWindow.progress
+//        }
+//    }
 
     Image {
         id: splashBackground

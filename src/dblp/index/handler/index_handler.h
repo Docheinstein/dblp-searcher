@@ -82,9 +82,9 @@ signals:
 	void vocabularyLoadProgress(double progress);
 	void vocabularyLoadEnded();
 
-	void keysLoadStarted();
-	void keysLoadProgress(double progress);
-	void keysLoadEnded();
+	void identifiersLoadStarted();
+	void identifiersLoadProgress(double progress);
+	void identifiersLoadEnded();
 
 	void crossrefsLoadStarted();
 	void crossrefsLoadProgress(double progress);

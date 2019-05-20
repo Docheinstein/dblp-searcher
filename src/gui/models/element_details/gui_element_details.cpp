@@ -9,6 +9,9 @@
 #include "gui/main/gui_main_window.h"
 #include "dblp/query/resolver/query_resolver.h"
 
+#define HIGHLIGHT_COLOR "#e24834"
+#define HIGHLIGHTED(term) "<b style='color: " HIGHLIGHT_COLOR "'>" + term + "</b>"
+
 LOGGING(GuiElementDetails, true)
 
 DblpElementXmlRetrieverHandler::~DblpElementXmlRetrieverHandler() {}
@@ -90,8 +93,6 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 
 		_dd("Checking highlighting for field: " << fieldNum
 			 << "[" << fieldNum << "]: " << fieldValue);
-
-#define HIGHLIGHTED(term) "<span style='color: red'>" + term + "</span>"
 
 		// Highlight the query matches, we just have a vector, so scan all the
 		// vector and eventually highlight the matches

@@ -11,7 +11,7 @@
 #include <QElapsedTimer>
 #include "commons/profiler/profiler.h"
 
-LOGGING(GuiMainWindow, false)
+LOGGING(GuiMainWindow, true)
 
 GuiMainWindow::~GuiMainWindow() {}
 
@@ -106,7 +106,7 @@ void GuiMainWindow::doSearch(const QString &query)
 
 	emit searchStarted();
 
-	QFuture<QVector<QueryMatch>> queryFuture =
+	QFuture<QueryOutcome> queryFuture =
 			QtConcurrent::run(this, &GuiMainWindow::doSearchReal, query);
 
 	mQueryWatcher.setFuture(queryFuture);
@@ -127,7 +127,7 @@ void GuiMainWindow::popView()
 }
 
 
-QVector<QueryMatch> GuiMainWindow::doSearchReal(const QString &queryString)
+QueryOutcome GuiMainWindow::doSearchReal(const QString &queryString)
 {
 
 	PROF_FUNC_BEGIN0
@@ -136,22 +136,22 @@ QVector<QueryMatch> GuiMainWindow::doSearchReal(const QString &queryString)
 	queryTimer.start();
 
 	Query query(queryString);
-	QVector<QueryMatch> matches = mResolver->resolveQuery(query);
+	QueryOutcome outcome = mResolver->resolveQuery(query);
 
-#if INFO
-	for (auto it = matches.begin(); it != matches.end(); it++) {
+#if VERBOSE
+	for (auto it = outcome.sortedQueryMatches.cbegin(); it != outcome.sortedQueryMatches.cend(); it++) {
 		const QueryMatch &queryMatch = *it;
 
 		if (queryMatch.matchType() == QueryMatchType::Publication) {
-			ii("Found PUBLICATION match: " << queryMatch.publication() <<
+			vv("Found PUBLICATION match: " << queryMatch.publication() <<
 			   "; score = " << FLT(queryMatch.score()));
 		}
 		else if (queryMatch.matchType() == QueryMatchType::Venue) {
-			ii("Found VENUE match: " << queryMatch.venue() <<
+			vv("Found VENUE match: " << queryMatch.venue() <<
 			   "; score = " << FLT(queryMatch.score()));
 		}
 		else if (queryMatch.matchType() == QueryMatchType::PublicationVenue) {
-			ii("Found PUB+VENUE match: " <<
+			vv("Found PUB+VENUE match: " <<
 			   queryMatch.publication() << " => " << queryMatch.venue() <<
 			   "; score = " << FLT(queryMatch.score()));
 		}
@@ -165,7 +165,7 @@ QVector<QueryMatch> GuiMainWindow::doSearchReal(const QString &queryString)
 
 	PROF_FUNC_END
 
-	return matches;
+	return outcome;
 }
 
 void GuiMainWindow::setQueryStatus(QueryStatus status)
@@ -189,42 +189,17 @@ void GuiMainWindow::searchStarted()
 
 void GuiMainWindow::searchFinished()
 {
-	const QVector<QueryMatch> &matches = mQueryWatcher.result();
+	const QueryOutcome &outcome = mQueryWatcher.result();
 
-	ii("Search done; # results = " << matches.size());
+	ii("Search done; # results = " << outcome.sortedQueryMatches.size());
+	ii("Search done; # raw results = " << outcome.indexMatchesBySerial.size());
 
-	PROF_BEGIN(matchesToHash)
-	for (const QueryMatch &match : matches) {
-		// Push the index matches to the hash for fast retrieval for specific element
-		if (match.matchType() == QueryMatchType::Publication ||
-			match.matchType() == QueryMatchType::PublicationVenue) {
-			for (const IndexMatch & indexMatch : match.publication().matches()) {
-				auto it = mMatchesHash.find(indexMatch.elementSerial);
-				if (it == mMatchesHash.end()) {
-					mMatchesHash.insert(indexMatch.elementSerial, {indexMatch});
-				} else {
-					it.value().append(indexMatch);
-				}
-			}
-		}
-		if (match.matchType() == QueryMatchType::Venue ||
-			match.matchType() == QueryMatchType::PublicationVenue) {
-			for (const IndexMatch & indexMatch : match.venue().matches()) {
-				auto it = mMatchesHash.find(indexMatch.elementSerial);
-				if (it == mMatchesHash.end()) {
-					mMatchesHash.insert(indexMatch.elementSerial, {indexMatch});
-				} else {
-					it.value().append(indexMatch);
-				}
-			}
-		}
-	}
-	PROF_END(matchesToHash)
 #if PROFILER
 	prof_print();
 #endif
 
-	mMatches.addMatches(matches);
+	mMatches.addMatches(outcome.sortedQueryMatches);
+	mMatchesHash = outcome.indexMatchesBySerial;
 
 	emit matchesCountChanged();
 	setQueryStatus(QueryStatus::Done);

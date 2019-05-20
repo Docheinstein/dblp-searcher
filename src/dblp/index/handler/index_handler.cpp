@@ -699,7 +699,7 @@ void IndexHandler::loadIdentifiers()
 
 	vv("Loading identifiers file index");
 
-	emit keysLoadStarted();
+	emit identifiersLoadStarted();
 
 	const qint64 identifiersFileSize = mIdentifiersStream.fileSize();
 
@@ -708,14 +708,14 @@ void IndexHandler::loadIdentifiers()
 		mIdentifiers.append({key});
 
 		double progress = DOUBLE(mIdentifiersStream.filePosition()) / identifiersFileSize;
-		vv1("Keys file load progress: " << progress);
-		emit keysLoadProgress(progress);
+		vv1("Identifiers file load progress: " << progress);
+		emit identifiersLoadProgress(progress);
 	}
 
 	ii("Finished loading of identifiers file (" <<
 	   Util::File::humanSize(mIdentifiersStream.file) + ")");
 
-	emit keysLoadEnded();
+	emit identifiersLoadEnded();
 }
 
 

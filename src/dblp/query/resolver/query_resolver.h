@@ -9,11 +9,17 @@
 #include "dblp/query/match/query_match.h"
 
 
+struct QueryOutcome {
+	QVector<QueryMatch> sortedQueryMatches;
+	QHash<elem_serial, QVector<IndexMatch>> indexMatchesBySerial;
+};
+
 class QueryResolver : protected Loggable {
 public:
+	QueryResolver();
 	QueryResolver(IRModel *irmodel);
 
-	QVector<QueryMatch> resolveQuery(const Query &query);
+	QueryOutcome resolveQuery(const Query &query);
 
 	IRModel *irModel();
 
@@ -22,5 +28,6 @@ protected:
 
 	IRModel *mIrModel;
 };
+Q_DECLARE_METATYPE(QueryResolver);
 
 #endif // QUERY_RESOLVER_H

@@ -7,6 +7,7 @@
 #include <QVector>
 #include <QHash>
 #include <QFutureWatcher>
+#include <dblp/query/resolver/query_resolver.h>
 #include "dblp/query/match/query_match.h"
 #include "gui/base/component/gui_component.h"
 #include "gui/models/query_matches/gui_query_matches.h"
@@ -78,12 +79,12 @@ signals:
 private:
 	static Logger L;
 
-	QVector<QueryMatch> doSearchReal(const QString &queryString);
+	QueryOutcome doSearchReal(const QString &queryString);
 	void setQueryStatus(QueryStatus status);
 	void setQueryTime(int ms);
 
 	QueryResolver *mResolver;
-	QFutureWatcher<QVector<QueryMatch>> mQueryWatcher;
+	QFutureWatcher<QueryOutcome> mQueryWatcher;
 
 	QueryStatus mQueryStatus = QueryStatus::None;
 	int mQueryTime = 0;

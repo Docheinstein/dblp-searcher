@@ -12,7 +12,7 @@
 //#include "gui/ui/window/main/main_window.h"
 #include "gui/engine/gui_engine.h"
 #include "commons/globals/globals.h"
-#include "main/tests.cpp"
+#include "main/tests.h"
 #include "commons/profiler/profiler.h"
 #include "gui/splash/gui_splash_window.h"
 #include "gui/main/gui_main_window.h"
@@ -24,10 +24,11 @@
 #include "dblp/xml/parser/dblp_xml_parser.h"
 #include "commons/log/loggable/loggable.h"
 #include "main/args.h"
+#include "main_gui.h"
 
-#define QML_URI				"DblpSearcher"
-#define QML_VERSION_MAJOR	1
-#define QML_REVISION		0
+//#define QML_URI				"DblpSearcher"
+//#define QML_VERSION_MAJOR	1
+//#define QML_REVISION		0
 
 #define QML_REGISTRAR QML_URI, QML_VERSION_MAJOR, QML_REVISION
 
@@ -69,15 +70,6 @@ SEARCH MODE
 
 Arguments arguments;
 
-[[noreturn]] static void dblpSearcherAbort(const char *message = HELP) {
-	qCritical() << message;
-	exit(-1);
-}
-
-[[noreturn]] static void dblpSearcherAbort(const QString &message) {
-	dblpSearcherAbort(message.toStdString().c_str());
-}
-
 static int startIndexMode() {
 	Q_ASSERT(arguments.mode == DblpSearcherMode::Index);
 
@@ -88,147 +80,166 @@ static int startIndexMode() {
 	return 0;
 }
 
-static int startSearchMode() {
-	Q_ASSERT(arguments.mode == DblpSearcherMode::Search);
+//static int startSearchMode() {
+//	Q_ASSERT(arguments.mode == DblpSearcherMode::Search);
 
-	// Gui application (must be before everything else)
-	QGuiApplication guiApp(arguments.argc, arguments.argv);
+//	// Gui application (must be before everything else)
+//	QGuiApplication guiApp(arguments.argc, arguments.argv);
 
-	// Global qml engine
-	QQmlEngine *engine = new QQmlEngine;
-	GuiEngine::instance(engine);
+//	// Global qml engine
+//	QQmlEngine *engine = new QQmlEngine;
+//	GuiEngine::instance(engine);
 
-	// Custom types registration
-	// - singletons
-	qmlRegisterSingletonType<GuiSplashWindow>(
-		QML_REGISTRAR, GUI_SPLASH_WINDOW_QML_NAME,
-		&GuiSplashWindow::qmlInstance
-	);
-	qmlRegisterSingletonType<GuiMainWindow>(
-		QML_REGISTRAR, GUI_MAIN_WINDOW_QML_NAME,
-		&GuiMainWindow::qmlInstance
-	);
-	// - instantiable
-	qmlRegisterType<GuiElementDetails>(
-		QML_REGISTRAR, GUI_ELEMENT_DETAILS_QML_NAME
-	);
-	// - enums
-	qmlRegisterUncreatableType<GuiQueryMatchType>(
-		QML_REGISTRAR, GUI_QUERY_MATCH_TYPE_QML_NAME,
-		"Not instantiable (enum)"
-	);
-	qmlRegisterUncreatableType<GuiDblpXmlLineType>(
-		QML_REGISTRAR, GUI_DBLP_XML_LINE_QML_NAME,
-		"Not instantiable (enum)"
-	);
+//	// Custom types registration
+//	// - singletons
+//	qmlRegisterSingletonType<GuiSplashWindow>(
+//		QML_REGISTRAR, GUI_SPLASH_WINDOW_QML_NAME,
+//		&GuiSplashWindow::qmlInstance
+//	);
+//	qmlRegisterSingletonType<GuiMainWindow>(
+//		QML_REGISTRAR, GUI_MAIN_WINDOW_QML_NAME,
+//		&GuiMainWindow::qmlInstance
+//	);
+//	// - instantiable
+//	qmlRegisterType<GuiElementDetails>(
+//		QML_REGISTRAR, GUI_ELEMENT_DETAILS_QML_NAME
+//	);
+//	// - enums
+//	qmlRegisterUncreatableType<GuiQueryMatchType>(
+//		QML_REGISTRAR, GUI_QUERY_MATCH_TYPE_QML_NAME,
+//		"Not instantiable (enum)"
+//	);
+//	qmlRegisterUncreatableType<GuiDblpXmlLineType>(
+//		QML_REGISTRAR, GUI_DBLP_XML_LINE_QML_NAME,
+//		"Not instantiable (enum)"
+//	);
 
-	IndexHandler *indexHandler;
-	IRModelIef *irmodel;
-	QueryResolver *queryResolver;
+//	IndexHandler *indexHandler;
+//	IRModelIef *irmodel;
+//	QueryResolver *queryResolver;
 
-	GuiSplashWindow &guiSplashWindow = GuiSplashWindow::instance();
-	GuiMainWindow &guiMainWindow = GuiMainWindow::instance();
+//	GuiSplashWindow &guiSplashWindow = GuiSplashWindow::instance();
+//	GuiMainWindow &guiMainWindow = GuiMainWindow::instance();
 
-	if (!guiSplashWindow.create())
-		dblpSearcherAbort("Error occurred while creating SplashWindow");
+//	if (!guiSplashWindow.create())
+//		QUIT("Error occurred while creating SplashWindow");
 
-	if (!guiMainWindow.create())
-		dblpSearcherAbort("Error occurred while creating SplashWindow");
+//	if (!guiMainWindow.create())
+//		QUIT("Error occurred while creating SplashWindow");
 
-	guiMainWindow.setShown(false);
-	guiSplashWindow.setShown(true);
+//	guiMainWindow.setShown(false);
+//	guiSplashWindow.setShown(true);
 
-	// Load async
-	QFutureWatcher<void> indexLoadingWatcher;
+//	// Load async
+//	QFutureWatcher<void> indexLoadingWatcher;
 
-	QFuture<void> indexLoadingFuture =
-			QtConcurrent::run([&guiSplashWindow, &guiMainWindow,
-								&indexHandler, &irmodel, &queryResolver]() {
 
-		bool loadPositions = !arguments.dblpXmlFilePath.isEmpty();
+//	QObject::connect(&indexLoadingWatcher,
+//					 &QFutureWatcher<void>::finished,
+//					 [&guiSplashWindow, &guiMainWindow]() {
+//		// Load of everything finished, show main window
+//		_dd(">>> Going to HIDE splash and show main window in thread: " << QThread::currentThreadId());
+//		guiSplashWindow.setShown(false);
+//		guiMainWindow.setShown(true);
+//	});
 
-		auto splashProgressor = [&guiSplashWindow](double progress) {
-			guiSplashWindow.setProgress(progress);
-		};
+////	QObject::connect(&indexLoadingWatcher,
+////					 &QFutureWatcher<void>::progressTextChanged,
+////					 [&guiSplashWindow](const QString &progress) {
+////		_dd(">>> Setting status in thread: " << QThread::currentThreadId());
+////		guiSplashWindow.setStatus(progress);
+////	});
 
-		// INDEX HANDLER
+////	QObject::connect(&indexLoadingWatcher,
+////					 &QFutureWatcher<void>::progressValueChanged,
+////					 [&guiSplashWindow](int progress) {
+////		_dd(">>> Setting status in thread: " << QThread::currentThreadId());
+////		guiSplashWindow.setProgress(DOUBLE(progress) / 100);
+////	});
 
-		indexHandler = new IndexHandler(arguments.indexFolderPath, arguments.baseIndexName,
-										loadPositions);
+//	QFuture<void> indexLoadingFuture =
+//			QtConcurrent::run([&guiSplashWindow, &guiMainWindow,
+//								&indexHandler, &irmodel, &queryResolver]() {
 
-		// Connect to signals for detect progress
+//		bool loadPositions = !arguments.dblpXmlFilePath.isEmpty();
 
-		// Keys
-		QObject::connect(indexHandler, &IndexHandler::keysLoadStarted, [&guiSplashWindow]() {
-			guiSplashWindow.setStatus("Loading index file: keys");
-		});
-		QObject::connect(indexHandler, &IndexHandler::keysLoadProgress, splashProgressor);
+//		auto splashProgressor = [&guiSplashWindow](double progress) {
+//			guiSplashWindow.setProgress(progress);
+//		};
 
-		// Vocabulary
-		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadStarted, [&guiSplashWindow]() {
-			guiSplashWindow.setStatus("Loading index file: vocabulary");
-		});
-		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadProgress, splashProgressor);
+//		// INDEX HANDLER
 
-		// Crossrefs
-		QObject::connect(indexHandler, &IndexHandler::crossrefsLoadStarted, [&guiSplashWindow]() {
-			guiSplashWindow.setStatus("Loading index file: crossrefs");
-		});
-		QObject::connect(indexHandler, &IndexHandler::crossrefsLoadProgress,
-						 splashProgressor);
+//		indexHandler = new IndexHandler(arguments.indexFolderPath, arguments.baseIndexName,
+//										loadPositions);
 
-		if (loadPositions) {
-			// Positions
-			QObject::connect(indexHandler, &IndexHandler::positionsLoadStarted, [&guiSplashWindow]() {
-				guiSplashWindow.setStatus("Loading index file: positions");
-			});
-			QObject::connect(indexHandler, &IndexHandler::positionsLoadProgress,
-							 splashProgressor);
-		}
+//		// Connect to signals for detect progress
 
-		indexHandler->load();
+//		// Keys
+//		QObject::connect(indexHandler, &IndexHandler::identifiersLoadStarted, [&guiSplashWindow]() {
+//			guiSplashWindow.setStatus("Loading index file: keys");
+//		});
+//		QObject::connect(indexHandler, &IndexHandler::identifiersLoadProgress, splashProgressor);
 
-		// IR MODEL
+//		// Vocabulary
+//		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadStarted, [&guiSplashWindow]() {
+//			guiSplashWindow.setStatus("Loading index file: vocabulary");
+//		});
+//		QObject::connect(indexHandler, &IndexHandler::vocabularyLoadProgress, splashProgressor);
 
-		irmodel = new IRModelIef(*indexHandler);
+//		// Crossrefs
+//		QObject::connect(indexHandler, &IndexHandler::crossrefsLoadStarted, [&guiSplashWindow]() {
+//			guiSplashWindow.setStatus("Loading index file: crossrefs");
+//		});
+//		QObject::connect(indexHandler, &IndexHandler::crossrefsLoadProgress,
+//						 splashProgressor);
 
-		QObject::connect(irmodel, &IRModelIef::initStarted, [&guiSplashWindow]() {
-			guiSplashWindow.setStatus("Initializing IR Model");
-		});
-		QObject::connect(irmodel, &IRModelIef::initProgress, splashProgressor);
+//		if (loadPositions) {
+//			// Positions
+//			QObject::connect(indexHandler, &IndexHandler::positionsLoadStarted, [&guiSplashWindow]() {
+//				guiSplashWindow.setStatus("Loading index file: positions");
+//			});
+//			QObject::connect(indexHandler, &IndexHandler::positionsLoadProgress,
+//							 splashProgressor);
+//		}
 
-		irmodel->init();
+//		indexHandler->load();
 
-		// QUERY RESOLVER (gratis)
-		queryResolver = new QueryResolver(irmodel);
+//		// IR MODEL
 
-		// Set the resolver
-		guiMainWindow.setResolver(queryResolver);
-	});
+//		irmodel = new IRModelIef(*indexHandler);
 
-	QObject::connect(&indexLoadingWatcher,
-					 &QFutureWatcher<void>::finished,
-					 [&guiSplashWindow, &guiMainWindow]() {
-		// Load of everything finished, show main window
-		_dd(">>> Going to HIDE splash and show main window");
-		guiSplashWindow.setShown(false);
-		guiMainWindow.setShown(true);
-	});
+//		QObject::connect(irmodel, &IRModelIef::initStarted, [&guiSplashWindow]() {
+//			guiSplashWindow.setStatus("Initializing IR Model");
+//		});
+//		QObject::connect(irmodel, &IRModelIef::initProgress, splashProgressor);
 
-	indexLoadingWatcher.setFuture(indexLoadingFuture);
+//		irmodel->init();
 
-	return guiApp.exec();
-}
+//		// QUERY RESOLVER (gratis)
+//		queryResolver = new QueryResolver(irmodel);
+
+//		// Set the resolver
+//		guiMainWindow.setResolver(queryResolver);
+//	});
+
+//	indexLoadingWatcher.setFuture(indexLoadingFuture);
+
+
+//	_dd(">>> haning on thread: " << QThread::currentThreadId());
+
+//	return guiApp.exec();
+//}
 
 int main(int argc, char *argv[])
 {
 //	map_reduce_tests();
 //	omp_tests();
 //	insert_sort_tests();
+//	thread_tests();
 	PROF_FUNC_BEGIN
 
 	if (argc < 2) {
-		dblpSearcherAbort();
+		QUIT(HELP);
 	}
 	try {
 		// Parse the arguments
@@ -245,7 +256,7 @@ int main(int argc, char *argv[])
 		}
 		else {
 			qWarning() << "Arguments parsing faile; please provide a valid mode.";
-			dblpSearcherAbort();
+			QUIT(HELP);
 		}
 	} catch (const char * e) {
 	  qCritical() << "Exception occured; aborting for the following reason:"
