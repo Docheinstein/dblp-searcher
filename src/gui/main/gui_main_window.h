@@ -77,8 +77,6 @@ signals:
 	void popViewRequired();
 
 private:
-	static Logger L;
-
 	QueryOutcome doSearchReal(const QString &queryString);
 	void setQueryStatus(QueryStatus status);
 	void setQueryTime(int ms);

@@ -3,15 +3,14 @@
 
 #include <QString>
 
-#define STRING_TYPE
 class StringType {
 public:
-	const char * string() const;
-	operator const char *();
+	QString string() const;
+	operator QString() const;
 
 protected:
-	StringType(const char * string);
-	const char * mString;
+	StringType(const QString &string);
+	QString mString;
 };
 
 #endif // STRING_TYPE_H

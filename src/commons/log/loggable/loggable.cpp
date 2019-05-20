@@ -1,6 +1,3 @@
 #include "loggable.h"
 
-Loggable::~Loggable()
-{
-
-}
+Loggable::~Loggable() {}

@@ -1,22 +1,13 @@
 #include "string_type.h"
 
-StringType::StringType(const char *string) : mString(string)
-{
+StringType::StringType(const QString &string) : mString(string) {}
 
-}
-
-const char * StringType::string() const
+QString StringType::string() const
 {
 	return mString;
 }
 
-//StringType::operator QString() const
-//{
-//	return mString;
-//}
-
-StringType::operator const char *()
+StringType::operator QString() const
 {
 	return mString;
 }
-

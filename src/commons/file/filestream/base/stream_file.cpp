@@ -27,12 +27,12 @@ bool StreamFile::close()
 	return true;
 }
 
-qint64 StreamFile::fileSize()
+qint64 StreamFile::fileSize() const
 {
 	return file.size();
 }
 
-qint64 StreamFile::filePosition()
+qint64 StreamFile::filePosition() const
 {
 	return file.pos();
 }

@@ -136,7 +136,7 @@ bool operator <(const Element &e1, const Element &e2) {
 
 	PROF_END(vector)
 
-	prof_print();
+	profPrint();
 
 	exit(-1);
 }

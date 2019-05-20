@@ -7,9 +7,6 @@
 #include <dblp/query/query/models/venue/query_venue_part.h>
 #include "commons/profiler/profiler.h"
 
-namespace QueryConst = Const::Dblp::Query;
-namespace QueryUtil = Util::Dblp::Query;
-
 LOGGING(Query, true)
 
 const QList<QueryBasePart *> Query::parts() const
@@ -360,7 +357,7 @@ QueryBasePart *Query::newQueryPartFromToken(
 		QueryFieldType *field,
 		QueryBasePart *queryPartCreator(QueryElementType *, QueryFieldType *))
 {
-	QString searchPattern = QueryUtil::queryPartSearch(
+	QString searchPattern = queryPartSearch(
 				element->string(),
 				field ? field->string() : "" /* no field */);
 
@@ -394,6 +391,16 @@ QueryBasePart *Query::newQueryPartFromToken(
 	return part;
 }
 
+QString Query::queryPartSearch(const QString &element, const QString &field) {
+	// Returns <publication>:
+	// Or <publication>.<field>:
+	if (field.isEmpty())
+		return element + Const::Dblp::Query::QUERY_PART_SEARCH_END_MARK;
+
+	return element + Const::Dblp::Query::ELEMENT_FIELD_DIVISOR +
+			field + Const::Dblp::Query::QUERY_PART_SEARCH_END_MARK;
+}
+
 Query::~Query()
 {
 	// Dealloc query parts
@@ -416,7 +423,7 @@ Query::operator QString() const
 		i++;
 
 		if (it != mQueryParts.end())
-			 s += "\n";
+			s += "\n";
 	}
 
 	return s;

@@ -21,7 +21,7 @@ void IRModelIef::init()
 	// but may require some time, for this reason the computing is parametrized
 	// at can be done either now or at runtime
 
-#ifdef LAZY_IEF
+#if LAZY_IEF
 	dd("Not computing iefs now since lazy initialization has been required");
 
 	// Emit signals any way

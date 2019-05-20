@@ -1,94 +1,96 @@
 #include "profiler.h"
 #include <algorithm>
-#include <QDebug>
 #include "commons/globals/globals.h"
-#include <iterator>
+#include "commons/log/logger/logger.h"
 
-int prof_current_entity_number = 0;
-prof_entity PROF_ENTITIES[MAX_PROF_ENTITIES];
+static int profCurrentEntityNumber;
+ProfEntity PROF_ENTITIES[MAX_PROF_ENTITIES];
 
-int prof_register_entity(const char *id, const char *prefix)
+int profRegisterEntity(const char *id, const char *prefix)
 {
-	if (prof_current_entity_number >= MAX_PROF_ENTITIES)
-		return prof_current_entity_number;
+	if (profCurrentEntityNumber >= MAX_PROF_ENTITIES)
+		return profCurrentEntityNumber;
 
-	char *real_entity_id;
+	char *realEntityId;
 
 	if (!prefix) {
 		// No prefix
-		real_entity_id = new char[strlen(id) + 1];
-		sprintf(real_entity_id, "%s", id);
+		realEntityId = new char[strlen(id) + 1];
+		sprintf(realEntityId, "%s", id);
 	}
 	else {
-		real_entity_id = new char[strlen(prefix) + strlen(id) + 1];
-		sprintf(real_entity_id, "%s%s", prefix, id);
+		// With prefix
+		realEntityId = new char[strlen(prefix) + strlen(id) + 1];
+		sprintf(realEntityId, "%s%s", prefix, id);
 	}
 
-	int entity_number = prof_current_entity_number;
-	PROF_ENTITIES[entity_number].id = real_entity_id;
-	PROF_ENTITIES[entity_number].time = 0;
-	prof_current_entity_number++;
-	return entity_number;
+	int entityNumber = profCurrentEntityNumber;
+
+	PROF_ENTITIES[entityNumber].id = realEntityId;
+	PROF_ENTITIES[entityNumber].time = 0;
+
+	profCurrentEntityNumber++;
+
+	return entityNumber;
 }
 
-
-void prof_print_entities(prof_entity *entities)
+void profPrintEntities(ProfEntity *entities)
 {
 
 	// Just for formatting purpose, find the longest function name
-	int longest_entity_name = 0;
-	for (int i = 0; i < prof_current_entity_number; i++) {
-		int entity_name_length = INT(strlen(entities[i].id));
-		if (entity_name_length > longest_entity_name)
-			longest_entity_name = entity_name_length;
+	int longestEntityName = 0;
+	for (int i = 0; i < profCurrentEntityNumber; i++) {
+		int entityNameLength = INT(strlen(entities[i].id));
+		if (entityNameLength > longestEntityName)
+			longestEntityName = entityNameLength;
 
 	}
-	qInfo() << "============ PROFILER ============";
 
-	for (int i = 0; i < prof_current_entity_number; i++) {
-		const prof_entity &fun = entities[i];
+	_ii_("============ PROFILER ============");
 
-		char *padded_entity_name = new char[longest_entity_name + 1];
-		sprintf(padded_entity_name, "%-*s", longest_entity_name, fun.id);
+	for (int i = 0; i < profCurrentEntityNumber; i++) {
+		const ProfEntity &fun = entities[i];
+
+		char *paddedEntityName = new char[longestEntityName + 1];
+		sprintf(paddedEntityName, "%-*s", longestEntityName, fun.id);
 
 		QString timeStr = fun.time > 0 ? (DEC(fun.time / 1000000) + "ms") : "...";
-		qInfo().noquote() << padded_entity_name << "\t|\t" << timeStr;
+		_ii_(paddedEntityName << "\t|\t" << timeStr);
 
-		delete[] padded_entity_name;
+		delete[] paddedEntityName;
 	}
 
-	qInfo() << "==================================";
+	_ii_("==================================");
 }
 
-void prof_print()
+void profPrint()
 {
-	prof_print_entities(PROF_ENTITIES);
+	profPrintEntities(PROF_ENTITIES);
 }
 
-void prof_print_sorted()
+void profPrintSorted()
 {
 
-	prof_entity sorted_prof_entities[MAX_PROF_ENTITIES];
+	ProfEntity sortedProfEntities[MAX_PROF_ENTITIES];
 
-	for (int i = 0; i < prof_current_entity_number; i++) {
-		sorted_prof_entities[i] = PROF_ENTITIES[i];
+	for (int i = 0; i < profCurrentEntityNumber; i++) {
+		sortedProfEntities[i] = PROF_ENTITIES[i];
 	}
 
-	std::sort(sorted_prof_entities,
-			  sorted_prof_entities + prof_current_entity_number,
-			  [](const prof_entity &pe1, const prof_entity &pe2) -> bool {
+	std::sort(sortedProfEntities,
+			  sortedProfEntities + profCurrentEntityNumber,
+			  [](const ProfEntity &pe1, const ProfEntity &pe2) -> bool {
 		return pe1.time > pe2.time;
 	});
 
-	prof_print_entities(sorted_prof_entities);
-
+	profPrintEntities(sortedProfEntities);
 }
 
-void prof_reset()
+void profReset()
 {
-	qInfo().nospace() << "PROFILER: reset (" << prof_current_entity_number << ")";
+	_ii_("PROFILER: reset (" << profCurrentEntityNumber << ")");
 
-	for (int i = 0; i < prof_current_entity_number; i++) {
+	for (int i = 0; i < profCurrentEntityNumber; i++) {
 		PROF_ENTITIES[i].time = 0;
 	}
 }

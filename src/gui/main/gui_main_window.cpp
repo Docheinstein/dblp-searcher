@@ -93,12 +93,12 @@ void GuiMainWindow::doSearch(const QString &query)
 	// Easter egg for profiling
 
 	if (query == QLatin1String("r")) {
-		prof_reset();
+		profReset();
 		return;
 	}
 
 	if (query == QLatin1String("p")) {
-		prof_print();
+		profPrint();
 		return;
 	}
 
@@ -195,7 +195,7 @@ void GuiMainWindow::searchFinished()
 	ii("Search done; # raw results = " << outcome.indexMatchesBySerial.size());
 
 #if PROFILER
-	prof_print();
+	profPrint();
 #endif
 
 	mMatches.addMatches(outcome.sortedQueryMatches);

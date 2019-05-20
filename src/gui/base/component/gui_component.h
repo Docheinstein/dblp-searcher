@@ -23,8 +23,6 @@ public:
 protected:
 	LOGGING_OVERRIDE
 
-	static Logger L;
-
 	virtual QString qmlName() = 0;
 	void createComponent();
 

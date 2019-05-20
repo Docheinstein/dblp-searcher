@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
 	PROF_FUNC_END
 
 #if PROFILER
-	prof_print();
+	profPrint();
 #endif
 
 }

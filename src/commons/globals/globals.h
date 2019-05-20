@@ -6,7 +6,8 @@
 
 // Global helpers
 
-#define QUIT(msg) qFatal("%s\n%s\n%s", "===== ABORTED =====", msg, "===================");
+#define QUIT(msg) \
+	qFatal("%s\n%s\n%s", "===== ABORTED =====", msg, "===================");
 
 // Handly cast
 
@@ -42,23 +43,11 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
+// Misc
 
-// Handly enum macros
-
-#define ENUM_STRING(...) \
-	enum { \
-		__VA_ARGS__ \
-	} type;
-
-#define ENUM_STRING_SWITCH_BEGIN switch (type) {
-#define ENUM_STRING_SWITCH_END }
-
-#define ENUM_STRING_CASE(case_name, case_str) \
-	case case_name: { \
-		return #case_str; \
-	}
-
-#define ENUM_AUTO_STRING_CASE(case_name) ENUM_STRING_CASE(case_name, #case_name)
+#define __FILENAME__ (__builtin_strrchr(__FILE__, '/') ? \
+	__builtin_strrchr(__FILE__, '/') + 1 :  \
+	__FILE__)
 
 // Asserts
 
@@ -117,10 +106,5 @@
 		QString(what7) + QString(what8) \
 	).toStdString().c_str())
 
-// Misc
-
-#define __FILENAME__ (__builtin_strrchr(__FILE__, '/') ? \
-	__builtin_strrchr(__FILE__, '/') + 1 :  \
-	__FILE__)
 
 #endif // GLOBALS_H

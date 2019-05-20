@@ -427,7 +427,7 @@ void Indexer::addTermsOfFields(void (*indexTermPostAdder)(IndexTerm &, const Ind
 {
 	int fieldsCount = fieldsContent.size();
 
-	ASSERT(UINT32(fieldsCount) < PostingListConf::FIELD_NUM_THRESHOLD, "indexing",
+	ASSERT(UINT32(fieldsCount) < Config::Index::PostingList::FIELD_NUM_THRESHOLD, "indexing",
 		   "Found an element with more fields than the index's allowed number");
 
 	for (int i = 0; i < fieldsCount; i++) {
@@ -444,7 +444,7 @@ void Indexer::addTermsOfField(void (*indexTermPostAdder)(IndexTerm &, const Inde
 	QStringList terms = fieldContent.split(" ", QString::SplitBehavior::SkipEmptyParts);
 
 	int termsCount = terms.size();
-	ASSERT(UINT32(termsCount) < PostingListConf::IN_FIELD_POS_THRESHOLD,
+	ASSERT(UINT32(termsCount) < Config::Index::PostingList::IN_FIELD_POS_THRESHOLD,
 			 "indexing", "Found a field with more terms than the index's allowed number");
 
 	for (int i = 0; i < termsCount; i++) {
@@ -678,7 +678,7 @@ void Indexer::writeTermFieldPostsCount(quint32 count)
 	// quint32 will have the first bit at 1, which should be removed for take the
 	// right number)
 
-	if (count < VocabularyConf::REF_SHRINKED_THRESHOLD) {
+	if (count < Config::Index::Vocabulary::REF_SHRINKED_THRESHOLD) {
 		// 16 bit
 
 		if (count > 0)
@@ -687,7 +687,7 @@ void Indexer::writeTermFieldPostsCount(quint32 count)
 		mVocabularyStream.stream << UINT16(count);
 	}
 	else {
-		ASSERT(mCurrentSerial < VocabularyConf::REF_EXTENDED_THRESHOLD,
+		ASSERT(mCurrentSerial < Config::Index::Vocabulary::REF_EXTENDED_THRESHOLD,
 				 "indexing", "There are more posts than the index's allowed number");
 		// 32 bit, with leftmost bit = 1
 
@@ -695,7 +695,7 @@ void Indexer::writeTermFieldPostsCount(quint32 count)
 			dd4("Writing posts count: " << count);
 
 		mVocabularyStream.stream <<
-			(count | VocabularyConf::REF_EXTENDED_FLAG);
+			(count | Config::Index::Vocabulary::REF_EXTENDED_FLAG);
 	}
 }
 
@@ -718,18 +718,18 @@ void Indexer::writePost(const IndexPost &post)
 	dd4("Writing post: " << post);
 
 	// Asserts
-	ASSERT(post.elementSerial < PostingListConf::ELEMENT_SERIAL_THRESHOLD,
+	ASSERT(post.elementSerial < Config::Index::PostingList::ELEMENT_SERIAL_THRESHOLD,
 			 "indexing", "There are more elements than the index's allowed number");
 
-	ASSERT(post.fieldNumber < PostingListConf::FIELD_NUM_THRESHOLD,
+	ASSERT(post.fieldNumber < Config::Index::PostingList::FIELD_NUM_THRESHOLD,
 			 "indexing", "There are more equals fields per element than the index's allowed number");
 
 	// Implicit
-//	Q_ASSERT_X(post.inFieldTermPosition < PostingListConf::IN_FIELD_POS_THRESHOLD,
+//	Q_ASSERT_X(post.inFieldTermPosition < Config::Index::PostingList::IN_FIELD_POS_THRESHOLD,
 //			 "indexing", "There are more terms per field than the index's allowed number");
 
 	quint32 P32 =  UINT32(
-			(post.elementSerial << PostingListConf::FIELD_NUM_BITS) |
+			(post.elementSerial << Config::Index::PostingList::FIELD_NUM_BITS) |
 			post.fieldNumber
 	);
 

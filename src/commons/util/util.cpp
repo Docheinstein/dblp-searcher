@@ -15,30 +15,6 @@
 
 namespace Util {
 	namespace Dblp {
-		namespace Xml {
-//			bool isElement(const QString &elementName) {
-//				return	elementName == Const::Dblp::Xml::Elements::ARTICLE ||
-//						elementName == DblpXmlElementType::Incollection ||
-//						elementName == DblpXmlElementType::Book ||
-//						elementName == DblpXmlElementType::Inproceedings ||
-//						elementName == DblpXmlElementType::Proceedings ||
-//						elementName == DblpXmlElementType::Phdthesis ||
-//						elementName == DblpXmlElementType::Masterthesis;
-//			}
-		}
-
-		namespace Query {
-			QString queryPartSearch(const QString &element, const QString &field) {
-				// Returns <publication>:
-				// Or <publication>.<field>:
-				if (field.isEmpty())
-					return element + Const::Dblp::Query::QUERY_PART_SEARCH_END_MARK;
-
-				return element + Const::Dblp::Query::ELEMENT_FIELD_DIVISOR +
-						field + Const::Dblp::Query::QUERY_PART_SEARCH_END_MARK;
-			}
-		}
-
 		namespace Index {
 			QString indexFilePath(const QString &indexPath,
 							 const QString &indexBaseName,

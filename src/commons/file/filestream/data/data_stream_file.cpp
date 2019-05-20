@@ -26,13 +26,3 @@ bool DataStreamFile::openRead(const QString &path)
 	stream.setDevice(&file);
 	return true;
 }
-
-void DataStreamFileMutex::lock()
-{
-	mutex.lock();
-}
-
-void DataStreamFileMutex::unlock()
-{
-	mutex.unlock();
-}

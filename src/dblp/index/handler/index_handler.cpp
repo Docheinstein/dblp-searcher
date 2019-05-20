@@ -640,7 +640,7 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 
 		// Figure out the position of the posts in the posting list (of the first one)
 		qint64 postPos = ref.postingListPosition +
-				(refPost->offset + i) * PostingListConf::POST_BYTES;
+				(refPost->offset + i) * Config::Index::PostingList::POST_BYTES;
 
 #if DEBUG
 		const QString &term = vocabularyEntry.key();
@@ -655,8 +655,8 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 		mPostingsStream.stream >> P32 >> P8;
 
 		// Figure out element id, field nubmer and field pos
-		quint32 elementSerial = P32 >> PostingListConf::FIELD_NUM_BITS;
-		field_num fieldNumber = P32 & (~0u >> (32 - PostingListConf::FIELD_NUM_BITS));
+		quint32 elementSerial = P32 >> Config::Index::PostingList::FIELD_NUM_BITS;
+		field_num fieldNumber = P32 & (~0u >> (32 - Config::Index::PostingList::FIELD_NUM_BITS));
 		term_pos inFieldPos = P8;
 
 		dd2("Element serial		= " << elementSerial);
@@ -739,7 +739,7 @@ void IndexHandler::loadVocabulary()
 
 		dd("Readed posts count from stream: " << shrinkedCount);
 
-		if ((shrinkedCount & VocabularyConf::REF_SHRINKED_FLAG) == 0) {
+		if ((shrinkedCount & Config::Index::Vocabulary::REF_SHRINKED_FLAG) == 0) {
 			// The post meta refers to no more than 2^15 posts per field
 			post.count = shrinkedCount;
 		} else {
@@ -755,11 +755,11 @@ void IndexHandler::loadVocabulary()
 				// but actually doesn't count for the int value
 				// Not removing it leads to have always a surplus of 2^31
 				(
-				UINT32(shrinkedCount) << (VocabularyConf::REF_SHRINKED_BITS + 1u)
+				UINT32(shrinkedCount) << (Config::Index::Vocabulary::REF_SHRINKED_BITS + 1u)
 					|
 				UINT32(countExtension)
 				)
-					& ~VocabularyConf::REF_EXTENDED_FLAG;
+					& ~Config::Index::Vocabulary::REF_EXTENDED_FLAG;
 		}
 
 		post.offset = offset;

@@ -8,16 +8,9 @@
 
 namespace Util {
 	namespace Dblp {
-		namespace Xml {
-//			bool isElement(const QString &elementName);
-		}
-
-		namespace Query {
-			QString queryPartSearch(const QString &element, const QString &field = "");
-		}
-
 		namespace Index {
-			QString indexFilePath(const QString &indexPath, const QString &indexBaseName,
+			QString indexFilePath(const QString &indexPath,
+								  const QString &indexBaseName,
 								const QString &extension);
 		}
 	}
@@ -35,7 +28,6 @@ namespace Util {
 		QString entityToString(const QString &entity);
 		QString entityNameToString(const QString &entityName);
 	}
-
 
 	namespace String {
 		QString sanitizeTerm(const QString &term);

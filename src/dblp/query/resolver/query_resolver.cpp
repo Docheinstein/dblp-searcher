@@ -110,7 +110,7 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 			// not thread safe to compute in omp for, and use a lock would be an overkill
 			// Those will be necessary for compute the elements score
 
-#ifdef LAZY_IEF
+#if LAZY_IEF
 			QStringList tokens = macroToken.split(
 						Const::Dblp::Query::TOKENS_SPLITTER,
 						QString::SplitBehavior::SkipEmptyParts);

@@ -11,8 +11,8 @@ public:
 	virtual bool openRead(const QString &path);
 	virtual bool close();
 
-	qint64 fileSize();
-	qint64 filePosition();
+	qint64 fileSize() const;
+	qint64 filePosition() const;
 
 	QFile file;
 };

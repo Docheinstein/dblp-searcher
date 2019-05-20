@@ -47,6 +47,8 @@ private:
 			QueryFieldType * field,
 			QueryBasePart *(queryPartCreator)(QueryElementType *el, QueryFieldType *fl));
 
+	static QString queryPartSearch(const QString &element, const QString &field);
+
 	void addPart(QueryBasePart * queryPart);
 
 	// The query is "only" its parts

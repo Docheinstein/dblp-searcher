@@ -3,10 +3,19 @@
 
 #include <QElapsedTimer>
 
+// Maximum number of functions that could be profiled
+#define MAX_PROF_ENTITIES 200
+
+typedef struct ProfEntity {
+	const char *id;
+	quint64 time;
+} ProfEntity;
+
+extern ProfEntity PROF_ENTITIES[MAX_PROF_ENTITIES];
+
+
 // Set to 0 or 1 to enable/disable profiler
 #define PROFILER 1
-
-#define MAX_PROF_ENTITIES 200
 
 // Core macros
 
@@ -15,7 +24,7 @@
 // PROF_BEGIN
 
 #define PROF_BEGIN_REAL(var, id, prefix) \
-	static int PROF_ENTITY_##var = prof_register_entity(id, prefix); \
+	static int PROF_ENTITY_##var = profRegisterEntity(id, prefix); \
 	QElapsedTimer profTimer_##var; \
 	profTimer_##var.start();
 
@@ -28,7 +37,7 @@
 #else
 #define PROF_BEGIN_REAL(_1, _2)
 #define PROF_END(_1)
-#endif
+#endif // PROFILER
 
 // Other handly macros
 
@@ -60,19 +69,10 @@
 
 #define PROF_FUNC_END PROF_END(__func__);
 
-
-typedef struct prof_entity {
-	const char *id;
-	quint64 time;
-} prof_entity;
-
-extern int prof_current_entity_number;
-extern prof_entity PROF_ENTITIES[MAX_PROF_ENTITIES];
-
-extern int prof_register_entity(const char *func, const char *prefix = nullptr);
-extern void prof_print_entities(prof_entity *entities);
-extern void prof_print_sorted();
-extern void prof_print();
-extern void prof_reset();
+extern int	profRegisterEntity(const char *func, const char *prefix = nullptr);
+extern void profPrintEntities(ProfEntity *entities);
+extern void profPrintSorted();
+extern void profPrint();
+extern void profReset();
 
 #endif // PROFILER_H

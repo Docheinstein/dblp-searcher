@@ -4,6 +4,7 @@
 #include <QString>
 
 namespace Const {
+
 	namespace Dblp {
 
 		namespace Query {
@@ -12,31 +13,27 @@ namespace Const {
 			const QString ELEMENT_FIELD_DIVISOR = ".";
 			const QString QUERY_PART_SEARCH_END_MARK = ":";
 
-//			namespace Elements {
-//				// Publication elements
-//				const QString PUBLICATION = "publication";
-//				const QString ARTICLE = "article";
-//				const QString INCOLLECTION = "incollection";
-//				const QString INPROCEEDINGS = "inproc";
-//				const QString PHDTHESIS = "phThesis";
-//				const QString MASTERTHESIS = "masterThesis";
+			namespace Elements {
+				const QString PUBLICATION = "publication";
+				const QString ARTICLE = "article";
+				const QString INCOLLECTION = "incollection";
+				const QString INPROCEEDINGS = "inproc";
+				const QString PHDTHESIS = "phThesis";
+				const QString MASTERTHESIS = "masterThesis";
 
-//				// Venue elements
-//				const QString VENUE = "venue";
-//			}
+				const QString VENUE = "venue";
+			}
 
-//			namespace Fields {
-//				// Fields
-//				const QString AUTHOR = "author";
-//				const QString TITLE = "title";
-//				const QString YEAR = "year";
-
-//				const QString PUBLISHER = "publisher";
-//			}
+			namespace Fields {
+				const QString AUTHOR = "author";
+				const QString TITLE = "title";
+				const QString YEAR = "year";
+				const QString PUBLISHER = "publisher";
+			}
 		}
 
 		namespace Xml {
-			const QString DBLP = "dblp";
+			const QString DBLP = "dblp"; // root element
 
 			namespace Elements {
 				const QString ARTICLE = "article";
@@ -54,14 +51,12 @@ namespace Const {
 				const QString YEAR = "year";
 				const QString JOURNAL = "journal";
 				const QString PUBLISHER = "publisher";
-//				const QString BOOKTITLE = "booktitle";
 				const QString CROSSREF = "crossref";
 			}
 
 			namespace Attributes {
 				const QString KEY = "key";
 			}
-
 		}
 	}
 }
