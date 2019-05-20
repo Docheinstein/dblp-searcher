@@ -1,4 +1,5 @@
 #include "args.h"
+
 #include "commons/log/loggable/loggable.h"
 #include "commons/globals/globals.h"
 
@@ -23,8 +24,7 @@ void parseArguments(int argc, char *argv[]) {
 		auto readNextParam = [argc, argv, &i](QString &str, const QString &failReason) {
 			i++;
 			if (i >= argc) {
-				qCritical() << failReason;
-				exit(-1);
+				QUIT(failReason.toStdString().c_str());
 			}
 			str = argv[i];
 		};

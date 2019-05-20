@@ -3,7 +3,6 @@
 #include "commons/const/const.h"
 #include "commons/util/util.h"
 #include "commons/profiler/profiler.h"
-#include "dblp/xml/models/types/dblp_xml_types.h"
 #include "dblp/xml/handler/dblp_xml_parse_handler.h"
 
 LOGGING(DblpXmlParser, true)

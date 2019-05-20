@@ -1,7 +1,10 @@
 #include "main_gui.h"
+
 #include <QGuiApplication>
 #include <QQmlEngine>
-#include "args.h"
+#include <QThread>
+
+#include "main/args.h"
 #include "dblp/irmodel/impl/ief/ir_model_ief.h"
 #include "dblp/query/resolver/query_resolver.h"
 #include "gui/engine/gui_engine.h"
@@ -72,8 +75,6 @@ int startSearchMode() {
 	IndexLoadingWorker *worker = new IndexLoadingWorker();
 	worker->moveToThread(workerThread);
 
-
-//	IndexLoadingThread loadingThread;
 	IndexLoadingThreadHandler loadingThreadHandler(guiMainWindow, guiSplashWindow);
 
 	QObject::connect(workerThread, &QThread::started,
@@ -88,15 +89,9 @@ int startSearchMode() {
 					 &loadingThreadHandler, &IndexLoadingThreadHandler::onProgressChanged,
 					 Qt::QueuedConnection);
 
-//	QObject::connect(&workerThread, &IndexLoadingThread::progressChanged,
-//					 &loadingThreadHandler, &IndexLoadingThreadHandler::onProgressChanged,
-//					 Qt::QueuedConnection);
-
 	QObject::connect(worker, &IndexLoadingWorker::loadFinished,
 					 &loadingThreadHandler, &IndexLoadingThreadHandler::onLoadingFinished,
 					 Qt::QueuedConnection);
-
-//	loadingThread.start();
 
 	workerThread->start();
 
@@ -168,10 +163,7 @@ void IndexLoadingWorker::loadIndex()
 
 IndexLoadingThreadHandler::IndexLoadingThreadHandler(
 		GuiMainWindow &main, GuiSplashWindow &splash)
-	:  mMain(main), mSplash(splash)
-{
-
-}
+	:  mMain(main), mSplash(splash) {}
 
 void IndexLoadingThreadHandler::onStatusChanged(QString status)
 {

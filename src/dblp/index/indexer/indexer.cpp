@@ -7,7 +7,6 @@
 #include "commons/util/util.h"
 #include "commons/globals/globals.h"
 #include "commons/profiler/profiler.h"
-#include "dblp/xml/models/types/dblp_xml_types.h"
 
 LOGGING(Indexer, true)
 

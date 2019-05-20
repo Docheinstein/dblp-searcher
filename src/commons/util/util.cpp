@@ -1,17 +1,16 @@
 #include "util.h"
-#include "commons/const/const.h"
-#include "commons/globals/globals.h"
-#include "dblp/xml/models/types/dblp_xml_types.h"
 
 #include <QTextDocument>
 #include <QTime>
+
+#include "commons/const/const.h"
+#include "commons/globals/globals.h"
 
 #define KB 1024
 #define MB 1048576l
 
 #define MS_IN_SEC 1000
 #define MS_IN_MIN 60000
-
 
 namespace Util {
 	namespace Dblp {
