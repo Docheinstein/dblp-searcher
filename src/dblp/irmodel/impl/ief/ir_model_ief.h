@@ -2,11 +2,11 @@
 #define IR_MODEL_IEF_H
 
 #include <QObject>
+
+#include "commons/log/loggable/loggable.h"
 #include "dblp/irmodel/base/ir_model.h"
 #include <dblp/index/models/reference/index_term_ref.h>
 #include "dblp/index/handler/index_handler.h"
-#include <commons/log/loggable/loggable.h>
-#include <QMutex>
 
 class IRModelIef : public QObject, public IRModel, protected Loggable {
 	Q_OBJECT
@@ -17,7 +17,7 @@ public:
 
 	void init();
 
-	float termScore(const QString &term) override; // thread-safe
+	float termScore(const QString &term) override;
 	float bonusFactorPerPhraseTerm() const override;
 	float bonusFactorForPublicationMatch() const override;
 	float bonusFactorForVenueMatch() const override;
@@ -38,7 +38,7 @@ private:
 	float computeIef(const QString &term);
 	float computeIef(const QMap<QString, IndexTermRef>::const_iterator &vocabularyEntry);
 
-	void printIefs();
+	void printIefs() const;
 
 	QHash<QString, float> mIefs;	// := inverse element frequency
 									// log10(|E|/ef_t)

@@ -1,11 +1,8 @@
 #include "ir_model.h"
-#include "dblp/index/handler/index_handler.h"
 
 IRModel::~IRModel() {}
 
-IRModel::IRModel(IndexHandler &indexHandler) : mIndex(indexHandler)
-{
-}
+IRModel::IRModel(IndexHandler &indexHandler) : mIndex(indexHandler) {}
 
 float IRModel::bonusFactorPerPhraseTerm() const
 {

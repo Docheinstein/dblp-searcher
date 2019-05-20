@@ -1,7 +1,9 @@
-#include "math.h"
-#include "commons/globals/globals.h"
 #include "ir_model_ief.h"
-#include <dblp/index/models/reference/index_term_ref.h>
+
+#include <math.h>
+
+#include "commons/globals/globals.h"
+#include "dblp/index/models/reference/index_term_ref.h"
 #include "dblp/index/handler/index_handler.h"
 
 static const float TERM_NOT_FOUND = -1;
@@ -9,17 +11,13 @@ static const float TERM_NOT_FOUND = -1;
 LOGGING(IRModelIef, true)
 
 IRModelIef::~IRModelIef() {}
-
-IRModelIef::IRModelIef(IndexHandler &indexHandler) : IRModel(indexHandler)
-{
-
-}
+IRModelIef::IRModelIef(IndexHandler &indexHandler) : IRModel(indexHandler) {}
 
 void IRModelIef::init()
 {
 	// Calling computeIefs() now will speed up any further call to termScore()
 	// but may require some time, for this reason the computing is parametrized
-	// at can be done either now or at runtime
+	// and can be done either now or at runtime
 
 #if LAZY_IEF
 	dd("Not computing iefs now since lazy initialization has been required");
@@ -60,6 +58,7 @@ float IRModelIef::termScore(const QString &term)
 
 float IRModelIef::bonusFactorPerPhraseTerm() const
 {
+	// Seems reasonable
 	return 1.15f;
 }
 
@@ -70,11 +69,13 @@ float IRModelIef::bonusFactorForPublicationMatch() const
 
 float IRModelIef::bonusFactorForVenueMatch() const
 {
+	// Consider the venues more important?
 	return 1.1f;
 }
 
 float IRModelIef::bonusFactorForPublicationVenueMatch() const
 {
+	// For sure a pub+venue is more important..
 	return 1.3f;
 }
 
@@ -86,7 +87,7 @@ void IRModelIef::computeIefs()
 
 	// Compute the inverse element frequency which is defined as
 	// ief_t = log10( |E| / ef_t)
-	// Whereas ef_t is the element frequnecy, thus the numbers of elements
+	// Whereas ef_t is the element frequency, thus the numbers of elements
 	// that contains t (must be < |E|)
 	// E := number of elements ( = |mKeys| )
 
@@ -101,7 +102,7 @@ void IRModelIef::computeIefs()
 	const qint64 vocabularySize = vocabulary.size();
 
 	int i = 0;
-	for (auto it = vocabulary.begin(); it != vocabulary.end(); it++, i++) {
+	for (auto it = vocabulary.cbegin(); it != vocabulary.cend(); it++, i++) {
 		const QString &term = it.key();
 
 		if (term.isEmpty())
@@ -139,15 +140,17 @@ float IRModelIef::computeIef(const QString &term)
 }
 
 
-float IRModelIef::computeIef(const QMap<QString, IndexTermRef>::const_iterator &vocabularyEntry)
+float IRModelIef::computeIef(const QMap<QString,
+							 IndexTermRef>::const_iterator &vocabularyEntry)
 {
 	vv("Computing ief for term: " << vocabularyEntry.key());
 
 	static const double E = mIndex.identifiers().size();
 
+	QSet<elem_serial> elementsWithTerm;
+
 	// We have to invoke findPosts() for each possible field
 
-	QSet<elem_serial> elementsWithTerm;
 
 	for (int f = static_cast<int>(ElementFieldType::_Start);
 		 f <= static_cast<int>(ElementFieldType::_End);
@@ -193,10 +196,11 @@ float IRModelIef::computeIef(const QMap<QString, IndexTermRef>::const_iterator &
 	dd("ef(" << term << ")" << " = " << ef_t);
 	dd("ief(" << term << ")" << " = " << ief_t);
 #endif
+
 	return ief_t;
 }
 
-void IRModelIef::printIefs()
+void IRModelIef::printIefs() const
 {
 #if VERBOSE
 	const int E = mIndex.identifiers().size();
@@ -207,13 +211,15 @@ void IRModelIef::printIefs()
 	// order by key)
 	QMap<float, QString> sortedIefs;
 
-	for (auto it = mIefs.begin(); it != mIefs.end(); it++) {
+	for (auto it = mIefs.cbegin(); it != mIefs.cend(); it++) {
+		// insertMulti since more than a term can have the same score
 		sortedIefs.insertMulti(it.value(), it.key());
 	}
 
-	for (auto it = sortedIefs.begin(); it != sortedIefs.end(); it++) {
+	for (auto it = sortedIefs.cbegin(); it != sortedIefs.cend(); it++) {
 		const float ief = it.key();
-		float ef = static_cast<float>(E / pow(10, ief)); // bonus; recompute ef with the inverse formula
+		// comfort: recompute ef with the inverse formula
+		float ef = static_cast<float>(E / pow(10, ief));
 		Q_UNUSED(ef)
 		dd1("ief(" << it.value() << ") = " << ief << " | ef ~= " << ef);
 	}
