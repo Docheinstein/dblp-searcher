@@ -21,7 +21,7 @@ class IndexHandler : public QObject, protected Loggable
 
 public:
 	IndexHandler(const QString &indexPath, const QString &baseName,
-				 bool loadPositions = false);
+				 bool loadPositions = false /* for XML retrieval */);
 
 	void load();
 
@@ -107,7 +107,6 @@ protected:
 	LOGGING_OVERRIDE
 
 private:
-
 	void init();
 
 	void loadIdentifiers();
@@ -170,10 +169,12 @@ private:
 
 
 	// ====================
-	// LOADING STATE
+	// MISC
 	// ====================
 
-	bool mLoadPositions;
+	// Whether we have to handle position file (e.g. for retrieval of original
+	// elements from XML file)
+	bool mLoadPositionsFeature;
 };
 
 #endif // INDEX_HANDLER_H
