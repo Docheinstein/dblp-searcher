@@ -3,8 +3,10 @@
 
 #include <QFile>
 #include <QXmlStreamReader>
+
 #include "commons/log/loggable/loggable.h"
-#include "dblp/xml/handler/dblp_xml_parse_handler.h"
+
+class DblpXmlParseHandler;
 
 class DblpXmlParser : protected Loggable
 {
@@ -17,18 +19,6 @@ protected:
 	LOGGING_OVERRIDE
 
 private:
-	QFile mInput;
-	qint64 mStartingPosition;
-	qint64 mEndingPosition;
-	DblpXmlParseHandler &mHandler;
-	QXmlStreamReader mReader;
-
-	QString mElementName;
-	QXmlStreamAttributes mElementAttributes;
-	QMap<QString, QVector<QString>> mElementFields;
-
-	int mLastNotifiedPercentage = 0;
-
 	bool handleStartElement();
 	bool handleStartField(const QString &field);
 	bool handleEndElement(bool resetState = true);
@@ -40,6 +30,17 @@ private:
 	bool setParserDeviceBuffer();
 	void resetParserState();
 
+	QFile mInput;
+	qint64 mStartingPosition;
+	qint64 mEndingPosition;
+	DblpXmlParseHandler &mHandler;
+	QXmlStreamReader mReader;
+
+	QString mElementName;
+	QXmlStreamAttributes mElementAttributes;
+	QMap<QString, QVector<QString>> mElementFields;
+
+	int mLastNotifiedPercentage = 0;
 };
 
 #endif // DBLP_XML_PARSER_H

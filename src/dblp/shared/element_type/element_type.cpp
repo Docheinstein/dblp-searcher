@@ -30,10 +30,10 @@ QString elementTypeString(ElementType t)
 		return "Proceedings";
 
 	case ElementType::Publication:
-		return "<unknown>"; // Not usable
+		return "Publication"; // Should not be used
 
 	case ElementType::Venue:
-		return "<unknown>"; // Not usable
+		return "Venue"; // Should not be used
 	}
 
 	return "<unknown>";

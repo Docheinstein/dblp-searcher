@@ -6,6 +6,7 @@
 
 enum class ElementType {
 	// Real
+
 	Article = 1,
 	Journal = Article << 1,
 	Incollection = Journal << 1,
@@ -16,8 +17,10 @@ enum class ElementType {
 	Proceedings = Book << 1,
 
 	// Extra
+
 	Publication = Article | Incollection | Inproceedings |
 				  Phdthesis | Masterthesis,
+
 	Venue = Book | Proceedings | Journal,
 };
 

@@ -4,51 +4,8 @@
 #include <QFlags>
 #include <QString>
 
-// article
-// - author
-// - title
-// - year
-
-// journal
-
-// incollection
-// - author
-// - title
-// - year
-// - booktitle
-
-// inproceedings
-// - author
-// - title
-// - year
-// - booktitle
-
-// phdthesis
-// - author
-// - title
-// - year
-
-// masterthesis
-// - author
-// - title
-// - year
-
-// (journal)
-
-// book
-// - author
-// - title
-// - year
-// - publisher
-
-// proceedings
-// - title
-// - year
-// - publisher
-// - booktitle
-
 enum class ElementFieldType {
-	_Start = 1,
+	_Start = 1, // Handly iterator begin
 
 	// Article
 
@@ -59,6 +16,7 @@ enum class ElementFieldType {
 	Article = ArticleAuthor | ArticleTitle | ArticleYear,
 
 	// Journal (name)
+
 	Journal =  ArticleYear << 1,
 
 	// Incollection
@@ -66,20 +24,18 @@ enum class ElementFieldType {
 	IncollectionAuthor = Journal << 1,
 	IncollectionTitle = IncollectionAuthor << 1,
 	IncollectionYear = IncollectionTitle << 1,
-//	IncollectionBooktitle = IncollectionYear << 1,
 
 	Incollection =	IncollectionAuthor | IncollectionTitle |
-					IncollectionYear, // | IncollectionBooktitle,
+					IncollectionYear,
 
 	// Inproceedings
 
 	InproceedingsAuthor = IncollectionYear << 1,
 	InproceedingsTitle = InproceedingsAuthor << 1,
 	InproceedingsYear = InproceedingsTitle << 1,
-//	InproceedingsBooktitle = InproceedingsYear << 1,
 
 	Inproceedings = InproceedingsAuthor | InproceedingsTitle |
-					InproceedingsYear, //| InproceedingsBooktitle,
+					InproceedingsYear,
 
 	// Phdthesis
 
@@ -111,12 +67,11 @@ enum class ElementFieldType {
 	ProceedingsTitle = BookPublisher << 1,
 	ProceedingsYear = ProceedingsTitle << 1,
 	ProceedingsPublisher = ProceedingsYear << 1,
-//	ProceedingsBooktitle = ProceedingsPublisher << 1,
 
 	Proceedings = ProceedingsTitle | ProceedingsYear |
-				  ProceedingsPublisher, // | ProceedingsBooktitle,
+				  ProceedingsPublisher,
 
-	_End = ProceedingsPublisher,
+	_End = ProceedingsPublisher, // Handly iterator end
 
 	// Extra: element
 
@@ -137,8 +92,6 @@ enum class ElementFieldType {
 	Year = ArticleYear | IncollectionYear | InproceedingsYear |
 			PhdthesisYear | PhdthesisYear | MasterthesisYear | BookYear |
 			ProceedingsYear,
-
-//	Booktitle = IncollectionBooktitle | ProceedingsBooktitle,
 
 	Publisher = BookPublisher | ProceedingsPublisher,
 

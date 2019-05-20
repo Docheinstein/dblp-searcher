@@ -1,14 +1,19 @@
 #include "dblp_xml_parser.h"
-#include "dblp/xml/models/types/dblp_xml_types.h"
+
 #include "commons/const/const.h"
 #include "commons/util/util.h"
 #include "commons/profiler/profiler.h"
-#include <QThread>
+#include "dblp/xml/models/types/dblp_xml_types.h"
+#include "dblp/xml/handler/dblp_xml_parse_handler.h"
 
 LOGGING(DblpXmlParser, true)
 
+// Whether print all the parsed XML (very verbose depending on the .xml size)
 #define DUMP_XML 1
 
+// This is used only for cheat the xml parsed  to use the right encoding
+// for retrieve single XML elements from the file for
+// which we known the position
 static const QString DBLP_XML_START_OF_DOCUMENT =
 R"#(<?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE dblp SYSTEM "dblp.dtd">
@@ -117,15 +122,6 @@ bool DblpXmlParser::handleStartElement()
 		// Read every possible field, so that even for purpose different from
 		// indexing the entire XML element could be figured out again
 
-//		if (
-//		token == DblpXmlFields::AUTHOR ||
-//		token == DblpXmlFields::TITLE ||
-//		token == DblpXmlFields::YEAR ||
-//		token == DblpXmlFields::PUBLISHER ||
-//		token == DblpXmlFields::CROSSREF ||
-//		token == DblpXmlFields::BOOKTITLE ||
-//		token == DblpXmlFields::JOURNAL) {
-
 		continueParsing &= handleStartField(token);
 	}
 
@@ -148,12 +144,16 @@ bool DblpXmlParser::handleStartField(const QString &field)
 
 		switch (mReader.tokenType()) {
 		case QXmlStreamReader::Characters:
+			// Standard case of known characters
 			#if DUMP_XML
 				dd4(mReader.text());
 			#endif
 			fieldContent += mReader.text();
 			break;
 		case QXmlStreamReader::EntityReference:
+			// The QXmlStreamReader notify us about EntityReference for special
+			// charachers (e.g. è ò ì..)
+			// We have to append it to the field content
 			#if DUMP_XML
 				dd4(mReader.name());
 				dd5(Util::Html::entityNameToString(mReader.name().toString()););
@@ -252,8 +252,10 @@ void DblpXmlParser::notifyProgress()
 bool DblpXmlParser::setParserDevice()
 {
 	if (mStartingPosition > 0)
+		// Will use a string as reader's device
 		return setParserDeviceBuffer();
 	else
+		// Will actually use the file as reader's device
 		return setParserDeviceFile();
 }
 
