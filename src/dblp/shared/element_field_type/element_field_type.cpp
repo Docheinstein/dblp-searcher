@@ -20,8 +20,6 @@ QString elementFieldTypeString(ElementFieldType t) {
 		return "IncollectionTitle";
 	case ElementFieldType::IncollectionYear:
 		return "IncollectionYear";
-//	case ElementFieldType::IncollectionBooktitle:
-//		return "IncollectionBooktitle";
 	case ElementFieldType::Incollection:
 		return "Incollection";
 
@@ -31,8 +29,6 @@ QString elementFieldTypeString(ElementFieldType t) {
 		return "InproceedingsTitle";
 	case ElementFieldType::InproceedingsYear:
 		return "InproceedingsYear";
-//	case ElementFieldType::InproceedingsBooktitle:
-//		return "InproceedingsBooktitle";
 	case ElementFieldType::Inproceedings:
 		return "Inproceedings";
 
@@ -71,8 +67,6 @@ QString elementFieldTypeString(ElementFieldType t) {
 		return "ProceedingsYear";
 	case ElementFieldType::ProceedingsPublisher:
 		return "ProceedingsPublisher";
-//	case ElementFieldType::ProceedingsBooktitle:
-//		return "ProceedingsBooktitle";
 	case ElementFieldType::Proceedings:
 		return "Proceedings";
 
@@ -80,9 +74,18 @@ QString elementFieldTypeString(ElementFieldType t) {
 		return "Publication";
 	case ElementFieldType::Venue:
 		return "Venue";
+	case ElementFieldType::Author:
+		return "Author";
+	case ElementFieldType::Title:
+		return "Title";
+	case ElementFieldType::Year:
+		return "Year";
+	case ElementFieldType::Publisher:
+		return "Publisher";
 	case ElementFieldType::All:
 		return "All";
 	}
 
 	return "<unknown>";
+
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.9.0, 2019-05-21T22:48:39. -->
+<!-- Written by QtCreator 4.9.0, 2019-05-21T23:06:10. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -141,7 +141,7 @@
      <valuemap type="QVariantMap" key="ProjectExplorer.BuildStepList.Step.0">
       <value type="bool" key="ProjectExplorer.BuildStep.Enabled">true</value>
       <value type="QString" key="ProjectExplorer.ProcessStep.Arguments"></value>
-      <value type="QString" key="ProjectExplorer.ProcessStep.Command">build.sh</value>
+      <value type="QString" key="ProjectExplorer.ProcessStep.Command">makepri.sh</value>
       <value type="QString" key="ProjectExplorer.ProcessStep.WorkingDirectory">/home/stefano/Develop/Qt/DblpSearcher</value>
       <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Custom Process Step</value>
       <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName"></value>
