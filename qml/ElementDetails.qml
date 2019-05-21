@@ -11,12 +11,10 @@ ColumnLayout {
     readonly property string tabUnselectedTextColor: "#27282a"
     readonly property string xmlBackgroundColor: "#353742"
 
+    // Bound from outside
     property int elementSerial;
 
-//    width: 800
-//    height: 600
     spacing: 0
-    // Bound from outside
 
     id: elementDetails
 
@@ -33,11 +31,6 @@ ColumnLayout {
                             .createObject(elementDetailsTabBar,
                                           {"index": tabCount})
                 );
-//                elementDetailsStack.addItem(
-//                            elementDetailsXmlViewComponent
-//                            .createObject(elementDetailsStack,
-//                                          {"index": tabCount})
-//                );
             }
         }
 
@@ -50,11 +43,6 @@ ColumnLayout {
                             .createObject(elementDetailsTabBar,
                                           {"index": tabCount})
                 );
-//                elementDetailsStack.insert(
-//                            elementDetailsPublicationsViewComponent
-//                            .createObject(elementDetailsStack,
-//                                          {"index": tabCount})
-//                );
             }
         }
     }
@@ -157,7 +145,6 @@ ColumnLayout {
         Layout.fillWidth: true
 
         currentIndex: elementDetailsTabBar.currentIndex
-//        currentIndex: 1
 
         Item {
             id: elementDetailsXmlView
@@ -200,28 +187,6 @@ ColumnLayout {
                 }
 
                 model: elementDetailsModel.xmlLines
-
-//                model: ListModel {
-//                    ListElement {
-//                        tag: "article"
-//                        type: "open"
-//                        attributes: "key=\"journals/it/ele-eco\" mdate=\"2018-03-26\""
-//                        indent: false
-//                    }
-//                    ListElement {
-//                        tag: "author"
-//                        type: "inline"
-//                        attributes: ""
-//                        content: "Amarjot <b>Singh</b>";
-//                        indent: true
-//                    }
-//                    ListElement {
-//                        tag: "article"
-//                        type: "close"
-//                        attributes: ""
-//                        indent: false
-//                    }
-//                }
             }
         }
 
@@ -274,23 +239,8 @@ ColumnLayout {
                     }
 
                     model: elementDetailsModel.publications
-
-//                    model: ListModel {
-//                        ListElement {
-//                            identifier: "/key/journal/BDT19"
-//                        }
-//                        ListElement {
-//                            identifier: "/key/journal/BDT19"
-//                        }
-//                        ListElement {
-//                            identifier: "/key/journal/BDT29"
-//                        }
-//                    }
                 }
             }
-
-
-         }
+        }
     }
-
 }

@@ -10,18 +10,12 @@ Window {
     flags: Qt.SplashScreen
     visible: SplashWindow.shown
 
-    //    x: (Screen.width - splash.width) / 2
-    //    y: (Screen.height - splash.height) / 2
+    x: (Screen.width - splash.width) / 2
+    y: (Screen.height - splash.height) / 2
     width: 480
     height: 360
+
     title: "Dblp Searcher"
-//    Connections {
-//        target: SplashWindow
-//        onProgressChanged: {
-//            console.log("Awere of splash progress change; to: " + SplashWindow.progress)
-//            splashProgress.value = SplashWindow.progress
-//        }
-//    }
 
     Image {
         id: splashBackground
@@ -60,7 +54,6 @@ Window {
             anchors.horizontalCenter: parent.horizontalCenter
             value: SplashWindow.progress
         }
-
     }
 }
 

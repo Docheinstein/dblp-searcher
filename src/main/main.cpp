@@ -56,6 +56,8 @@ static int startIndexMode() {
 
 int main(int argc, char *argv[])
 {
+	_ii("Hello! DblpSearcher v." << VERSION << " there");
+
 	PROF_FUNC_BEGIN
 
 	if (argc < 2) {

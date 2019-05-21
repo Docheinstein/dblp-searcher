@@ -164,7 +164,7 @@ bool IndexHandler::findMatches(const QStringList &tokens,
 	QStringList sanitizedTokens;
 
 	// Moreover, sanitize each term (lowercase, no punctuation, (trimmed))
-	for (auto it = tokens.begin(); it < tokens.end(); it++) {
+	for (auto it = tokens.begin(); it < tokens.end(); ++it) {
 		sanitizedTokens.append(Util::String::sanitizeTerm(*it));
 	}
 
@@ -205,7 +205,7 @@ bool IndexHandler::findWordMatches(const QString &token,
 	if (!findPosts(token, fieldType, termPosts))
 		return false; // nothing found for the term
 
-	for (auto it = termPosts.cbegin(); it != termPosts.cend(); it++) {
+	for (auto it = termPosts.cbegin(); it != termPosts.cend(); ++it) {
 		// For every post, push it as a match
 		const IndexPost &post = *it;
 		IndexMatch match;
@@ -263,7 +263,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 	// 1) For each term in the phrase, retrieve the associated posts
 	// and push those to an hash that maps <element,field> to <term,positions>
 
-	for (auto it = tokens.begin(); it != tokens.end(); it++) {
+	for (auto it = tokens.begin(); it != tokens.end(); ++it) {
 		// Retrieve the posts for the this term
 
 		const QString &term = *it;
@@ -339,7 +339,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 
 	for (auto it = categorizedTermsByElementField.begin();
 		it != categorizedTermsByElementField.end();
-		it++) {
+		++it) {
 
 		const ElementSerial_FieldNumber &ef = it.key();
 		const QHash<QString, QVector<term_pos>> &termsPositions = it.value();
@@ -375,7 +375,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 
 			// Avoid the position list for the term for which the position list
 			// has already been taken into ps0
-			for (ti = 1; ti < tokens.size(); ti++) {
+			for (ti = 1; ti < tokens.size(); ++ti) {
 				dd2("ti: " << ti);
 
 				term_pos uti = UINT8(ti);
@@ -606,7 +606,7 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 	}
 
 
-	for (quint32 i = 0; i < refPost->count; i++) {
+	for (quint32 i = 0; i < refPost->count; ++i) {
 
 		// Figure out the position of the posts in the posting list (of the first one)
 		qint64 postPos = ref.postingListPosition +
@@ -792,7 +792,7 @@ void IndexHandler::loadVocabulary()
 		vv1("Vocabulary file load progress: " << progress);
 		emit vocabularyLoadProgress(progress);
 
-		i++;
+		++i;
 	}
 
 	ii("Finished loading of vocabulary file (" <<
@@ -882,7 +882,7 @@ void IndexHandler::printIdentifiers()
 	elem_serial i = 0;
 	for (const QString &id : mIdentifiers) {
 		vv1("[" << i << "] : " << id);
-		i++;
+		++i;
 	}
 	vv("==== IDENTIFIERS END ====");
 #endif
@@ -892,7 +892,7 @@ void IndexHandler::printVocabulary()
 {
 #if VERBOSE
 	vv("==== VOCABULARY ====");
-	for (auto it = mVocabulary.cbegin(); it != mVocabulary.cend(); it++) {
+	for (auto it = mVocabulary.cbegin(); it != mVocabulary.cend(); ++it) {
 		vv1("'" << it.key() << "' : " << it.value());
 	}
 	vv("==== VOCABULARY END ====");
@@ -903,7 +903,7 @@ void IndexHandler::printCrossrefs()
 {
 #if VERBOSE
 	vv("==== CROSSREFS ====");
-	for (auto it = mCrossrefs.cbegin(); it != mCrossrefs.cend(); it++) {
+	for (auto it = mCrossrefs.cbegin(); it != mCrossrefs.cend(); ++it) {
 		vv1(it.key() << " => " << it.value());
 	}
 	vv("==== CROSSREFS END ====");
@@ -921,7 +921,7 @@ void IndexHandler::printPositions()
 	elem_serial i = 0;
 	for (const elem_pos pos : mElementsPositions) {
 		vv1("[" << i << "] : " << pos);
-		i++;
+		++i;
 	}
 	vv("==== POSITIONS END ====");
 #endif

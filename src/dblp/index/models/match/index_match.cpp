@@ -15,7 +15,7 @@ IndexMatch::operator QString() const
 
 	for (const QString &matchedToken : matchedTokens) {
 		s += DEC(i) + ". matched token: " + matchedToken + "\n";
-		i++;
+		++i;
 	}
 
 	return s;

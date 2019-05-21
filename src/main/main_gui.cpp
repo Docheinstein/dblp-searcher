@@ -167,7 +167,7 @@ IndexLoadingThreadHandler::IndexLoadingThreadHandler(
 
 void IndexLoadingThreadHandler::onStatusChanged(QString status)
 {
-	_dd("Setting splash status '" << status << "' on thread: " << QThread::currentThreadId());
+//	_dd("Setting splash status '" << status << "' on thread: " << QThread::currentThreadId());
 	mSplash.setStatus(status);
 }
 

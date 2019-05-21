@@ -4,9 +4,6 @@
 #include <QString>
 #include <limits>
 
-// Whether precompute all the ief (slow init, but faster searches) or not
-#define LAZY_IEF 1
-
 namespace Config {
 	namespace Index {
 		namespace Extensions {

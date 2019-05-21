@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include "commons/globals/globals.h"
+#include "commons/config/app_config.h"
 #include "dblp/index/models/reference/index_term_ref.h"
 #include "dblp/index/handler/index_handler.h"
 
@@ -102,7 +103,7 @@ void IRModelIef::computeIefs()
 	const qint64 vocabularySize = vocabulary.size();
 
 	int i = 0;
-	for (auto it = vocabulary.cbegin(); it != vocabulary.cend(); it++, i++) {
+	for (auto it = vocabulary.cbegin(); it != vocabulary.cend(); ++it, ++i) {
 		const QString &term = it.key();
 
 		if (term.isEmpty())
@@ -211,12 +212,12 @@ void IRModelIef::printIefs() const
 	// order by key)
 	QMap<float, QString> sortedIefs;
 
-	for (auto it = mIefs.cbegin(); it != mIefs.cend(); it++) {
+	for (auto it = mIefs.cbegin(); it != mIefs.cend(); ++it) {
 		// insertMulti since more than a term can have the same score
 		sortedIefs.insertMulti(it.value(), it.key());
 	}
 
-	for (auto it = sortedIefs.cbegin(); it != sortedIefs.cend(); it++) {
+	for (auto it = sortedIefs.cbegin(); it != sortedIefs.cend(); ++it) {
 		const float ief = it.key();
 		// comfort: recompute ef with the inverse formula
 		float ef = static_cast<float>(E / pow(10, ief));

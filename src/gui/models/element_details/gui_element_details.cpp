@@ -1,13 +1,16 @@
 #include "gui_element_details.h"
-#include "commons/globals/globals.h"
-#include <QString>
+
 #include <QTextDocument>
 #include <QtConcurrent>
+
 #include "main/args.h"
-#include "dblp/xml/parser/dblp_xml_parser.h"
+#include "commons/globals/globals.h"
 #include "commons/const/const.h"
-#include "gui/main/gui_main_window.h"
+#include "dblp/xml/parser/dblp_xml_parser.h"
 #include "dblp/query/resolver/query_resolver.h"
+#include "dblp/irmodel/base/ir_model.h"
+#include "dblp/index/handler/index_handler.h"
+#include "gui/main/gui_main_window.h"
 
 #define HIGHLIGHT_COLOR "#e24834"
 #define HIGHLIGHTED(term) "<b style='color: " HIGHLIGHT_COLOR "'>" + term + "</b>"
@@ -25,7 +28,7 @@ GuiElementDetails::GuiElementDetails()
 					 SLOT(xmlLoadingFinished()));
 }
 
-int GuiElementDetails::serial()
+int GuiElementDetails::serial() const
 {
 	return INT(mSerial);
 }
@@ -49,7 +52,7 @@ void GuiElementDetails::setSerial(int serial)
 //	return INT(mCrossrefSerial);
 //}
 
-QString GuiElementDetails::identifier()
+QString GuiElementDetails::identifier() const
 {
 	return mIdentifier;
 }
@@ -64,17 +67,17 @@ QObject *GuiElementDetails::publications()
 	return &mPublications;
 }
 
-int GuiElementDetails::publicationsCount()
+int GuiElementDetails::publicationsCount() const
 {
 	return mPublications.size();
 }
 
-bool GuiElementDetails::hasXml()
+bool GuiElementDetails::hasXml() const
 {
 	return mHasXml;
 }
 
-bool GuiElementDetails::hasPublications()
+bool GuiElementDetails::hasPublications() const
 {
 	return mHasPublications;
 }
@@ -87,7 +90,7 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 	QVector<IndexMatch> indexMatches =
 			GuiMainWindow::instance().elementMatches(mSerial);
 
-	auto highlightedFieldValue = [&indexMatches, this]
+	auto highlightedFieldValue = [&indexMatches]
 			(const QString &fieldName, const QString &fieldValue,
 			int fieldNum) -> QString /* eventually highlighted fieldValue */ {
 
@@ -111,14 +114,9 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 						(fieldTypeFlag & ElementFieldType::Year) == fieldTypeFlag) ||
 						(fieldName == Const::Dblp::Xml::Fields::TITLE &&
 						(fieldTypeFlag & ElementFieldType::Title) == fieldTypeFlag) ||
-	//					(fieldName == Const::Dblp::Xml::Fields::BOOKTITLE &&
-	//					fieldTypeFlag.testFlag(ElementFieldType::Booktitle) ||
 						(fieldName == Const::Dblp::Xml::Fields::PUBLISHER &&
-						(fieldTypeFlag & ElementFieldType::Publisher) == fieldTypeFlag) ||
-						(fieldName == Const::Dblp::Xml::Fields::JOURNAL &&
-						(fieldTypeFlag & ElementFieldType::Journal) == fieldTypeFlag)
-
-						;
+						(fieldTypeFlag & ElementFieldType::Publisher) == fieldTypeFlag)
+				;
 		};
 
 		for (int termPos = 0; termPos < fieldTerms.size();) {
@@ -188,7 +186,7 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 	);
 
 	// Fields
-	for (auto it = elem.fields.cbegin(); it != elem.fields.cend(); it++) {
+	for (auto it = elem.fields.cbegin(); it != elem.fields.cend(); ++it) {
 		const QString fieldName = it.key();
 		const QVector<QString> fieldValues = it.value();
 
@@ -207,9 +205,8 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 			// Mark the crossrefs rows
 
 			if (mHasCrossref &&
-				(fieldName == Const::Dblp::Xml::Fields::CROSSREF
-				// || fieldName == Const::Dblp::Xml::Fields::JOURNAL)
-				))
+				(fieldName == Const::Dblp::Xml::Fields::CROSSREF ||
+				 fieldName == Const::Dblp::Xml::Fields::JOURNAL))
 				lineBuilder.crossref(INT(mCrossrefSerial));
 
 			mLinesRaw.append(lineBuilder.build());
@@ -239,15 +236,12 @@ void GuiElementDetails::xmlLoadingFinished()
 	mLines.addLines(mLinesRaw);
 	emit xmlLinesChanged();
 
-	// Already fired
+	// Already fired, do not fire again (otherwise the QML pushes two times the XML tab)
 	// emit hasXmlChanged();
 }
 
 void GuiElementDetails::init()
 {
-	ASSERT(mSerial >= 0, "gui",
-		   "Cannot instantiate element details for serial < 0");
-
 	dd("Creating element details component for serial: " << mSerial);
 
 	// Load identifier
@@ -312,7 +306,7 @@ void GuiElementDetails::loadXml()
 	}
 
 	dd("Element position range (LB: " << elementPosition.first << " | " <<
-							" UB: " << elementPosition.second << ")");
+							   "UB: " << elementPosition.second << ")");
 
 	DblpElementXmlRetriever retriever(mSerial, *this);
 	DblpXmlParser parser(arguments.dblpXmlFilePath, retriever,
@@ -352,7 +346,7 @@ bool DblpElementXmlRetriever::onElement(
 		return true;
 	}
 
-	// Read the right element
+	// Read the right element, deliver it
 
 	mHandler.onElementRetrieved(element);
 

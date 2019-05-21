@@ -16,7 +16,7 @@ public:
 	void addPublications(const QVector<GuiElementPublication> &line);
 	void clearPublications();
 
-	int size();
+	int size() const;
 
 	// QAbstractItemModel interface
 	int rowCount(const QModelIndex &parent = QModelIndex()) const;

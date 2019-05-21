@@ -2,7 +2,7 @@
 #define LOGGER_H
 
 #include <QDebug>
-#include "commons/log/config/log_config.h"
+#include "commons/config/app_config.h"
 #include "commons/globals/globals.h"
 
 

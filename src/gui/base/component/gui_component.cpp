@@ -1,30 +1,22 @@
 #include "gui_component.h"
+
 #include <QQmlEngine>
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <QEventLoop>
+
 #include "commons/util/util.h"
 #include "gui/engine/gui_engine.h"
 
 LOGGING(GuiComponent, true)
 
-GuiComponent::~GuiComponent()
-{
-}
+GuiComponent::~GuiComponent() {}
 
 bool GuiComponent::create()
 {
-//	GuiEngine::instance().engine()->setObjectOwnership(this, ownership());
-
 	QUrl qmlResource = Util::Qml::resourceUrl(qmlName());
 
-	vv("Going to create GUI component; " <<
-	   "resource: '" << qmlResource);
-
-//	mContext = new QQmlContext(GuiEngine::instance().engine()->rootContext());
-//	mContext->setContextProperty(qmlName(), this);
-
-//	GuiEngine::instance().engine()->rootContext()->setContextProperty(contextName(), this);
+	vv("Going to create GUI component; resource: '" << qmlResource);
 
 	mComponent = new QQmlComponent(GuiEngine::instance().engine(), qmlResource);
 
@@ -74,7 +66,7 @@ void GuiComponent::createComponent()
 }
 
 
-bool GuiComponent::shown()
+bool GuiComponent::shown() const
 {
 	return mShown;
 }

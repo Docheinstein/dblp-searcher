@@ -36,7 +36,7 @@ GuiDblpXmlLine::Builder &GuiDblpXmlLine::Builder::crossref(int crossref)
 	return *this;
 }
 
-GuiDblpXmlLine GuiDblpXmlLine::Builder::build()
+GuiDblpXmlLine GuiDblpXmlLine::Builder::build() const
 {
 	GuiDblpXmlLine line;
 	line.mIndent = mIndent;

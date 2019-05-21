@@ -9,9 +9,7 @@ QHash<int, QByteArray> GuiDblpXmlLines::GUI_DBLP_XML_LINE_ROLES = {
 	{GuiDblpXmlLineRoleTagCrossref, "crossref"},
 };
 
-GuiDblpXmlLines::GuiDblpXmlLines(QObject *parent) : QAbstractListModel (parent)
-{
-}
+GuiDblpXmlLines::GuiDblpXmlLines(QObject *parent) : QAbstractListModel (parent) {}
 
 void GuiDblpXmlLines::addLine(const GuiDblpXmlLine &line)
 {
@@ -35,7 +33,7 @@ void GuiDblpXmlLines::clearLines()
 	endRemoveRows();
 }
 
-int GuiDblpXmlLines::size()
+int GuiDblpXmlLines::size() const
 {
 	return mLines.size();
 }

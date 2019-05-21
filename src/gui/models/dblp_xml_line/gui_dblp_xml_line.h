@@ -29,7 +29,7 @@ public:
 		Builder & content(QString content);
 		Builder & crossref(int crossref);
 
-		GuiDblpXmlLine build();
+		GuiDblpXmlLine build() const;
 
 	private:
 		bool mIndent;

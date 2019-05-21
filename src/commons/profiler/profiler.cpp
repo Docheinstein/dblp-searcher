@@ -1,4 +1,5 @@
 #include "profiler.h"
+
 #include <algorithm>
 #include "commons/globals/globals.h"
 #include "commons/log/logger/logger.h"
@@ -39,7 +40,7 @@ void profPrintEntities(ProfEntity *entities)
 
 	// Just for formatting purpose, find the longest function name
 	int longestEntityName = 0;
-	for (int i = 0; i < profCurrentEntityNumber; i++) {
+	for (int i = 0; i < profCurrentEntityNumber; ++i) {
 		int entityNameLength = INT(strlen(entities[i].id));
 		if (entityNameLength > longestEntityName)
 			longestEntityName = entityNameLength;
@@ -48,7 +49,7 @@ void profPrintEntities(ProfEntity *entities)
 
 	_ii_("============ PROFILER ============");
 
-	for (int i = 0; i < profCurrentEntityNumber; i++) {
+	for (int i = 0; i < profCurrentEntityNumber; ++i) {
 		const ProfEntity &fun = entities[i];
 
 		char *paddedEntityName = new char[longestEntityName + 1];
@@ -73,7 +74,7 @@ void profPrintSorted()
 
 	ProfEntity sortedProfEntities[MAX_PROF_ENTITIES];
 
-	for (int i = 0; i < profCurrentEntityNumber; i++) {
+	for (int i = 0; i < profCurrentEntityNumber; ++i) {
 		sortedProfEntities[i] = PROF_ENTITIES[i];
 	}
 
@@ -90,7 +91,7 @@ void profReset()
 {
 	_ii_("PROFILER: reset (" << profCurrentEntityNumber << ")");
 
-	for (int i = 0; i < profCurrentEntityNumber; i++) {
+	for (int i = 0; i < profCurrentEntityNumber; ++i) {
 		PROF_ENTITIES[i].time = 0;
 	}
 }

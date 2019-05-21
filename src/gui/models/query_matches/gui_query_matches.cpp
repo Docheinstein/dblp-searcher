@@ -57,7 +57,7 @@ void GuiQueryMatches::setIrModel(IRModel *irModel)
 	mIrModel = irModel;
 }
 
-int GuiQueryMatches::size()
+int GuiQueryMatches::size() const
 {
 	return mMatches.size();
 }

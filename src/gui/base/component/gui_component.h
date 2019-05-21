@@ -3,11 +3,12 @@
 
 #include <QObject>
 #include <QString>
-#include <commons/log/loggable/loggable.h>
+
+#include "commons/log/loggable/loggable.h"
 
 class QQmlComponent;
 
-class GuiComponent : public QObject, Loggable {
+class GuiComponent : public QObject, protected Loggable {
 	Q_OBJECT
 
 	Q_PROPERTY(bool shown READ shown WRITE setShown NOTIFY shownChanged)
@@ -15,7 +16,7 @@ class GuiComponent : public QObject, Loggable {
 public:
 	virtual ~GuiComponent() override;
 
-	bool shown();
+	bool shown() const;
 	void setShown(bool shown);
 
 	bool create();

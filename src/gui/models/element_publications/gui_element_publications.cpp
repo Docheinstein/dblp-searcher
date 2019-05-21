@@ -31,7 +31,7 @@ void GuiElementPublications::clearPublications()
 	endRemoveRows();
 }
 
-int GuiElementPublications::size()
+int GuiElementPublications::size() const
 {
 	return mPublications.size();
 }

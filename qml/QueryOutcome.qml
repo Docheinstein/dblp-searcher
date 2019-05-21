@@ -72,37 +72,6 @@ ColumnLayout {
             }
 
             model: MainWindow.matches
-
-//                model: ListModel {
-//                    ListElement {
-//                        rank: 1
-//                        type: "publication"
-//                        publicationIdentifier: "/key/bdt/2019"
-//                        publicationElementType: "Article"
-//                        venueIdentifier: "/key/bdt/2019"
-//                        venueElementType: "Journal"
-//                        score: 0.4
-//                    }
-//                    ListElement {
-//                        rank: 2
-//                        type: "venue"
-//                        publicationIdentifier: "/key/bdt/2019"
-//                        publicationElementType: "Article"
-//                        venueIdentifier: "/key/bdt/2019"
-//                        venueElementType: "Journal"
-//                        score: 0.2
-//                    }
-//                    ListElement {
-//                        rank: 3
-//                        type: "publication_venue"
-//                        publicationIdentifier: "/key/bdt/2019"
-//                        publicationElementType: "Article"
-//                        venueIdentifier: "/key/bdt/2019"
-//                        venueElementType: "Journal"
-//                        score: 0.1
-            //                    }
-            //                }
-
         }
     }
 

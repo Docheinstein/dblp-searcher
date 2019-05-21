@@ -5,10 +5,7 @@ import DblpSearcher 1.0
 Flow {
     id: xmlLine
 
-//    readonly property string tagColor: "#a04b6d"
-//    readonly property string tagColor: "#7997c6"
     readonly property string tagColor: "#6ea0ef"
-//    readonly property string attributesColor: "#c4c166"
     readonly property string attributesColor: "#e5e169"
     readonly property string contentColor: "#f7f7f7"
     readonly property string linkColor: "steelblue"

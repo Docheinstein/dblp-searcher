@@ -3,18 +3,17 @@
 
 #define GUI_MAIN_WINDOW_QML_NAME "MainWindow"
 
-#include <QObject>
 #include <QVector>
 #include <QHash>
 #include <QFutureWatcher>
-#include <dblp/query/resolver/query_resolver.h>
+
+#include "dblp/query/resolver/models/query_outcome.h"
 #include "dblp/query/match/query_match.h"
 #include "gui/base/component/gui_component.h"
 #include "gui/models/query_matches/gui_query_matches.h"
 
 class QQmlEngine;
 class QJSEngine;
-
 class QueryResolver;
 
 class GuiMainWindow : public GuiComponent {
@@ -43,15 +42,15 @@ public:
 	static GuiMainWindow & instance();
 
 	void setResolver(QueryResolver *resolver);
-	QueryResolver * resolver();
+	QueryResolver * resolver() const;
 
 	// Properties
-	QueryStatus queryStatus();
-	int queryTime();
+	QueryStatus queryStatus() const;
+	int queryTime() const;
 	int matchesCount();
 	QObject * matches();
 
-	QVector<IndexMatch> elementMatches(elem_serial serial);
+	const QVector<IndexMatch> elementMatches(elem_serial serial) const;
 
 
 public slots:
@@ -86,6 +85,7 @@ private:
 
 	QueryStatus mQueryStatus = QueryStatus::None;
 	int mQueryTime = 0;
+
 	GuiQueryMatches mMatches;
 	QHash<elem_serial, QVector<IndexMatch>> mMatchesHash;
 };

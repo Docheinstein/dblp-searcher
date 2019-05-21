@@ -20,10 +20,10 @@ public:
 	static QObject * qmlInstance(QQmlEngine *qeng, QJSEngine *jseng);
 	static GuiSplashWindow & instance();
 
-	QString status();
+	QString status() const;
 	void setStatus(const QString &status);
 
-	double progress();
+	double progress() const;
 	void setProgress(double progress);
 
 signals:

@@ -48,7 +48,7 @@ struct VenuesPushReductionContainer {
 static void computeElementsScoreCombiner(
 		QHash<elem_serial, ScoredIndexElementMatches> &out,
 		const QHash<elem_serial, ScoredIndexElementMatches> &in) {
-	for (auto in_it = in.cbegin(); in_it != in.cend(); in_it++) {
+	for (auto in_it = in.cbegin(); in_it != in.cend(); ++in_it) {
 		auto out_it = out.find(in_it.key());
 		if (out_it == out.cend()) {
 			_dd4("Combiner: inserting [e" << in_it.key() <<
@@ -118,7 +118,7 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 			QStringList tokens = macroToken.split(
 						Const::Dblp::Query::TOKENS_SPLITTER,
 						QString::SplitBehavior::SkipEmptyParts);
-			for (auto it = tokens.cbegin(); it < tokens.cend(); it++) {
+			for (auto it = tokens.cbegin(); it < tokens.cend(); ++it) {
 				float ief = mIrModel->termScore(Util::String::sanitizeTerm(*it));
 				vv4("Computing ief(" << *it << ") now due lazy ief: " << ief);
 			}
@@ -205,7 +205,7 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 			QHash<elem_serial, ScoredIndexElementMatches> &scoredMatches) {
 
 		#pragma omp parallel for reduction(computeElementsScoreReducer:scoredMatches)
-		for (int i = 0; i < matches.size(); i++) {
+		for (int i = 0; i < matches.size(); ++i) {
 			const IndexMatch &match = matches.at(i);
 
 			// Retrieve the current score for this element, if it doesn't exist
@@ -287,7 +287,7 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 			checkCrossrefsCombiner(omp_out, omp_in))
 
 	#pragma omp parallel for reduction(checkCrossrefsReducer:crossrefCheckReductionContainer)
-	for (int i = 0; i < scoredPubsElements.size(); i++) {
+	for (int i = 0; i < scoredPubsElements.size(); ++i) {
 
 		elem_serial scoredPubSerial = scoredPubsSerials.at(i);
 		const ScoredIndexElementMatches &scoredPub = scoredPubsElements.at(i);
@@ -391,7 +391,7 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 			venuesPushCombiner(omp_out, omp_in))
 
 	#pragma omp parallel for reduction(insertVenueInQueryMatchReducer:venuesReductionContainer)
-	for (int i = 0; i < scoredVenuesSerials.size(); i++) {
+	for (int i = 0; i < scoredVenuesSerials.size(); ++i) {
 
 		const elem_serial venueSerial = scoredVenuesSerials.at(i);
 		const ScoredIndexElementMatches &scoredVenueMatches = scoredVenuesElements.at(i);
@@ -436,7 +436,7 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 	int i = 0;
 	for (const QueryMatch &match : outcome.sortedQueryMatches) {
 		vv(i << "° MATCH === " << endl << match);
-		i++;
+		++i;
 	}
 #endif
 

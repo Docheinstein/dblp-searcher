@@ -2,6 +2,7 @@
 #define GUI_QUERY_MATCHES_H
 
 #include <QAbstractListModel>
+
 #include "dblp/query/match/query_match.h"
 #include "gui/models/query_match/gui_query_match.h"
 
@@ -23,7 +24,7 @@ public:
 
 	void setIrModel(IRModel *irModel);
 
-	int size();
+	int size() const;
 
 	// QAbstractItemModel interface
 	int rowCount(const QModelIndex &parent = QModelIndex()) const;

@@ -8,6 +8,8 @@ enum class DblpSearcherMode {
 	Search
 };
 
+// Global arguments, accessible from everywhere
+
 extern struct Arguments {
 	DblpSearcherMode mode;
 	QString dblpXmlFilePath;

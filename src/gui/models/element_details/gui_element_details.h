@@ -3,19 +3,14 @@
 
 #define GUI_ELEMENT_DETAILS_QML_NAME "ElementDetails"
 
-#include "dblp/shared/defs/defs.h"
+#include <QString>
+
 #include "commons/log/loggable/loggable.h"
+#include "dblp/xml/models/element/dblp_xml_element.h"
+#include "dblp/xml/handler/dblp_xml_parse_handler.h"
 #include "gui/models/dblp_xml_lines/gui_dblp_xml_lines.h"
 #include "gui/models/element_publications/gui_element_publications.h"
-#include "commons/config/config.h"
 
-#include <QFutureWatcher>
-#include <QObject>
-#include <QString>
-#include <QFile>
-
-#include <dblp/xml/models/element/dblp_xml_element.h>
-#include <dblp/xml/handler/dblp_xml_parse_handler.h>
 
 
 // XML Retriever stuff BEGIN
@@ -46,7 +41,7 @@ private:
 
 // XML Retriever stuff END
 
-class GuiElementDetails : public DblpElementXmlRetrieverHandler, Loggable {
+class GuiElementDetails : public DblpElementXmlRetrieverHandler, protected Loggable {
 	Q_OBJECT
 
 	Q_PROPERTY(int serial READ serial WRITE setSerial NOTIFY serialChanged)
@@ -63,21 +58,21 @@ public:
 	~GuiElementDetails() override;
 	GuiElementDetails();
 
-	int serial();
+	int serial() const;
 	void setSerial(int serial);
 
 //	int crossrefSerial();
 
-	QString identifier();
+	QString identifier() const;
 
 	QObject * xmlLines();
 
 	QObject * publications();
 
-	int publicationsCount();
+	int publicationsCount() const;
 
-	bool hasXml();
-	bool hasPublications();
+	bool hasXml() const;
+	bool hasPublications() const;
 
 	void onElementRetrieved(const DblpXmlElement &elem) override;
 

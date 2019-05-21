@@ -1,6 +1,6 @@
 #include "gui_engine.h"
-#include <QQmlEngine>
 
+#include <QQmlEngine>
 
 GuiEngine GuiEngine::instance(QQmlEngine *engine)
 {
@@ -13,7 +13,7 @@ GuiEngine GuiEngine::instance(QQmlEngine *engine)
 	return INSTANCE;
 }
 
-QQmlEngine *GuiEngine::engine()
+QQmlEngine *GuiEngine::engine() const
 {
 	return mEngine;
 }

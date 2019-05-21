@@ -412,7 +412,7 @@ void Indexer::addTermsOfFields(void (*indexTermPostAdder)(IndexTerm &, const Ind
 	ASSERT(UINT32(fieldsCount) < Config::Index::PostingList::FIELD_NUM_THRESHOLD, "indexing",
 		   "Found an element with more fields than the index's allowed number");
 
-	for (int i = 0; i < fieldsCount; i++) {
+	for (int i = 0; i < fieldsCount; ++i) {
 		const QString &fieldContent = fieldsContent.at(i);
 		addTermsOfField(indexTermPostAdder, fieldContent, static_cast<field_num>(i));
 	}
@@ -429,7 +429,7 @@ void Indexer::addTermsOfField(void (*indexTermPostAdder)(IndexTerm &, const Inde
 	ASSERT(UINT32(termsCount) < Config::Index::PostingList::IN_FIELD_POS_THRESHOLD,
 			 "indexing", "Found a field with more terms than the index's allowed number");
 
-	for (int i = 0; i < termsCount; i++) {
+	for (int i = 0; i < termsCount; ++i) {
 		const QString &term = terms.at(i);
 		vv3("Adding term: '" << term << "'");
 		addTerm(indexTermPostAdder, term, fieldNumber, static_cast<term_pos>(i));
@@ -522,7 +522,7 @@ void Indexer::writeIdentifiersFile()
 	for (const QString &key : mIdentifiers) {
 		vv2("Writing identifier for element = " << i << ": " << key);
 		mIdentifiersStream.stream << key << '\n';
-		i++;
+		++i;
 	}
 }
 
@@ -531,7 +531,7 @@ void Indexer::writePostingListAndVocabularyFiles()
 	vv1("Writing vocabulary and posting list index files ("
 		<< mIndexTerms.size() << " terms)");
 
-	for (auto it = mIndexTerms.cbegin(); it != mIndexTerms.cend(); it++) {
+	for (auto it = mIndexTerms.cbegin(); it != mIndexTerms.cend(); ++it) {
 			const QString &term = it.key();
 			const IndexTerm &termEntity = it.value();
 
@@ -741,7 +741,7 @@ void Indexer::writePositionsFile()
 		elem_pos P = static_cast<elem_pos>(pos);
 		mElementsPositionsStream.stream << P;
 
-		i++;
+		++i;
 	}
 }
 
@@ -754,7 +754,7 @@ void Indexer::writeCrossrefsFile()
 
 	for (auto it = mVenueIdentifierByPublicationSerial.cbegin();
 		 it != mVenueIdentifierByPublicationSerial.cend();
-		 it++) {
+		 ++it) {
 
 		// For each publication element id retrieve the element
 		// id of the venue
@@ -807,7 +807,7 @@ void Indexer::printStats()
 	QString maxPostsCountTerm = "";
 	quint64 maxPostCount = 0;
 
-	for (auto it = mIndexTerms.cbegin(); it != mIndexTerms.cend(); it++) {
+	for (auto it = mIndexTerms.cbegin(); it != mIndexTerms.cend(); ++it) {
 		quint64 postsCount = it.value().stats.postsCount;
 		if (postsCount > maxPostCount) {
 			maxPostCount = postsCount;

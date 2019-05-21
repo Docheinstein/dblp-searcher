@@ -10,6 +10,7 @@ QString queryMatchTypeString(QueryMatchType type)
 	case QueryMatchType::PublicationVenue:
 		return "pub+venue";
 	}
+	return "<unknown>";
 }
 
 QueryMatchComponent::QueryMatchComponent() {}
@@ -45,7 +46,7 @@ QueryMatchComponent::operator QString() const
 	int i = 1;
 	for (const IndexMatch & match: mMatches) {
 		s += DEC(i) + ". match: " + match + "\n";
-		i++;
+		++i;
 	}
 
 	return s;

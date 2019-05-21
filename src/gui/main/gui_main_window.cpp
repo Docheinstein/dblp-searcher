@@ -1,21 +1,26 @@
 #include "gui_main_window.h"
 
-#include "dblp/query/resolver/query_resolver.h"
-#include "dblp/query/match/query_match.h"
-#include "commons/globals/globals.h"
-#include "gui/models/query_match/gui_query_match.h"
+#include <QElapsedTimer>
 #include <QThread>
 #include <QtConcurrentRun>
 #include <QFuture>
 #include <QFutureWatcher>
-#include <QElapsedTimer>
+
+#include "dblp/query/resolver/query_resolver.h"
+#include "dblp/query/match/query_match.h"
+#include "commons/globals/globals.h"
+#include "gui/models/query_match/gui_query_match.h"
+
 #include "commons/profiler/profiler.h"
+#include "dblp/query/resolver/query_resolver.h"
+#include "dblp/query/query/query.h"
 
 LOGGING(GuiMainWindow, true)
 
 GuiMainWindow::~GuiMainWindow() {}
 
 GuiMainWindow::GuiMainWindow() {
+	// Connect the future end to the searchFinished slot
 	QObject::connect(&mQueryWatcher,
 					 SIGNAL(finished()),
 					 this,
@@ -46,14 +51,14 @@ void GuiMainWindow::setResolver(QueryResolver *resolver)
 	mMatches.setIrModel(resolver->irModel());
 }
 
-QueryResolver *GuiMainWindow::resolver()
+QueryResolver *GuiMainWindow::resolver() const
 {
 	return mResolver;
 }
 
 // PROPERTIES
 
-GuiMainWindow::QueryStatus GuiMainWindow::queryStatus()
+GuiMainWindow::QueryStatus GuiMainWindow::queryStatus() const
 {
 	return mQueryStatus;
 }
@@ -64,7 +69,7 @@ QObject *GuiMainWindow::matches()
 	return &mMatches;
 }
 
-QVector<IndexMatch> GuiMainWindow::elementMatches(elem_serial serial)
+const QVector<IndexMatch> GuiMainWindow::elementMatches(elem_serial serial) const
 {
 	return mMatchesHash.value(serial, {});
 }
@@ -75,7 +80,7 @@ int GuiMainWindow::matchesCount()
 }
 
 
-int GuiMainWindow::queryTime()
+int GuiMainWindow::queryTime() const
 {
 	return mQueryTime;
 }
@@ -90,17 +95,19 @@ void GuiMainWindow::doSearch(const QString &query)
 
 	PROF_FUNC_BEGIN0
 
+#if EASTER_EGGS
 	// Easter egg for profiling
 
-	if (query == QLatin1String("r")) {
+	if (query == QLatin1String("profreset")) {
 		profReset();
 		return;
 	}
 
-	if (query == QLatin1String("p")) {
+	if (query == QLatin1String("profprint")) {
 		profPrint();
 		return;
 	}
+#endif // EASTER_EGGS
 
 	ii("Performing search for: " << query << "");
 
@@ -139,7 +146,7 @@ QueryOutcome GuiMainWindow::doSearchReal(const QString &queryString)
 	QueryOutcome outcome = mResolver->resolveQuery(query);
 
 #if VERBOSE
-	for (auto it = outcome.sortedQueryMatches.cbegin(); it != outcome.sortedQueryMatches.cend(); it++) {
+	for (auto it = outcome.sortedQueryMatches.cbegin(); it != outcome.sortedQueryMatches.cend(); ++it) {
 		const QueryMatch &queryMatch = *it;
 
 		if (queryMatch.matchType() == QueryMatchType::Publication) {
@@ -192,7 +199,6 @@ void GuiMainWindow::searchFinished()
 	const QueryOutcome &outcome = mQueryWatcher.result();
 
 	ii("Search done; # results = " << outcome.sortedQueryMatches.size());
-	ii("Search done; # raw results = " << outcome.indexMatchesBySerial.size());
 
 #if PROFILER
 	profPrint();

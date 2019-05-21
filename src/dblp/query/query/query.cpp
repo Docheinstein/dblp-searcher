@@ -63,7 +63,7 @@ Query::Query(const QString &queryString)
 
 
 	int i = 0;
-	for (auto it = macroTokens.begin(); it != macroTokens.end(); it++, i++) {
+	for (auto it = macroTokens.begin(); it != macroTokens.end(); ++it, ++i) {
 		const QString &macroToken = *it;
 		vv1("Found macro token: " << macroToken);
 		// Skip empty tokens (may occur for single token queries)
@@ -427,8 +427,8 @@ Query::operator QString() const
 	for (auto it = mQueryParts.begin(); it != mQueryParts.end();) {
 		s += DEC(i) + ") " + **it;
 
-		it++;
-		i++;
+		++it;
+		++i;
 
 		if (it != mQueryParts.end())
 			s += "\n";

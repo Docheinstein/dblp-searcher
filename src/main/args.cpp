@@ -18,11 +18,11 @@ void parseArguments(int argc, char *argv[]) {
 	arguments.argc = argc;
 	arguments.argv = argv;
 
-	for (int i = 1; i < argc; i++) {
+	for (int i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
 
 		auto readNextParam = [argc, argv, &i](QString &str, const QString &failReason) {
-			i++;
+			++i;
 			if (i >= argc) {
 				QUIT(failReason.toStdString().c_str());
 			}

@@ -229,16 +229,3 @@ ApplicationWindow {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-/*##^## Designer {
-    D{i:19;anchors_height:30}D{i:20;anchors_height:30}D{i:21;anchors_height:30}D{i:12;anchors_width:800}
-}
- ##^##*/

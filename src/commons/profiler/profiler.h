@@ -1,7 +1,27 @@
 #ifndef PROFILER_H
 #define PROFILER_H
 
+#include <QtGlobal>
+#include "commons/config/app_config.h"
+
+#if PROFILER
 #include <QElapsedTimer>
+
+#define PROF_BEGIN_REAL(var, id, prefix) \
+	static int PROF_ENTITY_##var = profRegisterEntity(id, prefix); \
+	QElapsedTimer profTimer_##var; \
+	profTimer_##var.start();
+
+#define PROF_END(id) \
+	PROF_ENTITIES[PROF_ENTITY_##id].time += \
+		static_cast<quint64>(profTimer_##id.nsecsElapsed());
+
+#else
+#define PROF_BEGIN_REAL(_1, _2, _3)
+#define PROF_END(_1)
+#endif // PROFILER
+
+// Profiler data structures
 
 // Maximum number of functions that could be profiled
 #define MAX_PROF_ENTITIES 200
@@ -12,32 +32,6 @@ typedef struct ProfEntity {
 } ProfEntity;
 
 extern ProfEntity PROF_ENTITIES[MAX_PROF_ENTITIES];
-
-
-// Set to 0 or 1 to enable/disable profiler
-#define PROFILER 1
-
-// Core macros
-
-#if PROFILER
-
-// PROF_BEGIN
-
-#define PROF_BEGIN_REAL(var, id, prefix) \
-	static int PROF_ENTITY_##var = profRegisterEntity(id, prefix); \
-	QElapsedTimer profTimer_##var; \
-	profTimer_##var.start();
-
-// PROF_END
-
-#define PROF_END(id) \
-	PROF_ENTITIES[PROF_ENTITY_##id].time += \
-		static_cast<quint64>(profTimer_##id.nsecsElapsed());
-
-#else
-#define PROF_BEGIN_REAL(_1, _2)
-#define PROF_END(_1)
-#endif // PROFILER
 
 // Other handly macros
 
@@ -68,6 +62,8 @@ extern ProfEntity PROF_ENTITIES[MAX_PROF_ENTITIES];
 #define PROF_FUNC_BEGIN10	PROF_BEGIN_REAL(__func__, __func__, "[10] | | | | | | | | | | ")
 
 #define PROF_FUNC_END PROF_END(__func__);
+
+// Profiler funcs
 
 extern int	profRegisterEntity(const char *func, const char *prefix = nullptr);
 extern void profPrintEntities(ProfEntity *entities);

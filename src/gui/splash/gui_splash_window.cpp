@@ -21,7 +21,7 @@ QString GuiSplashWindow::qmlName()
 	return GUI_SPLASH_WINDOW_QML_NAME;
 }
 
-QString GuiSplashWindow::status()
+QString GuiSplashWindow::status() const
 {
 	return mStatus;
 }
@@ -32,25 +32,27 @@ void GuiSplashWindow::setStatus(const QString &status)
 	emit statusChanged();
 }
 
-double GuiSplashWindow::progress()
+double GuiSplashWindow::progress() const
 {
 	return mProgress;
 }
 
 void GuiSplashWindow::setProgress(double progress)
 {
-//	emit progressChanged();
+	if (
+		// Probably a loading of a different stuff started; allowed
+		progress < mProgress
 
-	if (progress < mProgress) {
-		qInfo() << "Setting splash progress (" << progress << ") on thread: " << QThread::currentThreadId();
-		mLastNotifiedProgress = progress;
-		emit progressChanged();
-	} else if (progress - mLastNotifiedProgress > PROGRESS_NOTIFICATION_THRESHOLD) {
-		// Do not notify too many times
-		qInfo() << "Setting splash progress (" << progress << ") on thread: " << QThread::currentThreadId();
+			||
+
+		// If the progress is gone further, notify only if the new progress
+		// differs from the previous by at least a certain threshold
+		progress - mLastNotifiedProgress > PROGRESS_NOTIFICATION_THRESHOLD
+	) {
 		mLastNotifiedProgress = progress;
 		emit progressChanged();
 	}
+	// else: do not notify now, but take into account anyway
 
 	mProgress = progress;
 

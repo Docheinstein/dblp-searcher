@@ -5,15 +5,10 @@
 #include <QHash>
 
 #include "commons/log/loggable/loggable.h"
-#include "dblp/query/match/query_match.h"
+#include "dblp/query/resolver/models/query_outcome.h"
 
 class Query;
 class IRModel;
-
-struct QueryOutcome {
-	QVector<QueryMatch> sortedQueryMatches;
-	QHash<elem_serial, QVector<IndexMatch>> indexMatchesBySerial;
-};
 
 class QueryResolver : protected Loggable {
 public:

@@ -16,7 +16,7 @@ public:
 	void addLines(const QVector<GuiDblpXmlLine> &lines);
 	void clearLines();
 
-	int size();
+	int size() const;
 
 	// QAbstractItemModel interface
 	int rowCount(const QModelIndex &parent = QModelIndex()) const;

@@ -7,7 +7,7 @@ class GuiEngine {
 public:
 	static GuiEngine instance(QQmlEngine *engine = nullptr);
 
-	QQmlEngine *engine();
+	QQmlEngine *engine() const;
 
 private:
 	QQmlEngine *mEngine;
