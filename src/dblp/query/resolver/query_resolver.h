@@ -1,13 +1,14 @@
 #ifndef QUERY_RESOLVER_H
 #define QUERY_RESOLVER_H
 
-#include <dblp/query/query/query.h>
-#include <dblp/irmodel/base/ir_model.h>
-#include <commons/log/loggable/loggable.h>
-#include "dblp/shared/defs/defs.h"
-#include "dblp/index/handler/index_handler.h"
+#include <QVector>
+#include <QHash>
+
+#include "commons/log/loggable/loggable.h"
 #include "dblp/query/match/query_match.h"
 
+class Query;
+class IRModel;
 
 struct QueryOutcome {
 	QVector<QueryMatch> sortedQueryMatches;
@@ -28,6 +29,8 @@ protected:
 
 	IRModel *mIrModel;
 };
+
+// Needed for use QueryResolver with the Qt signals/slots paradigm
 Q_DECLARE_METATYPE(QueryResolver);
 
 #endif // QUERY_RESOLVER_H

@@ -1,21 +1,21 @@
 #include "query_resolver.h"
-#include "math.h"
+
+#include <math.h>
+#include <omp.h>
+
 #include "commons/util/util.h"
-#include <dblp/index/handler/index_handler.h>
 #include "commons/globals/globals.h"
 #include "commons/const/const.h"
 #include "commons/config/config.h"
 #include "commons/profiler/profiler.h"
-#include <omp.h>
-#include <QMutex>
-#include <QThread>
+#include "dblp/index/handler/index_handler.h"
+#include "dblp/query/query/models/base/query_base_part.h"
+#include "dblp/query/query/query.h"
+#include "dblp/irmodel/base/ir_model.h"
 
 LOGGING(QueryResolver, false);
 
-QueryResolver::QueryResolver()
-{
-
-}
+QueryResolver::QueryResolver() {}
 
 QueryResolver::QueryResolver(IRModel *irmodel)
 {
@@ -31,6 +31,8 @@ struct ScoredIndexElementMatches {
 	QVector<IndexMatch> matches; // the matches should have the same serial
 	float score;
 };
+
+// ========== OMP REDUCTION MAP STUFF ===========
 
 struct CrossrefsCheckReductionContainer {
 	QSet<elem_serial> crossrefVenues;
@@ -83,6 +85,8 @@ static void venuesPushCombiner(
 	out.rawMatchesBySerial.unite(in.rawMatchesBySerial);
 }
 
+// ========== OMP REDUCTION MAP STUFF END ===========
+
 QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 	PROF_FUNC_BEGIN1
 
@@ -107,7 +111,7 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 		for (const QString &macroToken : part->tokens()) {
 
 			// If lazy ief is required, compute all the needed ief now (since its
-			// not thread safe to compute in omp for, and use a lock would be an overkill
+			// not thread safe to compute in omp for, and use a lock would be an overkill.
 			// Those will be necessary for compute the elements score
 
 #if LAZY_IEF
@@ -137,7 +141,6 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 					searchFields.testFlag((ElementFieldType::Venue)) ||
 					((searchFieldsFlags &
 					 INT(ElementFieldType::Venue)) == searchFieldsFlags);
-
 
 			// Potentially we could treat the case All for global searches,
 			// thus perform two calls to findElements()
@@ -266,7 +269,8 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 
 	PROF_END(resolveQueryScoreComputing)
 
-//	QSet<elem_serial> crossReferredVenues;
+	// Check whether the the publications have a crossref among the matches
+	// and push those as pub+venue eventually
 
 	PROF_BEGIN2(crossrefsCheck)
 
@@ -322,7 +326,6 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 				crossrefMatch = true; // do not push the publication
 									  // by itself later, but now as a pub+venue now
 
-//				crossReferredVenues.insert(crossrefSerial);
 				crossrefCheckReductionContainer.crossrefVenues.insert(crossrefSerial);
 
 				const ScoredIndexElementMatches &scoredVenueMatches = *crossrefVenueIt;
@@ -339,10 +342,6 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 
 				vv2("Pushing pub+venue match for [" << scoredPubSerial << "]" <<
 					" => [" << crossrefSerial << "] - score = " << enhancedScore);
-
-//				queryMatches.append(QueryMatch::forPublicationVenue(
-//					scoredPub.matches, scoredVenueMatches.matches,
-//					enhancedScore));
 
 				crossrefCheckReductionContainer.matches.append(
 							QueryMatch::forPublicationVenue(
@@ -378,8 +377,9 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 	dd1("Crossrefed venues count # = " << crossrefCheckReductionContainer.matches.size());
 	dd1("Crossrefed venues count # = " << crossrefCheckReductionContainer.crossrefVenues.size());
 
+	// And now push the remaining venues as venue only
+
 	VenuesPushReductionContainer venuesReductionContainer;
-//	venuesReductionContainer.matches = crossrefCheckReductionContainer.matches;
 
 	// VENUE matches (the venue not crossreferred yet)
 	const QList<elem_serial> &scoredVenuesSerials = scoredVenues.keys();
@@ -418,7 +418,7 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 
 	PROF_BEGIN2(sortQueryMatches)
 
-	// Push the matches from the the two steps
+	// Push the matches from the two steps to the outcome
 	outcome.sortedQueryMatches.append(venuesReductionContainer.matches);
 	outcome.sortedQueryMatches.append(crossrefCheckReductionContainer.matches);
 	outcome.indexMatchesBySerial.unite(venuesReductionContainer.rawMatchesBySerial);

@@ -8,6 +8,9 @@
 class QueryElementType;
 class QueryFieldType;
 
+// Generic query part that has some tokens and eventually refers
+// to a combination of element+field
+
 class QueryBasePart {
 public:
 	virtual ~QueryBasePart() {}
@@ -15,11 +18,14 @@ public:
 
 	QStringList tokens();
 
+	// Combination of field+element;
+	// e.g. All will have all the flags set
 	virtual ElementFieldTypes elementFieldTypes() = 0;
+
 	virtual QueryElementType *element() = 0;
 	virtual QueryFieldType *field() = 0;
 
-	virtual operator QString();
+	virtual operator QString() const;
 
 protected:
 	QStringList mTokens;

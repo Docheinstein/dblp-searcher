@@ -16,7 +16,8 @@ void QueryVenuePart::computeTypes()
 		else if (mField == QueryVenueFieldType::TITLE)
 			mTypes =
 					ElementFieldType::BookTitle |
-					ElementFieldType::ProceedingsTitle;
+					ElementFieldType::ProceedingsTitle |
+					ElementFieldType::Journal;
 
 		else if (mField == QueryVenueFieldType::PUBLISHER)
 			mTypes =
@@ -38,7 +39,7 @@ ElementFieldTypes QueryVenuePart::elementFieldTypes() { return mTypes; }
 QueryElementType *QueryVenuePart::element() { return mElement; }
 QueryFieldType *QueryVenuePart::field() { return mField; }
 
-QueryVenuePart::operator QString()
+QueryVenuePart::operator QString() const
 {
 	QString s = mElement->string();
 	if (mField != nullptr) {

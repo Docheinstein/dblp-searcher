@@ -14,7 +14,7 @@ public:
 	QueryElementType *element() override;
 	QueryFieldType *field() override;
 
-	operator QString() override;
+	operator QString() const override;
 
 protected:
 	void computeTypes();

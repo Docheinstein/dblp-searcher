@@ -111,14 +111,9 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 						(fieldTypeFlag & ElementFieldType::Year) == fieldTypeFlag) ||
 						(fieldName == Const::Dblp::Xml::Fields::TITLE &&
 						(fieldTypeFlag & ElementFieldType::Title) == fieldTypeFlag) ||
-	//					(fieldName == Const::Dblp::Xml::Fields::BOOKTITLE &&
-	//					fieldTypeFlag.testFlag(ElementFieldType::Booktitle) ||
 						(fieldName == Const::Dblp::Xml::Fields::PUBLISHER &&
-						(fieldTypeFlag & ElementFieldType::Publisher) == fieldTypeFlag) ||
-						(fieldName == Const::Dblp::Xml::Fields::JOURNAL &&
-						(fieldTypeFlag & ElementFieldType::Journal) == fieldTypeFlag)
-
-						;
+						(fieldTypeFlag & ElementFieldType::Publisher) == fieldTypeFlag)
+				;
 		};
 
 		for (int termPos = 0; termPos < fieldTerms.size();) {
@@ -207,9 +202,8 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 			// Mark the crossrefs rows
 
 			if (mHasCrossref &&
-				(fieldName == Const::Dblp::Xml::Fields::CROSSREF
-				// || fieldName == Const::Dblp::Xml::Fields::JOURNAL)
-				))
+				(fieldName == Const::Dblp::Xml::Fields::CROSSREF || 
+				 fieldName == Const::Dblp::Xml::Fields::JOURNAL))
 				lineBuilder.crossref(INT(mCrossrefSerial));
 
 			mLinesRaw.append(lineBuilder.build());

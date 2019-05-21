@@ -143,7 +143,7 @@ void QueryPublicationPart::computeTypes()
 	}
 }
 
-QueryPublicationPart::operator QString()
+QueryPublicationPart::operator QString() const
 {
 	QString s = mElement->string();
 	if (mField != nullptr) {

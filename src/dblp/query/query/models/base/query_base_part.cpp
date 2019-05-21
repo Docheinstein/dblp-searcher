@@ -7,13 +7,12 @@ void QueryBasePart::addToken(const QString &token)
 	mTokens.append(Util::String::sanitizeTerm(token));
 }
 
-
 QStringList QueryBasePart::tokens()
 {
 	return mTokens;
 }
 
-QueryBasePart::operator QString()
+QueryBasePart::operator QString() const
 {
 	return "TOKENS: {" + mTokens.join(", ") + "}";
 }

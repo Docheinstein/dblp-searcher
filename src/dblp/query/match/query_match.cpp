@@ -1,7 +1,16 @@
 #include "query_match.h"
-#include <dblp/index/handler/index_handler.h>
-#include "commons/globals/globals.h"
-#include "dblp/shared/element_type/element_type.h"
+
+QString queryMatchTypeString(QueryMatchType type)
+{
+	switch (type) {
+	case QueryMatchType::Publication:
+		return "publication";
+	case QueryMatchType::Venue:
+		return "venue";
+	case QueryMatchType::PublicationVenue:
+		return "pub+venue";
+	}
+}
 
 QueryMatchComponent::QueryMatchComponent() {}
 
@@ -21,6 +30,11 @@ QVector<IndexMatch> QueryMatchComponent::matches() const
 	return mMatches;
 }
 
+ElementType QueryMatchComponent::elementType() const
+{
+	return mType;
+}
+
 QueryMatchComponent::operator QString() const
 {
 	QString s;
@@ -36,11 +50,6 @@ QueryMatchComponent::operator QString() const
 
 	return s;
 
-}
-
-ElementType QueryMatchComponent::elementType() const
-{
-	return mType;
 }
 
 void QueryMatchComponent::finalize()
@@ -80,13 +89,6 @@ void QueryMatchComponent::finalize()
 	// OK: every IndexMatch within a category have the same element_serial
 	// and belong to the same element type
 }
-
-//QueryMatchComponent::operator QString() const
-//{
-//	return QString("{serial = ") + DEC(mSerial) + "; type = " +
-//			elementTypeString(mType) + "; # matches = " +
-//			DEC(mMatches.size()) + "}";
-//}
 
 
 QueryMatch QueryMatch::forPublication(const QVector<IndexMatch> &pubMatches, float score)
@@ -184,14 +186,36 @@ void QueryMatch::finalize()
 	}
 }
 
-QString queryMatchTypeString(QueryMatchType type)
+bool operator==(const QueryMatch &qm1, const QueryMatch &qm2)
 {
-	switch (type) {
-	case QueryMatchType::Publication:
-		return "publication";
-	case QueryMatchType::Venue:
-		return "venue";
-	case QueryMatchType::PublicationVenue:
-		return "pub+venue";
+	if (qm1.matchType() != qm2.matchType())
+		return false;
+
+	if (qm1.matchType() == QueryMatchType::Publication ||
+			qm1.matchType() == QueryMatchType::PublicationVenue) {
+		if (qm1.publication().elementSerial() != qm2.publication().elementSerial())
+			return false;
 	}
+
+	if (qm1.matchType() == QueryMatchType::Venue ||
+			qm1.matchType() == QueryMatchType::PublicationVenue) {
+		if (qm1.venue().elementSerial() != qm2.venue().elementSerial())
+			return false;
+	}
+
+	return true;
+}
+
+uint qHash(const QueryMatch &qm)
+{
+	static quint32 SERIAL_ENLARGER =
+			UINT_MAX / Config::Index::PostingList::ELEMENT_SERIAL_THRESHOLD;
+
+	return	qHash(qm.publication().elementSerial() * SERIAL_ENLARGER) ^
+			qHash(qm.venue().elementSerial() * SERIAL_ENLARGER);
+}
+
+bool operator<(const QueryMatch &qm1, const QueryMatch &qm2)
+{
+	return qm1.score() < qm2.score();
 }

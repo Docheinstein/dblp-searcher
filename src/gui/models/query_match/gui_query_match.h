@@ -1,6 +1,7 @@
 #ifndef GUI_QUERY_MATCH_H
 #define GUI_QUERY_MATCH_H
 
+#include <QObject>
 #include <dblp/query/match/query_match.h>
 
 #define GUI_QUERY_MATCH_TYPE_QML_NAME "QueryMatchType"

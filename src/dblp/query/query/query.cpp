@@ -1,15 +1,17 @@
 #include "query.h"
-#include <commons/const/const.h>
-#include <commons/util/util.h>
+
+#include "commons/const/const.h"
+#include "commons/util/util.h"
 #include "commons/globals/globals.h"
-#include <dblp/query/query/models/publication/query_publication_part.h>
-#include <dblp/query/query/models/basic/query_basic_part.h>
-#include <dblp/query/query/models/venue/query_venue_part.h>
 #include "commons/profiler/profiler.h"
+#include "dblp/query/query/models/publication/query_publication_part.h"
+#include "dblp/query/query/models/basic/query_basic_part.h"
+#include "dblp/query/query/models/venue/query_venue_part.h"
+#include "dblp/query/query/models/base/query_base_part.h"
 
 LOGGING(Query, true)
 
-const QList<QueryBasePart *> Query::parts() const
+const QVector<QueryBasePart *> Query::parts() const
 {
 	return mQueryParts;
 }
@@ -37,7 +39,7 @@ Query::Query(const QString &queryString)
 	// Just wrap a string remind if it was a phrasal or not
 	typedef struct QueryToken {
 		QString token;
-		bool phrasal;
+		bool phrasal; // whether the token is a word or a phrase
 	} QueryToken;
 
 	QList<QueryToken> queryTokens;
@@ -81,7 +83,7 @@ Query::Query(const QString &queryString)
 					macroToken.split(Const::Dblp::Query::TOKENS_SPLITTER,
 							  QString::SplitBehavior::SkipEmptyParts);
 
-			foreach (QString macroTokenToken, macroTokenTokens) {
+			for (const QString & macroTokenToken : macroTokenTokens) {
 				vv3("Adding as simple: " << macroTokenToken);
 				queryTokens.append({macroTokenToken, false /* not phrasal */});
 			}
@@ -89,7 +91,7 @@ Query::Query(const QString &queryString)
 	}
 
 	vv("Tokenized into: ");
-	foreach (QueryToken token, queryTokens) {
+	for (const QueryToken & token : queryTokens ) {
 		vv(token.token << " (" << (token.phrasal ? "phrasal" : "simple") << "): ");
 	}
 
@@ -109,7 +111,7 @@ Query::Query(const QString &queryString)
 		part->addToken(token);
 	};
 
-	foreach (QueryToken qtoken, queryTokens) {
+	for (const QueryToken & qtoken : queryTokens) {
 		vv("Inspecting: '" << qtoken.token << "'");
 
 		/*
@@ -194,8 +196,8 @@ Query::Query(const QString &queryString)
 	PROF_FUNC_END
 }
 
-// If the token is a search pattern, returns true and put into part
-// the new query part
+// If the token is a search pattern returns a new query part for that token
+// otherwise returns null
 QueryBasePart * Query::newQueryPartFromToken(const QString &token)
 {
 	QueryBasePart * queryPart = nullptr;
@@ -357,9 +359,12 @@ QueryBasePart *Query::newQueryPartFromToken(
 		QueryFieldType *field,
 		QueryBasePart *queryPartCreator(QueryElementType *, QueryFieldType *))
 {
-	QString searchPattern = queryPartSearch(
+	QString searchPattern = queryPartSearchPattern(
 				element->string(),
-				field ? field->string() : "" /* no field */);
+				field ?
+					field->string() :
+					"" /* no field */
+	);
 
 	if (!token.startsWith(searchPattern)) {
 		// Search pattern doesn't match
@@ -374,6 +379,9 @@ QueryBasePart *Query::newQueryPartFromToken(
 	// At this point, it means that the token is a search pattern
 	// (it begins with "<publication>.<field>:" or "<publication/field>:")
 	// We have to capture eventual other tokens that occure after the search pattern
+	// This is needed since the user could provide a search pattern attached
+	// to other token(s) that would be discarded otherwise
+	// e.g. article.author:JKRowling
 
 	QString remainingToken = token.mid(searchPattern.size());
 
@@ -391,7 +399,7 @@ QueryBasePart *Query::newQueryPartFromToken(
 	return part;
 }
 
-QString Query::queryPartSearch(const QString &element, const QString &field) {
+QString Query::queryPartSearchPattern(const QString &element, const QString &field) {
 	// Returns <publication>:
 	// Or <publication>.<field>:
 	if (field.isEmpty())

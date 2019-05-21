@@ -3,6 +3,8 @@
 
 #include <dblp/query/query/models/base/query_base_part.h>
 
+// Query part not bound to any element+field (general query)
+
 class QueryBasicPart : public QueryBasePart {
 public:
 	ElementFieldTypes elementFieldTypes() override;

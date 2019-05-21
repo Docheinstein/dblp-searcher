@@ -1,5 +1,6 @@
 #include "gui_query_matches.h"
 #include "dblp/irmodel/base/ir_model.h"
+#include "dblp/index/handler/index_handler.h"
 
 #define NOT_FOUND -1
 

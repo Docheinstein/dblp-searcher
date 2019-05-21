@@ -1,10 +1,11 @@
 #ifndef QUERY_H
 #define QUERY_H
 
-#include <QList>
-#include <commons/log/loggable/loggable.h>
-#include <dblp/query/query/models/base/query_base_part.h>
+#include <QVector>
+#include "commons/log/loggable/loggable.h"
 #include "dblp/query/query/models/types/query_types.h"
+
+class QueryBasePart;
 
 class Query : protected Loggable {
 public:
@@ -12,20 +13,23 @@ public:
 	Query(const QString &queryString);
 	operator QString() const;
 
-	const QList<QueryBasePart *> parts() const;
+	const QVector<QueryBasePart *> parts() const;
 
 protected:
 	LOGGING_OVERRIDE
 
 private:
-	static QueryBasePart * newQueryPartFromToken(const QString &token);
+	// We have to use QueryBasePart pointer everywhere since we cannot
+	// have a vector of non pointers of abstract classes
+
+	static QueryBasePart * newQueryPartFromToken(
+			   const QString &token);
 
 	static QueryBasePart * newQueryPublicationPartFromToken(
 			const QString &token);
 	static QueryBasePart * newQueryPublicationPartFromToken(
 			const QString &token,
 			QueryPublicationElementCase pubElement);
-
 	static QueryBasePart * newQueryPublicationPartFromToken(
 			const QString &token,
 			QueryPublicationElementCase pubElement,
@@ -47,12 +51,12 @@ private:
 			QueryFieldType * field,
 			QueryBasePart *(queryPartCreator)(QueryElementType *el, QueryFieldType *fl));
 
-	static QString queryPartSearch(const QString &element, const QString &field);
+	static QString queryPartSearchPattern(const QString &element, const QString &field);
 
 	void addPart(QueryBasePart * queryPart);
 
 	// The query is "only" its parts
-	QList<QueryBasePart *> mQueryParts;
+	QVector<QueryBasePart *> mQueryParts;
 };
 
 #endif // QUERY_H
