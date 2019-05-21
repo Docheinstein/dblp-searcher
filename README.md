@@ -5,11 +5,11 @@ Indexer and query resolver of a mini language over the DBLP's dumps (dblp.xml).
 
 ## REQUIREMENTS
 
-make
-qmake (qt5-make)
-Qt5 (libqt5...)
-openmp (libgomp)
-qtdeclarative5-dev
+* make
+* qmake (qt5-make)
+* Qt5 (libqt5...)
+* openmp (libgomp)
+* Qt5 GUI (qtdeclarative5-dev)
 
 ## COMPILE
 
