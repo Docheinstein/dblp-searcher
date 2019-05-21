@@ -4,7 +4,7 @@
 #include <QAbstractListModel>
 
 #include "dblp/query/match/query_match.h"
-#include "gui/models/query_match/gui_query_match.h"
+#include "gui/components/query_match/gui_query_match.h"
 
 class IRModel;
 

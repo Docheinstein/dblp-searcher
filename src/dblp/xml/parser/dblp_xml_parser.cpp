@@ -298,15 +298,17 @@ bool DblpXmlParser::setParserDeviceBuffer()
 	// Found the first token that delimits a start of tag for a known element
 
 	// Where are them?
+	// Search for the pattern "<article " with a trailing space, so that
+	// <book is not confused with <booktitle, and in general is more appropriate
+	// since the element must have a key and thus a space after the element name
 	int debrisMinSize = INT_MAX;
-	int articleOffset = qdata.indexOf("<" + DblpXmlElements::ARTICLE);
-	int incollectionOffset = qdata.indexOf("<" + DblpXmlElements::INCOLLECTION);
-	int bookOffset = qdata.indexOf("<" + DblpXmlElements::BOOK);
-	int inprocOffset = qdata.indexOf("<" + DblpXmlElements::INPROCEEDINGS);
-	int procOffset = qdata.indexOf("<" + DblpXmlElements::PROCEEDINGS);
-	int phdOffset = qdata.indexOf("<" + DblpXmlElements::PHDTHESIS);
-	int masterOffset = qdata.indexOf("<" + DblpXmlElements::MASTERTHESIS);
-
+	int articleOffset = qdata.indexOf("<" + DblpXmlElements::ARTICLE + " ");
+	int incollectionOffset = qdata.indexOf("<" + DblpXmlElements::INCOLLECTION + " ");
+	int bookOffset = qdata.indexOf("<" + DblpXmlElements::BOOK + " ");
+	int inprocOffset = qdata.indexOf("<" + DblpXmlElements::INPROCEEDINGS + " ");
+	int procOffset = qdata.indexOf("<" + DblpXmlElements::PROCEEDINGS + " ");
+	int phdOffset = qdata.indexOf("<" + DblpXmlElements::PHDTHESIS + " ");
+	int masterOffset = qdata.indexOf("<" + DblpXmlElements::MASTERTHESIS + " ");
 
 	if (articleOffset >= 0)
 		debrisMinSize = MIN(debrisMinSize, articleOffset);

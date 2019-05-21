@@ -8,10 +8,10 @@
 #include "dblp/irmodel/impl/ief/ir_model_ief.h"
 #include "dblp/query/resolver/query_resolver.h"
 #include "gui/engine/gui_engine.h"
-#include "gui/splash/gui_splash_window.h"
-#include "gui/main/gui_main_window.h"
-#include "gui/models/dblp_xml_lines/gui_dblp_xml_lines.h"
-#include "gui/models/element_details/gui_element_details.h"
+#include "gui/windows/splash/gui_splash_window.h"
+#include "gui/windows/main/gui_main_window.h"
+#include "gui/components/dblp_xml_lines/gui_dblp_xml_lines.h"
+#include "gui/components/element_details/gui_element_details.h"
 
 #define QML_URI				"DblpSearcher"
 #define QML_VERSION_MAJOR	1
@@ -19,7 +19,10 @@
 
 #define QML_REGISTRAR QML_URI, QML_VERSION_MAJOR, QML_REVISION
 
+#if DEBUG
+// Just for avoid warnings about unused vars
 STATIC_LOGGING(Main, true)
+#endif
 
 int startSearchMode() {
 	Q_ASSERT(arguments.mode == DblpSearcherMode::Search);

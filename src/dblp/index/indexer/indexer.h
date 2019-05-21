@@ -1,6 +1,7 @@
 #ifndef INDEXER_H
 #define INDEXER_H
 
+#include <QElapsedTimer>
 #include <QString>
 #include "commons/file/filestream/data/data_stream_file.h"
 #include "commons/file/filestream/text/text_stream_file.h"
@@ -88,6 +89,7 @@ private:
 	void printStats();
 
 	struct {
+		QElapsedTimer timer;
 		quint64 postsCount = 0;
 		quint32 highestFieldNumber = 0;
 		quint32 highestInFieldPosition = 0;

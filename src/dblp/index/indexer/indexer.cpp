@@ -68,6 +68,9 @@ void Indexer::onParseStart()
 		QUIT(INDEX_CREATION_ERROR);
 
 	ii("Started parsing of XML file...");
+
+	// Start the timer
+	mStats.timer.start();
 }
 
 void Indexer::onParseEnd()
@@ -659,8 +662,9 @@ void Indexer::writeTermFieldPostsCount(quint32 count)
 	if (count < Config::Index::Vocabulary::REF_SHRINKED_THRESHOLD) {
 		// 16 bit
 
-		if (count > 0)
+		if (count > 0) {
 			dd4("Writing posts count: " << UINT16(count));
+		}
 
 		mVocabularyStream.stream << UINT16(count);
 	}
@@ -669,8 +673,9 @@ void Indexer::writeTermFieldPostsCount(quint32 count)
 				 "indexing", "There are more posts than the index's allowed number");
 		// 32 bit, with leftmost bit = 1
 
-		if (count > 0)
+		if (count > 0) {
 			dd4("Writing posts count: " << count);
+		}
 
 		mVocabularyStream.stream <<
 			// In order to distinguish this from the < 16 bit case, add a
@@ -785,6 +790,8 @@ void Indexer::printStats()
 	ii("========================");
 	ii("==== INDEXING STATS ====");
 	ii("========================");
+
+	ii("Time: " << 	Util::Time::humanTime(INT(mStats.timer.elapsed())));
 
 	// Count
 

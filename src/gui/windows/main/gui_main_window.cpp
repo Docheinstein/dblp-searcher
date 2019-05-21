@@ -8,14 +8,13 @@
 
 #include "dblp/query/resolver/query_resolver.h"
 #include "dblp/query/match/query_match.h"
-#include "commons/globals/globals.h"
-#include "gui/models/query_match/gui_query_match.h"
-
-#include "commons/profiler/profiler.h"
 #include "dblp/query/resolver/query_resolver.h"
 #include "dblp/query/query/query.h"
+#include "commons/globals/globals.h"
+#include "commons/profiler/profiler.h"
+#include "gui/components/query_match/gui_query_match.h"
 
-LOGGING(GuiMainWindow, true)
+LOGGING(GuiMainWindow, false)
 
 GuiMainWindow::~GuiMainWindow() {}
 

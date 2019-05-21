@@ -119,10 +119,16 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 						Const::Dblp::Query::TOKENS_SPLITTER,
 						QString::SplitBehavior::SkipEmptyParts);
 			for (auto it = tokens.cbegin(); it < tokens.cend(); ++it) {
+#if VERBOSE
+				// Compute & print
 				float ief = mIrModel->termScore(Util::String::sanitizeTerm(*it));
 				vv4("Computing ief(" << *it << ") now due lazy ief: " << ief);
+#else
+				// Just compute
+				mIrModel->termScore(Util::String::sanitizeTerm(*it));
+#endif // VERBOSE
 			}
-#endif
+#endif // LAZY_IEF
 
 			vv2("Resolving subpart for token: " << macroToken);
 

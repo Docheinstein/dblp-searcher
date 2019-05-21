@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.9.0, 2019-05-21T16:48:02. -->
+<!-- Written by QtCreator 4.9.0, 2019-05-21T22:48:39. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -658,7 +658,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">DblpSearcher</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">DblpIndexer_Prod</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/stefano/Develop/Qt/DblpSearcher/DblpSearcher.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">--index /home/stefano/Documents/DblpSearcher/xml/dblp-prod.xml /home/stefano/Documents/DblpSearcher/index/ prod</value>
+    <value type="QString" key="RunConfiguration.Arguments">--index /home/stefano/Documents/DblpSearcher/xml/dblp.xml /home/stefano/Documents/DblpSearcher/index/ prod</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
@@ -790,7 +790,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">DblpSearcher</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">DblpSearcher_Prod</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/stefano/Develop/Qt/DblpSearcher/DblpSearcher.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Documents/DblpSearcher/index/ prod</value>
+    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Documents/DblpSearcher/index/ prod -X /home/stefano/Documents/DblpSearcher/xml/dblp.xml</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>

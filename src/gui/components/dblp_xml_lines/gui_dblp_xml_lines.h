@@ -3,7 +3,7 @@
 
 #include <QAbstractListModel>
 
-#include <gui/models/dblp_xml_line/gui_dblp_xml_line.h>
+#include "gui/components/dblp_xml_line/gui_dblp_xml_line.h"
 
 class GuiDblpXmlLines : public QAbstractListModel {
 

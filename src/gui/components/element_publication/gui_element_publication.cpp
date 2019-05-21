@@ -3,7 +3,7 @@
 #include "dblp/index/handler/index_handler.h"
 #include "dblp/query/resolver/query_resolver.h"
 #include "dblp/irmodel/base/ir_model.h"
-#include "gui/main/gui_main_window.h"
+#include "gui/windows/main/gui_main_window.h"
 
 
 elem_serial GuiElementPublication::serial() const

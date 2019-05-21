@@ -90,10 +90,12 @@ Query::Query(const QString &queryString)
 		}
 	}
 
+#if VERBOSE
 	vv("Tokenized into: ");
 	for (const QueryToken & token : queryTokens ) {
 		vv(token.token << " (" << (token.phrasal ? "phrasal" : "simple") << "): ");
 	}
+#endif // VERBOSE
 
 	// Query part the next tokens will be added to
 	QueryBasePart * currentQueryPart = nullptr;

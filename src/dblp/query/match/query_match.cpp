@@ -218,5 +218,11 @@ uint qHash(const QueryMatch &qm)
 
 bool operator<(const QueryMatch &qm1, const QueryMatch &qm2)
 {
+	// Two query matches with the same score are considered equals; we do
+	// not prefer any of the two; altough this may lead to situations in which
+	// the same query returns results sorted in different order, if two
+	// query matches have the same score, but is reasonable
+	// Otherwise we should check the query match serial/identifier for
+	// both the publication and venue component...
 	return qm1.score() < qm2.score();
 }

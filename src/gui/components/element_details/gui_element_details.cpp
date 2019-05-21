@@ -10,7 +10,7 @@
 #include "dblp/query/resolver/query_resolver.h"
 #include "dblp/irmodel/base/ir_model.h"
 #include "dblp/index/handler/index_handler.h"
-#include "gui/main/gui_main_window.h"
+#include "gui/windows/main/gui_main_window.h"
 
 #define HIGHLIGHT_COLOR "#e24834"
 #define HIGHLIGHTED(term) "<b style='color: " HIGHLIGHT_COLOR "'>" + term + "</b>"
@@ -90,8 +90,22 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 	QVector<IndexMatch> indexMatches =
 			GuiMainWindow::instance().elementMatches(mSerial);
 
-	auto highlightedFieldValue = [&indexMatches]
-			(const QString &fieldName, const QString &fieldValue,
+	QVector<IndexMatch> crossrefIndexMatches;
+
+	// Retrieve the crossref matches
+	// This is actually useless apart from the journals for which an element
+	// doesn't exists; in that case we highlight the journal field within
+	// the article, so we have to retrieve the crossref matches for highlight
+	// the matched terms.
+	if (mHasCrossref) {
+		crossrefIndexMatches =
+				GuiMainWindow::instance().elementMatches(mCrossrefSerial);
+	}
+
+	auto highlightedFieldValue = []
+			(const QVector<IndexMatch> &indexMatches,
+			const QString &fieldName,
+			const QString &fieldValue,
 			int fieldNum) -> QString /* eventually highlighted fieldValue */ {
 
 		_dd("Checking highlighting for field: " << fieldName
@@ -115,7 +129,10 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 						(fieldName == Const::Dblp::Xml::Fields::TITLE &&
 						(fieldTypeFlag & ElementFieldType::Title) == fieldTypeFlag) ||
 						(fieldName == Const::Dblp::Xml::Fields::PUBLISHER &&
-						(fieldTypeFlag & ElementFieldType::Publisher) == fieldTypeFlag)
+						(fieldTypeFlag & ElementFieldType::Publisher) == fieldTypeFlag) ||
+						// Even journal may contain matches
+						(fieldName == Const::Dblp::Xml::Fields::JOURNAL &&
+						(fieldTypeFlag & ElementFieldType::Journal) == fieldTypeFlag)
 				;
 		};
 
@@ -130,7 +147,7 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 				_dd3("- field num: " << indexMatch.fieldNumber);
 				_dd3("- field type: " << elementFieldTypeString(indexMatch.fieldType));
 
-				if (/* mSerial == indexMatch.elementSerial && */
+				if (/* Assumption: the serial is right; the caller is responsible of this */
 					termPos == indexMatch.matchPosition &&
 					fieldNum == indexMatch.fieldNumber &&
 					fieldHasIndexMatches(indexMatch)) {
@@ -198,9 +215,7 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 				.tag(fieldName)
 				.indent(true)
 				.type(GuiDblpXmlLineType::Inline)
-				.content(highlightedFieldValue(fieldName, fieldValue, fieldNum))
 				.crossref(-1);
-
 
 			// Mark the crossrefs rows
 
@@ -208,6 +223,23 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 				(fieldName == Const::Dblp::Xml::Fields::CROSSREF ||
 				 fieldName == Const::Dblp::Xml::Fields::JOURNAL))
 				lineBuilder.crossref(INT(mCrossrefSerial));
+
+			// Special case: the journal field could be either a crossref row
+			// or a field that contains matches; we have to handle it apart
+			// since all the other <crossref> tags do not contain any term matches
+
+			if (fieldName == Const::Dblp::Xml::Fields::JOURNAL) {
+				// Special case, pass the index matches of the journal.
+				// All the other crossref is not handled this way since
+				// have a dedicate element that could be seen (and for which
+				// the matches terms can be seen)
+				lineBuilder.content(highlightedFieldValue(
+						crossrefIndexMatches, fieldName, fieldValue, fieldNum));
+			} else {
+				// Standard case, pass the index matches of this element
+				lineBuilder.content(highlightedFieldValue(
+						indexMatches, fieldName, fieldValue, fieldNum));
+			}
 
 			mLinesRaw.append(lineBuilder.build());
 

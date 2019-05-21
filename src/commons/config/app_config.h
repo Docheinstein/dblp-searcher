@@ -22,7 +22,7 @@
 
 
 // Set to 0 or 1 to enable/disable profiler
-#define PROFILER 1
+#define PROFILER 0
 
 
 // =============================================================================
@@ -45,7 +45,7 @@
 // SILENT_ALMOST_ALL_ALL: shut up every log level apart from info, warn and errors
 
 #define SILENT_ALL			0
-#define SILENT_ALMOST_ALL	1
+#define SILENT_ALMOST_ALL	0
 
 
 // Real log levels state accordingly to SILENT_ALL and SILENT_ALMOST_ALL

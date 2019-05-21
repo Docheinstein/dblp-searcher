@@ -3,7 +3,7 @@
 
 #include <QAbstractListModel>
 
-#include <gui/models/element_publication/gui_element_publication.h>
+#include "gui/components/element_publication/gui_element_publication.h"
 
 class GuiElementPublications : public QAbstractListModel {
 

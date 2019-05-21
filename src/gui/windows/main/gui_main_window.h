@@ -10,7 +10,7 @@
 #include "dblp/query/resolver/models/query_outcome.h"
 #include "dblp/query/match/query_match.h"
 #include "gui/base/component/gui_component.h"
-#include "gui/models/query_matches/gui_query_matches.h"
+#include "gui/components/query_matches/gui_query_matches.h"
 
 class QQmlEngine;
 class QJSEngine;

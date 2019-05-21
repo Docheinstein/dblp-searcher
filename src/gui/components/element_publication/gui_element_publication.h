@@ -2,6 +2,7 @@
 #define GUI_ELEMENT_PUBLICATION_H
 
 #include <QString>
+
 #include "dblp/shared/defs/defs.h"
 
 class GuiElementPublication {

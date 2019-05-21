@@ -8,8 +8,8 @@
 #include "commons/log/loggable/loggable.h"
 #include "dblp/xml/models/element/dblp_xml_element.h"
 #include "dblp/xml/handler/dblp_xml_parse_handler.h"
-#include "gui/models/dblp_xml_lines/gui_dblp_xml_lines.h"
-#include "gui/models/element_publications/gui_element_publications.h"
+#include "gui/components/dblp_xml_lines/gui_dblp_xml_lines.h"
+#include "gui/components/element_publications/gui_element_publications.h"
 
 
 
