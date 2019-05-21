@@ -11,8 +11,6 @@
 #include "gui/components/dblp_xml_lines/gui_dblp_xml_lines.h"
 #include "gui/components/element_publications/gui_element_publications.h"
 
-
-
 // XML Retriever stuff BEGIN
 
 class DblpElementXmlRetrieverHandler : public QObject {

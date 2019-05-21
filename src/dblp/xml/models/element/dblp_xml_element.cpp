@@ -6,7 +6,7 @@ DblpXmlElement::operator QString() const
 	s += "Name: " + name + "\n";
 
 	for (auto it = attributes.cbegin(); it != attributes.cend(); ++it) {
-		s+= "Attr (" + it->name() + " : " + it->value() + ")" + "\n";
+		s+= "Attr (" + it->name().toString() + " : " + it->value().toString() + ")" + "\n";
 	}
 
 	for (auto it = fields.cbegin(); it != fields.cend(); ++it) {

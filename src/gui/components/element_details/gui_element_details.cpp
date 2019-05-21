@@ -189,7 +189,7 @@ void GuiElementDetails::onElementRetrieved(const DblpXmlElement &elem)
 	// Compute attributes
 	QStringList attrs;
 	for (const QXmlStreamAttribute & attr : elem.attributes) {
-		attrs.append(attr.name() + "=\"" + attr.value() + "\"");
+		attrs.append(attr.name().toString() + "=\"" + attr.value().toString() + "\"");
 	}
 
 	// Element open

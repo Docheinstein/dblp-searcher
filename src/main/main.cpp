@@ -40,6 +40,26 @@ SEARCH MODE
 		--xml, -X <dblp_xml_file>
 		Use the original XML for show the original XML content of the query matches.
 		Must obviously be the same file used for the indexing.
+
+
+SEARCH MODE LANGUAGE
+	The following mini language is supported by the query resolver:
+
+	f-t-s: ([element-field:] search-pattern)+
+	search-pattern: term | "phrasal terms"
+	element-field: publication-search | venue-search
+	publication-search : publication-element[.publication-field]
+	publication-element: publication | article | incollection | inproc | phThesis | masterThesis
+	publication-field: author | title | year
+	venue-search: venue[.venue-field]
+	venue-field: title | publisher
+
+	e.g.
+	1. information retrieval
+	2. "information retrieval"
+	3. article: data science
+	4. incollection.title: "database logic"
+	5. article: science venue.title: springer
 )#";
 
 Arguments arguments;

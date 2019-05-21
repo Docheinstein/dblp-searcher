@@ -9,118 +9,104 @@ make
 qmake (qt5-make)
 Qt5 (libqt5...)
 openmp (libgomp)
+qtdeclarative5-dev
 
 ## COMPILE
 
-./makepri.sh
-qmake DblpSearcher.pro -spec linux-g++ CONFIG+=qtquickcompiler
-make -j8 in /home/stefano/Develop/Qt/DblpSearcher/build
+```
+./build.sh
+```
+
+Which actually does the following:
+
+```
+rm -rf build
+mkdir build
+cd build
+../makepri.sh
+qmake ../DblpSearcher.pro
+make -j8
+```
+
+A binary file (`DblpSearcher`) will be created under the `build` directory.
+
+Copy to binary to your path or `cd` to `build` for follow the documentation.
 
 ## USAGE
 
-Two scripts will be installed in your local binary path (e.g. `/home/user/.local/bin`): `compress` and `uncompress`.
-If you want to invoke these scripts, ensure that your `$PATH` contains the python binary path
-Note that this compressor just compress regular files (i.e. doesn't create an archive such as .zip or .tar.gz).
-Anyhow, directory can still be compressed using the option: `-r`
-
-### Compression
-
-The compression phases replaces the original files with the compressed ones, appending the extension ".Z"
-
-Compress a list of files:
 ```
-python3 -m lzw3.compressor doc1.txt doc2.txt
-```
- 
-Compress a directory recursively:
-```
-python3 -m lzw3.compressor -r /home/user/Docs/Project
-```
+NAME
+	dblp-searcher
 
-Alternatively you can user the `compress` script as follows:
-```
-compress doc1.txt doc2.txt
-```
+SYNOPSIS
+	dblp-searcher <MODE> <INDEX_FOLDER_PATH> <INDEX_BASE_NAME> [OPTIONS]...
 
-#### Options
+DESCRIPTION
+	Perform full-text searches over the dblp.xml dump of DBLP.
+	This program can be launched in two different mode:
+	1) Index creation: parses the dblp.xml and creates the index files from it
+	2) Search: open the GUI for perform searches over the previously created
+			   index files
 
-```
-    -r
-        Recursively compress the files inside the directories
-        within the given file list.
-        If not specified, directories in the file list are skipped.
+INDEX MODE
+	--index, -I <dblp_file_path> <index_folder_path> <index_base_name>
+		Starts in index creation mode.
+		Requires two additional arguments, the path where to place the index
+		files and the base name to use for the index files.
+		e.g. --index /tmp/dblp.xml /tmp/dblp-index/ indexname
 
-    -v
-        Prints information about the handled files and the percentage of
-        saved space for each compressed file.
+SEARCH MODE
+	--search, -S <index_folder_path> <index_base_name>
+		Starts the GUI in search mode.
+		Requires two additional arguments, the path where to load the index
+		files and the base name of those.
+		e.g. --search /tmp/dblp-index/ indexname
 
-    -t
-        Prints the time spent for compress each file.
-
-    -k
-        Keeps the original files instead of replace those with the
-        compressed ones.
-
-    -f
-        Force to compress and keep the compressed file, even if the size
-        of the compressed file is higher than the size of the original one.
-
-    -d
-        Prints debug messages.
-```
+	OPTIONALS
+		--xml, -X <dblp_xml_file>
+		Use the original XML for show the original XML content of the query matches.
+		Must obviously be the same file used for the indexing.
 
 
-### Decompression
+SEARCH MODE LANGUAGE
+	The following mini language is supported by the query resolver:
+	
+	f-t-s: ([element-field:] search-pattern)+
+	search-pattern: term | "phrasal terms"
+	element-field: publication-search | venue-search
+	publication-search : publication-element[.publication-field]
+	publication-element: publication | article | incollection | inproc | phThesis | masterThesis
+	publication-field: author | title | year
+	venue-search: venue[.venue-field]
+	venue-field: title | publisher
 
-The decompression phases replaces the compressed files (with extension ".Z") with the uncompressed ones.
+	e.g.
+	1. information retrieval
+	2. "information retrieval"
+	3. article: data science
+	4. incollection.title: "database logic"
+	5. article: science venue.title: springer
 
-Decompress a list of files:
-```
-python3 -m lzw3.decompressor doc1.txt.Z doc2.txt.Z
-```
-        
-Decompress a directory recursively:
-```
-python3 -m lzw3.decompressor -r /home/user/Docs/Project
 ```
 
-Alternatively you can user the `uncompress` script as follows:
-```
-uncompress doc1.txt.Z doc2.txt.Z
-```
+### Indexing
 
-#### Options
+First of all a valid dblp.xml file should be downloaded from the 
+[DBLP page](https://dblp.uni-trier.de/xml/).
 
-```
-    -r
-        Recursively decompress the files inside the directories
-        within the given file list.
-        If not specified, directories in the file list are skipped.
+Therefore starts the binary in index mode in order to index the dblp.xml file.
 
-    -v
-        Prints information about the handled files.
+e.g. ./DblpSearcher --index /tmp/dblp.xml /tmp/dblp-index/ myindex
 
-    -t
-        Prints the time spent for decompress each file.
+### Searching
 
-    -k
-        Keeps the decompressed files after the decompression.
+After the creation of the indexes files, the application can be started in search
+mode.
 
-    -f
-        Force to decompress the files even if the file name 
-        doesn't end with ".Z".
+e.g. ./DblpSearcher --search /tmp/dblp-index/ myindex
 
-    -d
-        Prints debug messages.
-```
-
-## TESTING
-
-The project comes with few unit tests, both on static or random generated files.
-To run the tests use:
-```
-python3 setup.py test
-```
+The queries should be conform to the language expressed in the USAGE section.
 
 ## LICENSE
-LZW3 is [MIT licensed](./LICENSE).
+
+DblpSearcher is [MIT licensed](./LICENSE).
