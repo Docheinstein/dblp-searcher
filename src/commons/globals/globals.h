@@ -9,6 +9,10 @@
 #define QUIT(msg) \
 	qFatal("%s\n%s\n%s", "===== ABORTED =====", msg, "===================");
 
+#define QUIT_SOFT(msg) \
+	qInfo() << msg; \
+	exit(-1)
+
 // Handly cast
 
 #define INT(x) static_cast<int>(x)

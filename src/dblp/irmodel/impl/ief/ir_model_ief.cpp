@@ -29,9 +29,8 @@ void IRModelIef::init()
 #else
 	// Compute all the iefs now (may require some time)
 	computeIefs();
-#endif
-
 	printIefs();
+#endif
 }
 
 float IRModelIef::termScore(const QString &term)

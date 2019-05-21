@@ -14,7 +14,7 @@
 #include "commons/profiler/profiler.h"
 #include "gui/components/query_match/gui_query_match.h"
 
-LOGGING(GuiMainWindow, false)
+LOGGING(GuiMainWindow, true)
 
 GuiMainWindow::~GuiMainWindow() {}
 

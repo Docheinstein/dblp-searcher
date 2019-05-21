@@ -19,8 +19,8 @@ DESCRIPTION
 	Perform full-text searches over the dblp.xml dump of DBLP.
 	This program can be launched in two different mode:
 	1) Index creation: parses the dblp.xml and creates the index files from it
-	2) Search:	open the GUI for perform searches over the previously created
-				index files
+	2) Search: open the GUI for perform searches over the previously created
+			   index files
 
 INDEX MODE
 	--index, -I <dblp_file_path> <index_folder_path> <index_base_name>
@@ -56,17 +56,17 @@ static int startIndexMode() {
 
 int main(int argc, char *argv[])
 {
-	_ii("Hello! DblpSearcher v." << VERSION << " there");
-
 	PROF_FUNC_BEGIN
 
 	if (argc < 2) {
-		QUIT(HELP);
+		QUIT_SOFT(HELP);
 	}
 	try {
 		// Parse the arguments
 		parseArguments(argc, argv);
 		printArguments();
+
+		_ii("Hello, dblp searcher v" << VERSION << " there!");
 
 		if (arguments.mode == DblpSearcherMode::Index) {
 			_ii("Starting in INDEX mode");
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 			startSearchMode();
 		}
 		else {
-			_ww("Arguments parsing failed; please provide a valid mode.");
+			_ww("Arguments parsing failed; please provide a valid mode");
 			QUIT(HELP);
 		}
 	} catch (const char * e) {

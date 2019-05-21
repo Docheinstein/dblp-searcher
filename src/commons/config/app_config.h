@@ -45,7 +45,7 @@
 // SILENT_ALMOST_ALL_ALL: shut up every log level apart from info, warn and errors
 
 #define SILENT_ALL			0
-#define SILENT_ALMOST_ALL	0
+#define SILENT_ALMOST_ALL	1
 
 
 // Real log levels state accordingly to SILENT_ALL and SILENT_ALMOST_ALL

@@ -47,7 +47,7 @@ bool DblpXmlParser::parse()
 		return false;
 	}
 
-	ii("Starting XML file parsing of: " << mInput.fileName());
+	vv("Starting XML file parsing of: " << mInput.fileName());
 
 	mHandler.onParseStart();
 

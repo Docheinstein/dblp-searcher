@@ -44,8 +44,8 @@ ApplicationWindow {
     Connections {
         target: MainWindow
         onOpenElementDetailsRequired: {
-            console.log("Element details opening required for: " + serial)
-            console.log("Going to push:" + Qt.resolvedUrl("ElementDetails.qml"))
+//            console.log("Element details opening required for: " + serial)
+//            console.log("Going to push:" + Qt.resolvedUrl("ElementDetails.qml"))
             mainStackView.push(
                 "ElementDetails.qml",
                 {
@@ -55,7 +55,7 @@ ApplicationWindow {
         }
 
         onPopViewRequired: {
-            console.log("Stackview pop required")
+//            console.log("Stackview pop required")
             mainStackView.pop()
         }
     }

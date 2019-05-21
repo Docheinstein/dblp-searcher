@@ -8,7 +8,7 @@
 #include "commons/globals/globals.h"
 #include "commons/profiler/profiler.h"
 
-LOGGING(IndexHandler, false);
+LOGGING(IndexHandler, true);
 
 IndexHandler::IndexHandler(const QString &indexPath, const QString &baseName,
 						   bool loadPositions)

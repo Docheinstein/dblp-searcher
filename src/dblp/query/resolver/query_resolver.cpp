@@ -13,7 +13,7 @@
 #include "dblp/query/query/query.h"
 #include "dblp/irmodel/base/ir_model.h"
 
-LOGGING(QueryResolver, false);
+LOGGING(QueryResolver, true);
 
 QueryResolver::QueryResolver() {}
 

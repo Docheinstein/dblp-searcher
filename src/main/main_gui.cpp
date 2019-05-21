@@ -72,7 +72,7 @@ int startSearchMode() {
 	guiMainWindow.setShown(false);
 	guiSplashWindow.setShown(true);
 
-	_dd("Created windows on thread: " << QThread::currentThread());
+	_dd("Created windows on thread: " << QThread::currentThreadId());
 
 	QThread * workerThread = new QThread();
 	IndexLoadingWorker *worker = new IndexLoadingWorker();
@@ -98,7 +98,7 @@ int startSearchMode() {
 
 	workerThread->start();
 
-	_dd("Hanging on : " << QThread::currentThreadId());
+	_dd("Hanging on thread: " << QThread::currentThreadId());
 
 	return guiApp.exec();
 }

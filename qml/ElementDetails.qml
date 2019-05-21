@@ -23,7 +23,7 @@ ColumnLayout {
         serial: elementSerial // Create with the bound serial
 
         onHasXmlChanged: {
-            console.log('Has xml changed: ' + hasXml)
+//            console.log('Has xml changed: ' + hasXml)
             const tabCount = elementDetailsTabBar.count
             if (hasXml) {
                 elementDetailsTabBar.addItem(
@@ -35,7 +35,7 @@ ColumnLayout {
         }
 
         onHasPublicationsChanged: {
-            console.log('Has publications changed: ' + hasPublications)
+//            console.log('Has publications changed: ' + hasPublications)
             const tabCount = elementDetailsTabBar.count
             if (hasPublications) {
                 elementDetailsTabBar.addItem(
