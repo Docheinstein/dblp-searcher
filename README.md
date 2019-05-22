@@ -9,7 +9,7 @@ Indexer and query resolver of a mini language over the DBLP's dumps (dblp.xml).
 * qmake (qt5-make)
 * Qt5 (libqt5...)
 * openmp (libgomp)
-* Qt5 GUI (qtdeclarative5-dev)
+* Qt5 GUI (qtdeclarative5-dev, qt5-quickcontrols2)
 
 ## COMPILE
 
