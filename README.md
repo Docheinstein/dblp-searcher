@@ -34,7 +34,7 @@ make -j8
 
 A binary file (`DblpSearcher`) will be created under the `build` directory.
 
-Copy to binary to your path or `cd` to `build` for follow the documentation.
+Copy the binary to your path or `cd` to `build` for follow the documentation.
 
 ## USAGE
 
