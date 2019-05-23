@@ -24,9 +24,9 @@ QDebug operator<<(QDebug stream, const IndexTermRef &tr) {
 		  tr.phdthesis.title << ",\t" <<
 		  tr.phdthesis.year << endl <<
 		"mas (a, t, y):\t" <<
-		  tr.masterthesis.author << ",\t" <<
-		  tr.masterthesis.title << ",\t" <<
-		  tr.masterthesis.year << endl <<
+		  tr.mastersthesis.author << ",\t" <<
+		  tr.mastersthesis.title << ",\t" <<
+		  tr.mastersthesis.year << endl <<
 		"bok (a, t, y, p):\t" <<
 		  tr.book.author << ",\t" <<
 		  tr.book.title << ",\t" <<

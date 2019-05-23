@@ -41,11 +41,11 @@ QString elementFieldTypeString(ElementFieldType t) {
 	case ElementFieldType::Phdthesis:
 		return "Phdthesis";
 
-	case ElementFieldType::MasterthesisAuthor:
+	case ElementFieldType::MastersthesisAuthor:
 		return "MasterthesisAuthor";
-	case ElementFieldType::MasterthesisTitle:
+	case ElementFieldType::MastersthesisTitle:
 		return "MasterthesisTitle";
-	case ElementFieldType::MasterthesisYear:
+	case ElementFieldType::MastersthesisYear:
 		return "MasterthesisYear";
 	case ElementFieldType::Masterthesis:
 		return "Masterthesis";

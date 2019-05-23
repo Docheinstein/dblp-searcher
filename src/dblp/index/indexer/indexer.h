@@ -35,7 +35,7 @@ private:
 	void handleInproceedings(const DblpInproceedings &inproc, qint64 pos);
 	void handleProceedings(const DblpProceedings &proc, qint64 pos);
 	void handlePhdThesis(const DblpPhdThesis &phd, qint64 pos);
-	void handleMasterThesis(const DblpMasterThesis &master, qint64 pos);
+	void handleMastersThesis(const DblpMastersThesis &master, qint64 pos);
 
 
 	// ===================

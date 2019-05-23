@@ -160,10 +160,10 @@ bool Indexer::onElement(const DblpXmlElement &element, qint64 pos)
 		DblpPhdThesis phd;
 		fillPublication(phd, element);
 		handlePhdThesis(phd, pos);
-	} else if (element.name == DblpXmlElements::MASTERTHESIS) {
-		DblpMasterThesis master;
+	} else if (element.name == DblpXmlElements::MASTERSTHESIS) {
+		DblpMastersThesis master;
 		fillPublication(master, element);
-		handleMasterThesis(master, pos);
+		handleMastersThesis(master, pos);
 	}
 
 	PROF_FUNC_END
@@ -375,25 +375,25 @@ void Indexer::handlePhdThesis(const DblpPhdThesis &phd, qint64 pos)
 	elementHandled();
 }
 
-void Indexer::handleMasterThesis(const DblpMasterThesis &master, qint64 pos)
+void Indexer::handleMastersThesis(const DblpMastersThesis &master, qint64 pos)
 {
-	dd("Handling masterthesis: " << master);
+	dd("Handling mastersthesis: " << master);
 
 	vv1("Adding terms of master.authors");
 	addTermsOfFields([](IndexTerm &term, const IndexPost &post)
-		{ term.masterthesis.author.append(post); },
+		{ term.mastersthesis.author.append(post); },
 		master.authors
 	);
 
 	vv1("Adding terms of master.title");
 	addTermsOfField([](IndexTerm &term, const IndexPost &post)
-		{ term.masterthesis.title.append(post); },
+		{ term.mastersthesis.title.append(post); },
 		master.title
 	);
 
 	vv1("Adding terms of master.year");
 	addTermsOfField([](IndexTerm &term, const IndexPost &post)
-		{ term.masterthesis.year.append(post); },
+		{ term.mastersthesis.year.append(post); },
 		master.year
 	);
 
@@ -607,9 +607,9 @@ void Indexer::writePostingListAndVocabularyFiles()
 			// - title
 			// - year
 
-			writeField(termEntity.masterthesis.author);
-			writeField(termEntity.masterthesis.title);
-			writeField(termEntity.masterthesis.year);
+			writeField(termEntity.mastersthesis.author);
+			writeField(termEntity.mastersthesis.title);
+			writeField(termEntity.mastersthesis.year);
 
 			// book
 			// - author

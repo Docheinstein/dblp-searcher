@@ -54,7 +54,7 @@ struct DblpInproceedings :  DblpPublicationCrossref {
 struct DblpProceedings :  DblpVenue {};
 
 struct DblpPhdThesis :  DblpPublication {};
-struct DblpMasterThesis :  DblpPublication {};
+struct DblpMastersThesis :  DblpPublication {};
 
 //struct DblpPerson :
 

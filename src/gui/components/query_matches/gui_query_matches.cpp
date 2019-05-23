@@ -131,6 +131,7 @@ QVariant GuiQueryMatches::data(const QModelIndex &index, int role) const
 		case QueryMatchType::PublicationVenue:
 			return GuiQueryMatchType::PublicationVenue;
 		}
+		break;
 	case GuiQueryMatchRoleScore:
 		return match.score();
 	case GuiQueryMatchRoleRank:

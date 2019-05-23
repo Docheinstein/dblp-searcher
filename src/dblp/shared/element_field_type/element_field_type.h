@@ -47,15 +47,15 @@ enum class ElementFieldType {
 
 	// Masterthesis
 
-	MasterthesisAuthor = PhdthesisYear << 1,
-	MasterthesisTitle = MasterthesisAuthor << 1,
-	MasterthesisYear = MasterthesisTitle << 1,
+	MastersthesisAuthor = PhdthesisYear << 1,
+	MastersthesisTitle = MastersthesisAuthor << 1,
+	MastersthesisYear = MastersthesisTitle << 1,
 
-	Masterthesis = MasterthesisAuthor | MasterthesisTitle | MasterthesisYear,
+	Masterthesis = MastersthesisAuthor | MastersthesisTitle | MastersthesisYear,
 
 	// Book
 
-	BookAuthor = MasterthesisYear << 1,
+	BookAuthor = MastersthesisYear << 1,
 	BookTitle = BookAuthor << 1,
 	BookYear = BookTitle << 1,
 	BookPublisher = BookYear << 1,
@@ -83,14 +83,14 @@ enum class ElementFieldType {
 	// Extra: field
 
 	Author = ArticleAuthor | IncollectionAuthor | InproceedingsAuthor |
-			PhdthesisAuthor | PhdthesisAuthor | MasterthesisAuthor | BookAuthor,
+			PhdthesisAuthor | PhdthesisAuthor | MastersthesisAuthor | BookAuthor,
 
 	Title = ArticleTitle | IncollectionTitle | InproceedingsTitle |
-			PhdthesisTitle | PhdthesisTitle | MasterthesisTitle | BookTitle |
+			PhdthesisTitle | PhdthesisTitle | MastersthesisTitle | BookTitle |
 			ProceedingsTitle,
 
 	Year = ArticleYear | IncollectionYear | InproceedingsYear |
-			PhdthesisYear | PhdthesisYear | MasterthesisYear | BookYear |
+			PhdthesisYear | PhdthesisYear | MastersthesisYear | BookYear |
 			ProceedingsYear,
 
 	Publisher = BookPublisher | ProceedingsPublisher,

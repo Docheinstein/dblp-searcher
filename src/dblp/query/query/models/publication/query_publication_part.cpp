@@ -28,7 +28,7 @@ void QueryPublicationPart::computeTypes()
 				ElementFieldType::IncollectionAuthor |
 				ElementFieldType::InproceedingsAuthor |
 				ElementFieldType::PhdthesisAuthor |
-				ElementFieldType::MasterthesisAuthor;
+				ElementFieldType::MastersthesisAuthor;
 
 		else if (mField == QueryPublicationFieldType::TITLE)
 			mTypes =
@@ -36,7 +36,7 @@ void QueryPublicationPart::computeTypes()
 				ElementFieldType::IncollectionTitle |
 				ElementFieldType::InproceedingsTitle |
 				ElementFieldType::PhdthesisTitle |
-				ElementFieldType::MasterthesisTitle;
+				ElementFieldType::MastersthesisTitle;
 
 		else if (mField == QueryPublicationFieldType::YEAR)
 			mTypes =
@@ -44,7 +44,7 @@ void QueryPublicationPart::computeTypes()
 				ElementFieldType::IncollectionYear |
 				ElementFieldType::InproceedingsYear |
 				ElementFieldType::PhdthesisYear |
-				ElementFieldType::MasterthesisYear;
+				ElementFieldType::MastersthesisYear;
 		else
 			// We should never come here
 			mTypes = ElementFieldType::Publication;
@@ -125,13 +125,13 @@ void QueryPublicationPart::computeTypes()
 			mTypes = ElementFieldType::Masterthesis;
 
 		else if (mField == QueryPublicationFieldType::AUTHOR)
-			mTypes = ElementFieldType::MasterthesisAuthor;
+			mTypes = ElementFieldType::MastersthesisAuthor;
 
 		else if (mField == QueryPublicationFieldType::TITLE)
-			mTypes = ElementFieldType::MasterthesisTitle;
+			mTypes = ElementFieldType::MastersthesisTitle;
 
 		else if (mField == QueryPublicationFieldType::YEAR)
-			mTypes = ElementFieldType::MasterthesisYear;
+			mTypes = ElementFieldType::MastersthesisYear;
 		else
 			// We should never come here
 			mTypes = ElementFieldType::Masterthesis;

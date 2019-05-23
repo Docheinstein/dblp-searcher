@@ -168,8 +168,6 @@ bool IndexHandler::findMatches(const QStringList &tokens,
 		sanitizedTokens.append(Util::String::sanitizeTerm(*it));
 	}
 
-	bool somethingFound = false;
-
 	// For each possibile field inside fields, test whether the flag
 	// in fields is set; if so extend the search to this field to
 	for (int f = INT(ElementFieldType::_Start);
@@ -180,15 +178,20 @@ bool IndexHandler::findMatches(const QStringList &tokens,
 		if (!fieldTypes.testFlag(fieldFlag))
 			continue; // do not search within this field
 
-		if (!phrasal)
-			somethingFound |= findWordMatches(sanitizedTokens.at(0), fieldFlag, matches);
-		else
-			somethingFound |= findPhraseMatches(sanitizedTokens, fieldFlag, matches);
+		bool termExists =
+				phrasal ?
+					findPhraseMatches(sanitizedTokens, fieldFlag, matches) :
+					findWordMatches(sanitizedTokens.at(0), fieldFlag, matches);
+
+		if (!termExists) {
+			ww("Aborting matches search for: " << sanitizedTokens.join(" "));
+			return false;
+		}
 	}
 
 	PROF_FUNC_END
 
-	return somethingFound;
+	return true;
 }
 
 bool IndexHandler::findWordMatches(const QString &token,
@@ -272,7 +275,8 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 
 		QVector<IndexPost> termPosts;
 		if (!findPosts(term, fieldType, termPosts))
-			continue; // nothing found
+			// For sure the phrase won't be matched if the term doesn't exists
+			return false;
 
 		for (const IndexPost & post : termPosts) {
 
@@ -554,14 +558,14 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 		refPost = &ref.phdthesis.year;
 		break;
 
-	case ElementFieldType::MasterthesisAuthor:
-		refPost = &ref.masterthesis.author;
+	case ElementFieldType::MastersthesisAuthor:
+		refPost = &ref.mastersthesis.author;
 		break;
-	case ElementFieldType::MasterthesisTitle:
-		refPost = &ref.masterthesis.title;
+	case ElementFieldType::MastersthesisTitle:
+		refPost = &ref.mastersthesis.title;
 		break;
-	case ElementFieldType::MasterthesisYear:
-		refPost = &ref.masterthesis.year;
+	case ElementFieldType::MastersthesisYear:
+		refPost = &ref.mastersthesis.year;
 		break;
 
 	case ElementFieldType::BookAuthor:
@@ -771,9 +775,9 @@ void IndexHandler::loadVocabulary()
 		incrementalOffset += loadIndexTermReference(ref.phdthesis.title, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.phdthesis.year, incrementalOffset);
 
-		incrementalOffset += loadIndexTermReference(ref.masterthesis.author, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.masterthesis.title, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.masterthesis.year, incrementalOffset);
+		incrementalOffset += loadIndexTermReference(ref.mastersthesis.author, incrementalOffset);
+		incrementalOffset += loadIndexTermReference(ref.mastersthesis.title, incrementalOffset);
+		incrementalOffset += loadIndexTermReference(ref.mastersthesis.year, incrementalOffset);
 
 		incrementalOffset += loadIndexTermReference(ref.book.author, incrementalOffset);
 		incrementalOffset += loadIndexTermReference(ref.book.title, incrementalOffset);

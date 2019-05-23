@@ -19,7 +19,7 @@
 
 #define QML_REGISTRAR QML_URI, QML_VERSION_MAJOR, QML_REVISION
 
-#if DEBUG
+#if DEBUG || INFO
 // Just for avoid warnings about unused vars
 STATIC_LOGGING(Main, true)
 #endif
@@ -98,7 +98,8 @@ int startSearchMode() {
 
 	workerThread->start();
 
-	_dd("Hanging on thread: " << QThread::currentThreadId());
+//	_dd("Hanging on thread: " << QThread::currentThreadId());
+	_ii("Hanging on thread: " << QThread::currentThreadId());
 
 	return guiApp.exec();
 }
@@ -182,7 +183,8 @@ void IndexLoadingThreadHandler::onProgressChanged(double progress)
 
 void IndexLoadingThreadHandler::onLoadingFinished(QueryResolver * resolver)
 {
-	_dd("Index loading finished");
+	_ii("Index loading finished");
+//	_dd("Index loading finished");
 
 	// Set the resolver
 	mMain.setResolver(resolver);
@@ -190,6 +192,8 @@ void IndexLoadingThreadHandler::onLoadingFinished(QueryResolver * resolver)
 	// Hide splash, show main
 	mSplash.setShown(false);
 	mMain.setShown(true);
-	_dd("Going to hide splash and show main window on thread: "
+	_ii("Going to hide splash and show main window on thread: "
 		<< QThread::currentThreadId());
+//	_dd("Going to hide splash and show main window on thread: "
+//		<< QThread::currentThreadId());
 }

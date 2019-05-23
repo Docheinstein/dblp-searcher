@@ -111,7 +111,7 @@ bool DblpXmlParser::handleStartElement()
 		token == DblpXmlElements::INPROCEEDINGS ||
 		token == DblpXmlElements::PROCEEDINGS ||
 		token == DblpXmlElements::PHDTHESIS ||
-		token == DblpXmlElements::MASTERTHESIS) {
+		token == DblpXmlElements::MASTERSTHESIS) {
 
 		// Save the element name and the attributes
 		mElementName = token;
@@ -216,7 +216,7 @@ bool DblpXmlParser::handleEndElement(bool resetState)
 		token == DblpXmlElements::INPROCEEDINGS ||
 		token == DblpXmlElements::PROCEEDINGS ||
 		token == DblpXmlElements::PHDTHESIS ||
-		token == DblpXmlElements::MASTERTHESIS) {
+		token == DblpXmlElements::MASTERSTHESIS) {
 
 		// Save the element name and the attributes
 		DblpXmlElement elem;
@@ -308,7 +308,7 @@ bool DblpXmlParser::setParserDeviceBuffer()
 	int inprocOffset = qdata.indexOf("<" + DblpXmlElements::INPROCEEDINGS + " ");
 	int procOffset = qdata.indexOf("<" + DblpXmlElements::PROCEEDINGS + " ");
 	int phdOffset = qdata.indexOf("<" + DblpXmlElements::PHDTHESIS + " ");
-	int masterOffset = qdata.indexOf("<" + DblpXmlElements::MASTERTHESIS + " ");
+	int masterOffset = qdata.indexOf("<" + DblpXmlElements::MASTERSTHESIS + " ");
 
 	if (articleOffset >= 0)
 		debrisMinSize = MIN(debrisMinSize, articleOffset);

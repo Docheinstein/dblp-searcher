@@ -55,7 +55,7 @@ public:
 		IndexTermRefPostMeta author;
 		IndexTermRefPostMeta title;
 		IndexTermRefPostMeta year;
-	} masterthesis;
+	} mastersthesis;
 
 	struct {
 		IndexTermRefPostMeta author;

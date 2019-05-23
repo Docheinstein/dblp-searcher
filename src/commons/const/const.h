@@ -19,7 +19,7 @@ namespace Const {
 				const QString INCOLLECTION = "incollection";
 				const QString INPROCEEDINGS = "inproc";
 				const QString PHDTHESIS = "phThesis";
-				const QString MASTERTHESIS = "masterThesis";
+				const QString MASTERSTHESIS = "masterThesis";
 
 				const QString VENUE = "venue";
 			}
@@ -42,7 +42,7 @@ namespace Const {
 				const QString INPROCEEDINGS = "inproceedings";
 				const QString PROCEEDINGS = "proceedings";
 				const QString PHDTHESIS = "phdthesis";
-				const QString MASTERTHESIS = "masterthesis";
+				const QString MASTERSTHESIS = "mastersthesis";
 			}
 
 			namespace Fields {

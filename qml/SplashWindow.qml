@@ -17,6 +17,13 @@ Window {
 
     title: "Dblp Searcher"
 
+//    Connections {
+//        target: SplashWindow
+//        onShownChanged: {
+//            console.log("onShown: " + SplashWindow.shown)
+//        }
+//    }
+
     Image {
         id: splashBackground
         anchors.fill: parent

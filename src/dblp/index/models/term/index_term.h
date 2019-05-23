@@ -60,7 +60,7 @@ public:
 		IndexPosts author;
 		IndexPosts title;
 		IndexPosts year;
-	} masterthesis;
+	} mastersthesis;
 
 	// STATS/DEBUG
 	struct {
