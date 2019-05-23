@@ -211,7 +211,7 @@ private:
 	 * additional stuff on the posting list using the terms alphabetical
 	 * order (such as compute the iefs of the terms).
 	 */
-	QMap<QString, IndexTerm> mIndexTerms;
+	QHash<QString, IndexTerm> mIndexTerms;
 
 	/* Associates publications element id with the respective venue identifier,
 	 * which usually is the key, but might even by another field (e.g. for
@@ -229,13 +229,13 @@ private:
 	 * the journals for which the journal name is the identifier (a journal
 	 * element doesnt exists in dblp.xml)
 	 */
-	QList<QString> mIdentifiers;
+	QVector<QString> mIdentifiers;
 
 	/* Parallel list of mIdentifiers which contains the positions of the elements
 	 * in the original dblp.xml file (an approximation of the position: an upper
 	 * bound).
 	 */
-	QList<qint64> mPositions;
+	QVector<elem_pos> mPositions;
 
 
 	// ===================

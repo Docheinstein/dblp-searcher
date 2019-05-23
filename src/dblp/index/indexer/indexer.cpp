@@ -495,7 +495,8 @@ void Indexer::addPosition(qint64 pos)
 
 	dd1("Adding dblp.xml pos for serial = " << mPositions.size() << ": " << pos);
 
-	mPositions.append(pos);
+	// No more than 4GB file is allowed
+	mPositions.append(static_cast<elem_pos>(pos));
 }
 
 void Indexer::addCrossref(const QString &externalVenueIdentifier)
@@ -740,11 +741,10 @@ void Indexer::writePositionsFile()
 
 	elem_serial i = 0;
 
-	for (qint64 pos : mPositions) {
+	for (elem_pos pos : mPositions) {
 		vv2("Writing position for element = " << i << ": " << pos);
 
-		elem_pos P = static_cast<elem_pos>(pos);
-		mElementsPositionsStream.stream << P;
+		mElementsPositionsStream.stream << pos;
 
 		++i;
 	}

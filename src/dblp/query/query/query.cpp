@@ -42,7 +42,7 @@ Query::Query(const QString &queryString)
 		bool phrasal; // whether the token is a word or a phrase
 	} QueryToken;
 
-	QList<QueryToken> queryTokens;
+	QVector<QueryToken> queryTokens;
 
 	// Retrieve the macro tokens of the query, by splitting by double quotes
 	QStringList macroTokens = queryString.split(

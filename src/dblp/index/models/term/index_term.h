@@ -1,10 +1,10 @@
 #ifndef INDEX_TERM_H
 #define INDEX_TERM_H
 
-#include <QList>
+#include <QVector>
 #include "dblp/index/models/post/index_post.h"
 
-typedef QList<IndexPost> IndexPosts;
+typedef QVector<IndexPost> IndexPosts;
 
 class IndexTerm {
 public:
@@ -25,7 +25,6 @@ public:
 		IndexPosts author;
 		IndexPosts title;
 		IndexPosts year;
-		IndexPosts booktitle;
 	} incollection;
 
 	struct {
@@ -39,7 +38,6 @@ public:
 		IndexPosts author;
 		IndexPosts title;
 		IndexPosts year;
-		IndexPosts booktitle;
 	} inproceedings;
 
 	struct {
@@ -47,7 +45,6 @@ public:
 		IndexPosts title;
 		IndexPosts year;
 		IndexPosts publisher;
-		IndexPosts booktitle;
 	} proceedings;
 
 	struct {
