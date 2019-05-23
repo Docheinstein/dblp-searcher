@@ -5,11 +5,15 @@ Indexer and query resolver of a mini language over the DBLP's dumps (dblp.xml).
 
 ## REQUIREMENTS
 
+The following packages are needed in order to compile DBLP Searcher (tested on Debian 9.1):
+
 * make
-* qmake (qt5-make)
-* Qt5 (libqt5...)
-* openmp (libgomp)
-* Qt5 GUI (qtdeclarative5-dev)
+* g++
+* qt5-make (qmake)
+* qt5-default (Qt5)
+* libgomp (openmp)
+* qtdeclarative5-dev (Qt5 GUI module)
+* qtquickcontrols2-5-dev (Qt5 GUI module)
 
 ## COMPILE
 
@@ -30,7 +34,7 @@ make -j8
 
 A binary file (`DblpSearcher`) will be created under the `build` directory.
 
-Copy to binary to your path or `cd` to `build` for follow the documentation.
+Copy the binary to your path or `cd` to `build` for follow the documentation.
 
 ## USAGE
 
