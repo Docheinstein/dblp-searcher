@@ -75,8 +75,8 @@ private:
 	void writeTermMetas(const QString &term); // to vocabulary
 	void writeTermFieldPostsCount(quint32 count); // to vocabulary
 
-	void writePosts(const IndexPosts &posts);
-	void writePost(const IndexPost &post);
+	void writePosts(const IndexPosts &posts, bool multifield);
+	void writePost(const IndexPost &post, bool multifield);
 
 	void writePositionsFile();
 

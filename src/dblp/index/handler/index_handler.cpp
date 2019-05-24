@@ -503,8 +503,10 @@ bool IndexHandler::findPosts(const QString &term,
 	return true;
 }
 
-void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator vocabularyEntry,
-							 ElementFieldType field, QVector<IndexPost> &posts)
+void IndexHandler::findPosts(const QMap<QString,
+							 IndexTermRef>::const_iterator vocabularyEntry,
+							 ElementFieldType field,
+							 QVector<IndexPost> &posts)
 {
 	PROF_FUNC_BEGIN6
 
@@ -513,9 +515,12 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 	// Calculate the field relative position within the ref based on the field
 	const IndexTermRefPostMeta *refPost;
 
+	bool multifield = false;
+
 	switch (field) {
 	case ElementFieldType::ArticleAuthor:
 		refPost = &ref.article.author;
+		multifield = true;
 		break;
 	case ElementFieldType::ArticleTitle:
 		refPost = &ref.article.title;
@@ -530,6 +535,7 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 
 	case ElementFieldType::IncollectionAuthor:
 		refPost = &ref.incollection.author;
+		multifield = false;
 		break;
 	case ElementFieldType::IncollectionTitle:
 		refPost = &ref.incollection.title;
@@ -540,6 +546,7 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 
 	case ElementFieldType::InproceedingsAuthor:
 		refPost = &ref.inproceedings.author;
+		multifield = false;
 		break;
 	case ElementFieldType::InproceedingsTitle:
 		refPost = &ref.inproceedings.title;
@@ -550,6 +557,7 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 
 	case ElementFieldType::PhdthesisAuthor:
 		refPost = &ref.phdthesis.author;
+		multifield = false;
 		break;
 	case ElementFieldType::PhdthesisTitle:
 		refPost = &ref.phdthesis.title;
@@ -560,6 +568,7 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 
 	case ElementFieldType::MastersthesisAuthor:
 		refPost = &ref.mastersthesis.author;
+		multifield = false;
 		break;
 	case ElementFieldType::MastersthesisTitle:
 		refPost = &ref.mastersthesis.title;
@@ -570,6 +579,7 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 
 	case ElementFieldType::BookAuthor:
 		refPost = &ref.book.author;
+		multifield = false;
 		break;
 	case ElementFieldType::BookTitle:
 		refPost = &ref.book.title;
@@ -609,29 +619,49 @@ void IndexHandler::findPosts(const QMap<QString, IndexTermRef>::const_iterator v
 			<< " and term '" << vocabularyEntry.key() << "'");
 	}
 
-
 	for (quint32 i = 0; i < refPost->count; ++i) {
 
 		// Figure out the position of the posts in the posting list (of the first one)
-		qint64 postPos = ref.postingListPosition +
-				(refPost->offset + i) * Config::Index::PostingList::POST_BYTES;
+		qint64 postPos = ref.postingListPosition + refPost->offset +
+				(i * (multifield ?
+					 Config::Index::PostingList::POST_BYTES_MULTIFIELD :
+					 Config::Index::PostingList::POST_BYTES_MONOFIELD));
 
 #if DEBUG
 		const QString &term = vocabularyEntry.key();
 		dd1(i << "°; post pos: " << postPos << " of term (" << term << ")");
 #endif
-		// 5 Bytes that will be read
-		quint32 P32;
-		quint8 P8;
-
-		// Go the the figured out position and read 5 bytes
+		// Go the the post position and read 4/5 bytes
 		mPostingsStream.file.seek(postPos);
-		mPostingsStream.stream >> P32 >> P8;
 
-		// Figure out element id, field nubmer and field pos
-		quint32 elementSerial = P32 >> Config::Index::PostingList::FIELD_NUM_BITS;
-		field_num fieldNumber = P32 & (~0u >> (32 - Config::Index::PostingList::FIELD_NUM_BITS));
-		term_pos inFieldPos = P8;
+		elem_serial elementSerial;
+		field_num fieldNumber;
+		term_pos inFieldPos;
+
+		if (multifield) {
+			// For multifield: read 5 bytes
+
+			quint32 P32;
+			quint8 P8;
+
+			mPostingsStream.stream >> P32 >> P8;
+
+			elementSerial = P32 >> Config::Index::PostingList::FIELD_NUM_BITS;
+			fieldNumber = P32 & (~0u >> (32 - Config::Index::PostingList::FIELD_NUM_BITS));
+			inFieldPos = P8;
+		} else {
+			// For monofield: read 4 bytes
+
+			quint32 P32;
+
+			mPostingsStream.stream >> P32;
+
+			elementSerial = P32 >> Config::Index::PostingList::IN_FIELD_POS_BITS;
+			fieldNumber = 0; // monofield
+			inFieldPos = P32 & (~0u >> (32 - Config::Index::PostingList::IN_FIELD_POS_BITS));
+		}
+
+		// Figure out element id, (field number) and field pos
 
 		dd2("Element serial		= " << elementSerial);
 		dd2("Field number		= " << fieldNumber);
@@ -685,7 +715,7 @@ void IndexHandler::loadVocabulary()
 	const qint64 vocabularyFileSize = mVocabularyStream.fileSize();
 
 	// Read the count of posts for each term's field
-	// An unit of offset means 5 bytes in the posting list file
+	// An unit of offset means 1 bytes in the posting list file
 	auto loadIndexTermReference =
 			[this](IndexTermRefPostMeta &post, quint32 offset) -> quint32 {
 		// First of all read 16 bits, than if the first bit is = 1
@@ -757,36 +787,39 @@ void IndexHandler::loadVocabulary()
 		// <bok.a> <bok.t> <bok.y> <bok.p>
 		// <pro.t> <pro.y> <pro.p>
 
-		incrementalOffset += loadIndexTermReference(ref.article.author, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.article.title, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.article.year, incrementalOffset);
+		const int M = Config::Index::PostingList::POST_BYTES_MULTIFIELD;
+		const int S = Config::Index::PostingList::POST_BYTES_MONOFIELD;
 
-		incrementalOffset += loadIndexTermReference(ref.journal.name, incrementalOffset);
+		incrementalOffset += loadIndexTermReference(ref.article.author, incrementalOffset) * M;
+		incrementalOffset += loadIndexTermReference(ref.article.title, incrementalOffset) * S;
+		incrementalOffset += loadIndexTermReference(ref.article.year, incrementalOffset) * S;
 
-		incrementalOffset += loadIndexTermReference(ref.incollection.author, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.incollection.title, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.incollection.year, incrementalOffset);
+		incrementalOffset += loadIndexTermReference(ref.journal.name, incrementalOffset) * S;
 
-		incrementalOffset += loadIndexTermReference(ref.inproceedings.author, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.inproceedings.title, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.inproceedings.year, incrementalOffset);
+		incrementalOffset += loadIndexTermReference(ref.incollection.author, incrementalOffset) * M;
+		incrementalOffset += loadIndexTermReference(ref.incollection.title, incrementalOffset) * S;
+		incrementalOffset += loadIndexTermReference(ref.incollection.year, incrementalOffset) * S;
 
-		incrementalOffset += loadIndexTermReference(ref.phdthesis.author, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.phdthesis.title, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.phdthesis.year, incrementalOffset);
+		incrementalOffset += loadIndexTermReference(ref.inproceedings.author, incrementalOffset) * M;
+		incrementalOffset += loadIndexTermReference(ref.inproceedings.title, incrementalOffset) * S;
+		incrementalOffset += loadIndexTermReference(ref.inproceedings.year, incrementalOffset) * S;
 
-		incrementalOffset += loadIndexTermReference(ref.mastersthesis.author, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.mastersthesis.title, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.mastersthesis.year, incrementalOffset);
+		incrementalOffset += loadIndexTermReference(ref.phdthesis.author, incrementalOffset) * M;
+		incrementalOffset += loadIndexTermReference(ref.phdthesis.title, incrementalOffset) * S;
+		incrementalOffset += loadIndexTermReference(ref.phdthesis.year, incrementalOffset) * S;
 
-		incrementalOffset += loadIndexTermReference(ref.book.author, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.book.title, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.book.year, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.book.publisher, incrementalOffset);
+		incrementalOffset += loadIndexTermReference(ref.mastersthesis.author, incrementalOffset) * M;
+		incrementalOffset += loadIndexTermReference(ref.mastersthesis.title, incrementalOffset) * S;
+		incrementalOffset += loadIndexTermReference(ref.mastersthesis.year, incrementalOffset) * S;
 
-		incrementalOffset += loadIndexTermReference(ref.proceedings.title, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.proceedings.year, incrementalOffset);
-		incrementalOffset += loadIndexTermReference(ref.proceedings.publisher, incrementalOffset);
+		incrementalOffset += loadIndexTermReference(ref.book.author, incrementalOffset) * M;
+		incrementalOffset += loadIndexTermReference(ref.book.title, incrementalOffset) * S;
+		incrementalOffset += loadIndexTermReference(ref.book.year, incrementalOffset) * S;
+		incrementalOffset += loadIndexTermReference(ref.book.publisher, incrementalOffset) * S;
+
+		incrementalOffset += loadIndexTermReference(ref.proceedings.title, incrementalOffset) * S;
+		incrementalOffset += loadIndexTermReference(ref.proceedings.year, incrementalOffset) * S;
+		incrementalOffset += loadIndexTermReference(ref.proceedings.publisher, incrementalOffset) * S;
 
 		vv2("Term reference has been loaded into vocabulary: " << ref);
 

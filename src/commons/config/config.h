@@ -24,8 +24,11 @@ namespace Config {
 			const quint32 IN_FIELD_POS_BITS = 8u;
 			const quint32 IN_FIELD_POS_THRESHOLD = 1u << IN_FIELD_POS_BITS; // 256
 
-			const quint32 POST_BITS = ELEMENT_SERIAL_BITS + FIELD_NUM_BITS + IN_FIELD_POS_BITS; // 40
-			const quint32 POST_BYTES = POST_BITS / 8; // 5
+			const quint32 POST_BITS_MONOFIELD = 32;
+			const quint32 POST_BYTES_MONOFIELD = POST_BITS_MONOFIELD / 8; // 4
+
+			const quint32 POST_BITS_MULTIFIELD = 40;
+			const quint32 POST_BYTES_MULTIFIELD = POST_BITS_MULTIFIELD / 8; // 5
 		}
 
 		namespace Vocabulary {

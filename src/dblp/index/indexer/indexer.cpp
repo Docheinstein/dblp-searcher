@@ -539,8 +539,8 @@ void Indexer::writePostingListAndVocabularyFiles()
 			const QString &term = it.key();
 			const IndexTerm &termEntity = it.value();
 
-			auto writeField = [this](const IndexPosts &posts) {
-				this->writePosts(posts);
+			auto writeField = [this](const IndexPosts &posts, bool multifield = false) {
+				this->writePosts(posts, multifield);
 				this->writeTermFieldPostsCount(UINT32(posts.size()));
 			};
 
@@ -568,7 +568,7 @@ void Indexer::writePostingListAndVocabularyFiles()
 			// - title
 			// - year
 
-			writeField(termEntity.article.author);
+			writeField(termEntity.article.author, true);
 			writeField(termEntity.article.title);
 			writeField(termEntity.article.year);
 
@@ -581,7 +581,7 @@ void Indexer::writePostingListAndVocabularyFiles()
 			// - title
 			// - year
 
-			writeField(termEntity.incollection.author);
+			writeField(termEntity.incollection.author, true);
 			writeField(termEntity.incollection.title);
 			writeField(termEntity.incollection.year);
 
@@ -590,7 +590,7 @@ void Indexer::writePostingListAndVocabularyFiles()
 			// - title
 			// - year
 
-			writeField(termEntity.inproceedings.author);
+			writeField(termEntity.inproceedings.author, true);
 			writeField(termEntity.inproceedings.title);
 			writeField(termEntity.inproceedings.year);
 
@@ -599,7 +599,7 @@ void Indexer::writePostingListAndVocabularyFiles()
 			// - title
 			// - year
 
-			writeField(termEntity.phdthesis.author);
+			writeField(termEntity.phdthesis.author, true);
 			writeField(termEntity.phdthesis.title);
 			writeField(termEntity.phdthesis.year);
 
@@ -608,7 +608,7 @@ void Indexer::writePostingListAndVocabularyFiles()
 			// - title
 			// - year
 
-			writeField(termEntity.mastersthesis.author);
+			writeField(termEntity.mastersthesis.author, true);
 			writeField(termEntity.mastersthesis.title);
 			writeField(termEntity.mastersthesis.year);
 
@@ -618,7 +618,7 @@ void Indexer::writePostingListAndVocabularyFiles()
 			// - year
 			// - publisher
 
-			writeField(termEntity.book.author);
+			writeField(termEntity.book.author, true);
 			writeField(termEntity.book.title);
 			writeField(termEntity.book.year);
 			writeField(termEntity.book.publisher);
@@ -685,19 +685,19 @@ void Indexer::writeTermFieldPostsCount(quint32 count)
 	}
 }
 
-void Indexer::writePosts(const IndexPosts &posts)
+void Indexer::writePosts(const IndexPosts &posts, bool multifield)
 {
 	// Write the posts to the posting list
 
 	for (const IndexPost & post : posts) {
 		dd4("Writing post: " << post);
-		writePost(post);
+		writePost(post, multifield);
 	}
 }
 
-void Indexer::writePost(const IndexPost &post)
+void Indexer::writePost(const IndexPost &post, bool multifield)
 {
-	dd4("Writing post: " << post);
+	dd4("Writing post: " << post << "(multifield: " << multifield << ")");
 
 	// Asserts
 	ASSERT(post.elementSerial < Config::Index::PostingList::ELEMENT_SERIAL_THRESHOLD,
@@ -710,17 +710,29 @@ void Indexer::writePost(const IndexPost &post)
 //	Q_ASSERT_X(post.inFieldTermPosition < Config::Index::PostingList::IN_FIELD_POS_THRESHOLD,
 //			 "indexing", "There are more terms per field than the index's allowed number");
 
-	quint32 P32 =  UINT32(
-			(post.elementSerial << Config::Index::PostingList::FIELD_NUM_BITS) |
-			post.fieldNumber
-	);
 
-	quint8 P8 =  UINT8(post.inFieldTermPosition);
+	if (multifield) {
+		quint32 P32 =  UINT32(
+				(post.elementSerial << Config::Index::PostingList::FIELD_NUM_BITS) |
+				post.fieldNumber
+		);
 
-	dd5("Writing P32 to posting list Hex: " << HEX(P32));
-	dd5("Writing P8 to posting list Hex: " << HEX(P8));
+		quint8 P8 =  UINT8(post.inFieldTermPosition);
 
-	mPostingsStream.stream << P32 << P8;
+		dd5("Writing P32 to posting list Hex: " << HEX(P32));
+		dd5("Writing P8 to posting list Hex: " << HEX(P8));
+
+		mPostingsStream.stream << P32 << P8;
+	} else {
+		quint32 P32 = UINT32(
+			(post.elementSerial << Config::Index::PostingList::IN_FIELD_POS_BITS) |
+			post.inFieldTermPosition
+		);
+
+		dd5("Writing P32 to posting list Hex: " << HEX(P32));
+
+		mPostingsStream.stream << P32;
+	}
 
 	dd5("New .plix buffer pos: " << mPostingsStream.filePosition());
 
