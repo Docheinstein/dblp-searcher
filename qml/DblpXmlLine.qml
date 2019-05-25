@@ -17,7 +17,6 @@ Flow {
 
     Text {
         text:  (indent ? "    " : "") + "<" + tag
-        wrapMode: Text.WordWrap
         font.pointSize: fontSize
         textFormat: Text.PlainText
         color: tagColor
@@ -26,7 +25,6 @@ Flow {
     Text {
         visible: attributes.length > 0
         text: " " + attributes
-        wrapMode: Text.WordWrap
         font.pointSize: fontSize
         textFormat: Text.PlainText
         color: attributesColor
@@ -34,7 +32,6 @@ Flow {
 
     Text {
         text: ">"
-        wrapMode: Text.WordWrap
         font.pointSize: fontSize
         textFormat: Text.PlainText
         color: tagColor
@@ -45,7 +42,6 @@ Flow {
         visible: type === DblpXmlLine.Inline
         font.pointSize: fontSize
         text: content
-        wrapMode: Text.WordWrap
         textFormat: Text.RichText
         color: (crossref >= 0) ? "steelblue" : contentColor
         font.italic: (crossref >= 0)
@@ -65,7 +61,6 @@ Flow {
         visible: type === DblpXmlLine.Inline
         font.pointSize: fontSize
         text: "</" + tag + ">"
-        wrapMode: Text.WordWrap
         textFormat: Text.PlainText
         color: tagColor
     }
