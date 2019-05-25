@@ -1,7 +1,7 @@
-import QtQuick 2.4
-import QtQuick.Window 2.4
-import QtQuick.Controls 2.4
-import QtQuick.Layouts 1.1
+import QtQuick 2.0
+import QtQuick.Window 2.0
+import QtQuick.Controls 2.0
+import QtQuick.Layouts 1.3
 import DblpSearcher 1.0
 
 ApplicationWindow {
@@ -85,29 +85,20 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignLeft | Qt.AlignTop
 
-            // LOGO
-            Image {
-                id: mainDblpLogo
-                visible: false
-                sourceSize.height: 40
-                fillMode: Image.PreserveAspectFit
-                source: ""
-            }
 
             // SEARCH BAR
             TextField {
                 id: mainSearchBar
                 selectByMouse: true
-                rightPadding: 60
 
                 background: Rectangle {
+                    radius: 10
                     implicitHeight: 40
                     border.color: "#d9d3d3"
                     border.width: 1
-                    radius: 10
                 }
 
-                Layout.rightMargin: 0
+                padding: 10
                 horizontalAlignment: Text.AlignLeft
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignLeft | Qt.AlignTop
@@ -142,6 +133,10 @@ ApplicationWindow {
                         radius: 10
                         border.width: 0
                     }
+
+//                    background: Rectangle {
+
+//                    }
                 }
             }
         }
@@ -159,15 +154,20 @@ ApplicationWindow {
 
     // FOOTER
 
-    footer: Item {
+    Item {
         id: mainFooter
-        width: 800
         height: 28
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 0
+        anchors.left: parent.left
+        anchors.leftMargin: 0
+        anchors.right: parent.right
+        anchors.rightMargin: 0
 
         Rectangle {
             id: mainFooterRectangle
             anchors.fill: parent
-            color: "#e5e8e7"
+            color: "#d3d3d3"
             border.color: "#80a2a2a2"
             border.width: 1
 
@@ -188,6 +188,9 @@ ApplicationWindow {
                         height: 16
                         width: 16
                         color: publicationColor
+                        border.color: "#80a2a2a2"
+                        border.width: 1
+                        radius: 2
                     }
 
                     Text {
@@ -203,6 +206,9 @@ ApplicationWindow {
                         height: 16
                         width: 16
                         color: venueColor
+                        border.color: "#80a2a2a2"
+                        border.width: 1
+                        radius: 4
                     }
 
                     Text {
@@ -217,6 +223,9 @@ ApplicationWindow {
                         height: 16
                         width: 16
                         color: publicationVenueColor
+                        border.color: "#80a2a2a2"
+                        border.width: 1
+                        radius: 4
                     }
 
                     Text {
@@ -229,3 +238,11 @@ ApplicationWindow {
         }
     }
 }
+
+
+
+
+
+
+
+

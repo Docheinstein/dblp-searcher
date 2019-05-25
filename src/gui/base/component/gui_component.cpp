@@ -34,8 +34,13 @@ bool GuiComponent::create()
 		QObject::connect(mComponent, &QQmlComponent::statusChanged,
 						 this, &GuiComponent::createComponent);
 
+		if (mComponent->isError()) {
+			ee("Errors occurred while creating component '" << qmlName() << "'");
+			ee("Reason: " << mComponent->errorString());
+			emit componentCreated();
+		}
 		// Double check, just in case...
-		if (!mComponent->isReady()) {
+		else if (!mComponent->isReady()) {
 			createImmediately = false;
 			// Wait until the component has been created
 			loop.exec();

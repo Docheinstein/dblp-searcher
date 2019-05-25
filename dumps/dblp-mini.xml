@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE dblp SYSTEM "dblp.dtd">
+<dblp>
+    <!-- ARTICLES -->
+<!-- 0 -->
+    <article key="journals/it/janus-fs" mdate="2017-05-26">
+        <author>Stefano Dottore</author>
+        <title>Integration between Janus and Freeswitch</title>
+        <year>2017</year>
+        <journal>Computer Science (IT)</journal>
+    </article>
+    <article key="journals/it/ele-eco" mdate="2018-03-26">
+        <author>Enrico Sedoni information</author>
+        <title>Electrical ecosystem for</title>
+        <year>2018</year>
+        <journal>Computer Science (IT)</journal>
+    </article>
+    <article key="journals/it/hackaton-sols" mdate="2019-05-27">
+        <author>Amarjon Singh</author>
+        <author>Lorenzo Miniero</author>
+        <title>Hackaton solutions for information retrieval</title>
+        <year>2019</year>
+        <journal>Computer Science (IT)</journal>
+    </article>
+    <article key="journals/it/hackaton-sols" mdate="2019-05-27">
+        <author>Luca Bartoli</author>
+        <title>Sensors and autonomous systems</title>
+        <year>2019</year>
+        <journal>UNIMORE Magazine information</journal>
+    </article>
+    <article key="journals/it/db-other-systems" mdate="2019-05-22">
+        <author>Luca Bartoli</author>
+        <author>Stefano Bartoli</author>
+        <title>DB and other systems information</title>
+        <year>2019</year>
+        <journal>UNIMORE Magazine information retrieval</journal>
+    </article>
+
+	<article mdate="2017-05-28" key="journals/kbs/BarbanchoTLEB15">
+		<author>Ana M. Barbancho</author>
+		<author>Lorenzo J. Tard&oacute;n</author>
+		<author>Javier L&oacute;pez-Carrasco</author>
+		<author>Jana Eggink</author>
+        <author>Stefano Lumacone Dottore Stefano YDottore Stefano Lumacone Dottore Stefano XX Lumacone Lumacone Dottore Stefano</author>
+		<author>Isabel Barbancho</author>
+		<title>Automatic classification of personal video recordings based on audiovisual features.</title>
+		<pages>218-227</pages>
+		<year>2015</year>
+		<volume>89</volume>
+		<journal>Knowl.-Based Syst.</journal>
+		<ee>https://doi.org/10.1016/j.knosys.2015.07.005</ee>
+		<url>db/journals/kbs/kbs89.html#BarbanchoTLEB15</url>
+	</article>
+
+    <!-- INCOLLECTION -->
+
+<!-- 6 -->
+    <incollection key="reference/bdt/0001S19" publtype="encyclopedia" mdate="2019-02-14">
+        <author>Guerzoni Matteo</author>
+        <author>Amarjot Singh</author>
+        <title>Database Consistency Models.</title>
+        <year>2019</year>
+        <booktitle>Encyclopedia of Big Data Technologies</booktitle>
+        <ee>https://doi.org/10.1007/978-3-319-63962-8_203-1</ee>
+        <crossref>reference/bdt/2019</crossref>
+        <url>db/reference/bdt/1.html#0001S19</url>
+    </incollection>
+
+    <incollection key="reference/bdt/0001S20" publtype="encyclopedia" mdate="2019-02-14">
+        <author>Guerzoni Matteo</author>
+        <author>Amarjot Singh</author>
+        <title>Database Consistency</title>
+        <year>2019</year>
+        <booktitle>Encyclopedia of Big Data Technologies</booktitle>
+        <ee>https://doi.org/10.1007/978-3-319-63962-8_203-1</ee>
+        <crossref>reference/bdt/2019</crossref>
+        <url>db/reference/bdt/1.html#0001S19</url>
+    </incollection>
+
+    <!-- BOOK -->
+<!-- 8 -->
+    <book key="reference/bdt/2019" mdate="2019-02-14">
+        <editor>Sherif Sakr</editor>
+        <editor>Albert Y. Zomaya</editor>
+        <title>Database Encyclopedia of Big Data Database Technologies.</title>
+        <publisher>Springer</publisher>
+        <year>2019</year>
+        <isbn>978-3-319-63962-8</isbn>
+        <isbn>978-3-319-77524-1</isbn>
+        <ee>https://doi.org/10.1007/978-3-319-63962-8</ee>
+        <ee>https://www.springer.com/de/book/9783319775241</ee>
+        <url>db/reference/bdt/1.html</url>
+    </book>
+
+
+    <!-- THESIS -->
+
+    <phdthesis mdate="2016-12-07" key="phd/Sack2002">
+        <author>Harald Sack</author>
+        <title>Improving the Power of Ordered Binary Decision Diagrams by Integrating Parity Nodes</title>
+        <year>2002</year>
+        <school>University of Trier, Germany</school>
+        <ee>http://ubt.opus.hbz-nrw.de/volltexte/2004/214/</ee>
+        <ee>http://nbn-resolving.de/urn:nbn:de:hbz:385-2148</ee>
+        <ee>http://d-nb.info/971741816</ee>
+    </phdthesis>
+
+    <masterthesis mdate="2016-12-07" key="phd/Sack2002">
+        <author>Mark Zuckerberg</author>
+        <title>The face behind Facebook</title>
+        <year>2009</year>
+        <school>University of Trier, Germany</school>
+        <ee>http://ubt.opus.hbz-nrw.de/volltexte/2004/214/</ee>
+        <ee>http://nbn-resolving.de/urn:nbn:de:hbz:385-2148</ee>
+        <ee>http://d-nb.info/971741816</ee>
+    </masterthesis>
+
+    <!-- INPROCEEDINGS -->
+
+<!-- 11 -->
+    <inproceedings key="conf/iptcomm/AmiranteCMR14" mdate="2018-11-06">
+        <author>Alessandro Amirante</author>
+        <author>Tobia Castaldi</author>
+        <author>Lorenzo Miniero</author>
+        <author orcid="0000-0002-5876-0382">Simon Pietro Romano</author>
+        <title>Janus: a general purpose WebRTC gateway by Janus.</title>
+        <pages>7:1-7:8</pages>
+        <year>2014</year>
+        <booktitle>IPTComm</booktitle>
+        <ee>https://doi.org/10.1145/2670386.2670389</ee>
+        <crossref>conf/iptcomm/2014</crossref>
+        <url>db/conf/iptcomm/iptcomm2014.html#AmiranteCMR14</url>
+    </inproceedings>
+
+    <!-- PROCEEDINGS -->
+<!-- 12 -->
+    <proceedings key="conf/iptcomm/2014" mdate="2018-11-06">
+        <title>Proceedings of the Conference on Principles, Systems and Applications of IP Telecommunications, IPTComm 2014, Chicago, Illinois, USA, October 1-2, 2014</title>
+        <booktitle>IPTComm</booktitle>
+        <publisher>ACM</publisher>
+        <year>2014</year>
+        <isbn>978-1-4503-2124-2</isbn>
+        <ee>https://doi.org/10.1145/2670386</ee>
+        <url>db/conf/iptcomm/iptcomm2014.html</url>
+    </proceedings>
+
+</dblp>
