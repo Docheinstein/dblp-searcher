@@ -2,6 +2,7 @@
 #define MAIN_SEARCH_H
 
 #include <QObject>
+#include <QThread>
 
 class GuiMainWindow;
 class GuiSplashWindow;
@@ -20,11 +21,11 @@ signals:
 };
 
 
-class IndexLoadingThreadHandler : public QObject {
+class IndexLoadingWorkerHandler : public QObject {
 	Q_OBJECT
 
 public:
-	IndexLoadingThreadHandler(GuiMainWindow &main,
+	IndexLoadingWorkerHandler(GuiMainWindow &main,
 							GuiSplashWindow &splash);
 
 public slots:
@@ -35,6 +36,20 @@ public slots:
 private:
 	GuiMainWindow &mMain;
 	GuiSplashWindow &mSplash;
+};
+
+class IndexLoadingController : public QObject {
+public:
+	IndexLoadingController(GuiMainWindow &main,
+						   GuiSplashWindow &splash);
+	~IndexLoadingController();
+
+	void doIndexing();
+
+private:
+	QThread * mWorkerThread;
+	IndexLoadingWorker * mWorker;
+	IndexLoadingWorkerHandler * mWorkerHandler;
 };
 
 int startSearchMode();

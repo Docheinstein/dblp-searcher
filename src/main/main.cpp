@@ -90,16 +90,17 @@ int main(int argc, char *argv[])
 
 		if (arguments.mode == DblpSearcherMode::Index) {
 			_ii("Starting in INDEX mode");
-			startIndexMode();
+			return startIndexMode();
 		}
-		else if (arguments.mode == DblpSearcherMode::Search) {
+
+		if (arguments.mode == DblpSearcherMode::Search) {
 			_ii("Starting in SEARCH mode");
-			startSearchMode();
+			return startSearchMode();
 		}
-		else {
-			_ww("Arguments parsing failed; please provide a valid mode");
-			QUIT(HELP);
-		}
+
+		_ww("Arguments parsing failed; please provide a valid mode");
+		QUIT(HELP);
+
 	} catch (const char * e) {
 	  qCritical() << "Exception occured; aborting for the following reason:"
 				  << endl << ">>" << e;

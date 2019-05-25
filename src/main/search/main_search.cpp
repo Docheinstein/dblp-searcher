@@ -74,34 +74,18 @@ int startSearchMode() {
 
 	_dd("Created windows on thread: " << QThread::currentThreadId());
 
-	QThread workerThread;
-	IndexLoadingWorker worker;
-	worker.moveToThread(&workerThread);
+	IndexLoadingController *controller = new IndexLoadingController(guiMainWindow, guiSplashWindow);
+	controller->doIndexing();
 
-	IndexLoadingThreadHandler loadingThreadHandler(guiMainWindow, guiSplashWindow);
+	int execCode = guiApp.exec();
 
-	QObject::connect(&workerThread, &QThread::started,
-					 &worker, &IndexLoadingWorker::loadIndex,
-					 Qt::QueuedConnection);
+	_dd("Finished execution; returning with code: " << execCode);
 
-	QObject::connect(&worker, &IndexLoadingWorker::statusChanged,
-					 &loadingThreadHandler, &IndexLoadingThreadHandler::onStatusChanged,
-					 Qt::QueuedConnection);
+	delete controller;
 
-	QObject::connect(&worker, &IndexLoadingWorker::progressChanged,
-					 &loadingThreadHandler, &IndexLoadingThreadHandler::onProgressChanged,
-					 Qt::QueuedConnection);
+	_dd("Deleted indexing controller");
 
-	QObject::connect(&worker, &IndexLoadingWorker::loadFinished,
-					 &loadingThreadHandler, &IndexLoadingThreadHandler::onLoadingFinished,
-					 Qt::QueuedConnection);
-
-	workerThread.start();
-
-//	_dd("Hanging on thread: " << QThread::currentThreadId());
-	_ii("Hanging on thread: " << QThread::currentThreadId());
-
-	return guiApp.exec();
+	return execCode;
 }
 
 void IndexLoadingWorker::loadIndex()
@@ -165,23 +149,23 @@ void IndexLoadingWorker::loadIndex()
 	emit loadFinished(queryResolver);
 }
 
-IndexLoadingThreadHandler::IndexLoadingThreadHandler(
+IndexLoadingWorkerHandler::IndexLoadingWorkerHandler(
 		GuiMainWindow &main, GuiSplashWindow &splash)
 	:  mMain(main), mSplash(splash) {}
 
-void IndexLoadingThreadHandler::onStatusChanged(QString status)
+void IndexLoadingWorkerHandler::onStatusChanged(QString status)
 {
 //	_dd("Setting splash status '" << status << "' on thread: " << QThread::currentThreadId());
 	mSplash.setStatus(status);
 }
 
-void IndexLoadingThreadHandler::onProgressChanged(double progress)
+void IndexLoadingWorkerHandler::onProgressChanged(double progress)
 {
 //	_dd("Setting splash progress (" << progress << ") on thread: " << QThread::currentThreadId());
 	mSplash.setProgress(progress);
 }
 
-void IndexLoadingThreadHandler::onLoadingFinished(QueryResolver * resolver)
+void IndexLoadingWorkerHandler::onLoadingFinished(QueryResolver * resolver)
 {
 	_ii("Index loading finished");
 //	_dd("Index loading finished");
@@ -192,8 +176,67 @@ void IndexLoadingThreadHandler::onLoadingFinished(QueryResolver * resolver)
 	// Hide splash, show main
 	mSplash.setShown(false);
 	mMain.setShown(true);
-	_ii("Going to hide splash and show main window on thread: "
+	_vv("Going to hide splash and show main window on thread: "
 		<< QThread::currentThreadId());
 //	_dd("Going to hide splash and show main window on thread: "
 //		<< QThread::currentThreadId());
+}
+
+IndexLoadingController::IndexLoadingController(GuiMainWindow &main,
+											   GuiSplashWindow &splash)
+{
+
+	mWorkerThread = new QThread();
+	mWorker = new IndexLoadingWorker();
+	mWorkerHandler = new IndexLoadingWorkerHandler(main, splash);
+
+	mWorker->moveToThread(mWorkerThread);
+
+
+	QObject::connect(mWorkerThread, &QThread::started,
+					 mWorker, &IndexLoadingWorker::loadIndex,
+					 Qt::QueuedConnection);
+
+	QObject::connect(mWorker, &IndexLoadingWorker::statusChanged,
+					 mWorkerHandler, &IndexLoadingWorkerHandler::onStatusChanged,
+					 Qt::QueuedConnection);
+
+	QObject::connect(mWorker, &IndexLoadingWorker::progressChanged,
+					 mWorkerHandler, &IndexLoadingWorkerHandler::onProgressChanged,
+					 Qt::QueuedConnection);
+
+	QObject::connect(mWorker, &IndexLoadingWorker::loadFinished,
+					 mWorkerHandler, &IndexLoadingWorkerHandler::onLoadingFinished,
+					 Qt::QueuedConnection);
+
+	QObject::connect(mWorker, &IndexLoadingWorker::loadFinished,
+					 mWorker, &QObject::deleteLater);
+
+	// Maybe works, but I prefer to postpone the deletion on the destructor
+//	QObject::connect(mWorker, &IndexLoadingWorker::loadFinished,
+//					 mWorkerHandler, &QObject::deleteLater);
+
+	QObject::connect(mWorkerThread, &QThread::finished,
+					 mWorkerThread, &QObject::deleteLater);
+
+	QObject::connect(mWorker, &IndexLoadingWorker::loadFinished,
+					 mWorkerThread, &QThread::quit);
+}
+
+IndexLoadingController::~IndexLoadingController()
+{
+//	_dd("Deleting worker");
+//	delete mWorker;
+
+	_dd("Deleting worker handler");
+	delete mWorkerHandler;
+
+//	_dd("Deleting thread");
+//	delete mWorkerThread;
+}
+
+void IndexLoadingController::doIndexing()
+{
+	_ii("Hanging on thread: " << QThread::currentThreadId());
+	mWorkerThread->start();
 }
