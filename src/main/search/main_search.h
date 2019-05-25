@@ -1,5 +1,5 @@
-#ifndef MAIN_GUI_H
-#define MAIN_GUI_H
+#ifndef MAIN_SEARCH_H
+#define MAIN_SEARCH_H
 
 #include <QObject>
 
@@ -39,4 +39,4 @@ private:
 
 int startSearchMode();
 
-#endif // MAIN_GUI_H
+#endif // MAIN_SEARCH_H

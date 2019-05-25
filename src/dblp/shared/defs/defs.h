@@ -17,4 +17,5 @@ typedef quint32 elem_pos;		// Max 2^32
 								// This means that if dblp.xml will ever be
 								// more than ~4GB we'll have to re structure everything
 
+
 #endif // DBLP_DEFS_H

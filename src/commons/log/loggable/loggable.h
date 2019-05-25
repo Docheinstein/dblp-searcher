@@ -9,12 +9,14 @@
 	static const char * const LOG_TAG = #clazz; \
 
 #define LOGGING_OVERRIDE \
+	static bool CAN_LOG; \
+	static const char * LOG_TAG; \
 	const char *logTag() const override; \
 	bool canLog() const override;
 
 #define LOGGING(clazz, enabled) \
-	static bool CAN_LOG = enabled; \
-	static const char * const LOG_TAG = #clazz; \
+	bool clazz::CAN_LOG = enabled; \
+	const char * clazz::LOG_TAG = #clazz; \
 	const char * clazz::logTag() const { return LOG_TAG; } \
 	bool clazz::canLog() const { return CAN_LOG; }
 

@@ -13,4 +13,8 @@ struct DblpXmlElement {
 	operator QString() const;
 };
 
+
+// Needed for use DblpXmlElement with the Qt signals/slots paradigm
+Q_DECLARE_METATYPE(DblpXmlElement);
+
 #endif // DBLP_XML_ELEMENT_H

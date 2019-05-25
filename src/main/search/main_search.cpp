@@ -1,10 +1,10 @@
-#include "main_gui.h"
+#include "main_search.h"
 
 #include <QGuiApplication>
 #include <QQmlEngine>
 #include <QThread>
 
-#include "main/args.h"
+#include "main/args/args.h"
 #include "dblp/irmodel/impl/ief/ir_model_ief.h"
 #include "dblp/query/resolver/query_resolver.h"
 #include "gui/engine/gui_engine.h"
@@ -74,29 +74,29 @@ int startSearchMode() {
 
 	_dd("Created windows on thread: " << QThread::currentThreadId());
 
-	QThread * workerThread = new QThread();
-	IndexLoadingWorker *worker = new IndexLoadingWorker();
-	worker->moveToThread(workerThread);
+	QThread workerThread;
+	IndexLoadingWorker worker;
+	worker.moveToThread(&workerThread);
 
 	IndexLoadingThreadHandler loadingThreadHandler(guiMainWindow, guiSplashWindow);
 
-	QObject::connect(workerThread, &QThread::started,
-					 worker, &IndexLoadingWorker::loadIndex,
+	QObject::connect(&workerThread, &QThread::started,
+					 &worker, &IndexLoadingWorker::loadIndex,
 					 Qt::QueuedConnection);
 
-	QObject::connect(worker, &IndexLoadingWorker::statusChanged,
+	QObject::connect(&worker, &IndexLoadingWorker::statusChanged,
 					 &loadingThreadHandler, &IndexLoadingThreadHandler::onStatusChanged,
 					 Qt::QueuedConnection);
 
-	QObject::connect(worker, &IndexLoadingWorker::progressChanged,
+	QObject::connect(&worker, &IndexLoadingWorker::progressChanged,
 					 &loadingThreadHandler, &IndexLoadingThreadHandler::onProgressChanged,
 					 Qt::QueuedConnection);
 
-	QObject::connect(worker, &IndexLoadingWorker::loadFinished,
+	QObject::connect(&worker, &IndexLoadingWorker::loadFinished,
 					 &loadingThreadHandler, &IndexLoadingThreadHandler::onLoadingFinished,
 					 Qt::QueuedConnection);
 
-	workerThread->start();
+	workerThread.start();
 
 //	_dd("Hanging on thread: " << QThread::currentThreadId());
 	_ii("Hanging on thread: " << QThread::currentThreadId());

@@ -1,10 +1,14 @@
+#include <QCoreApplication>
+#include <QtConcurrent>
+
 #include "dblp/index/indexer/indexer.h"
 #include "dblp/xml/parser/dblp_xml_parser.h"
 #include "commons/log/loggable/loggable.h"
 #include "commons/profiler/profiler.h"
 #include "commons/globals/globals.h"
-#include "main/args.h"
-#include "main/main_gui.h"
+#include "main/args/args.h"
+#include "main/search/main_search.h"
+#include "main/index/main_index.h"
 
 STATIC_LOGGING(Main, true)
 
@@ -64,18 +68,14 @@ SEARCH MODE LANGUAGE
 
 Arguments arguments;
 
-static int startIndexMode() {
-	Q_ASSERT(arguments.mode == DblpSearcherMode::Index);
-
-	Indexer indexer(arguments.indexFolderPath, arguments.baseIndexName);
-	DblpXmlParser parser(arguments.dblpXmlFilePath, indexer);
-	parser.parse();
-
-	return 0;
-}
 
 int main(int argc, char *argv[])
 {
+//	QCoreApplication app (argc, argv);
+//	QtConcurrent::run(workerTests);
+//	workerTests();
+//	return 	app.exec();
+
 	PROF_FUNC_BEGIN
 
 	if (argc < 2) {

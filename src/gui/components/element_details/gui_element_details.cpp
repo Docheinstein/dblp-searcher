@@ -3,7 +3,7 @@
 #include <QTextDocument>
 #include <QtConcurrent>
 
-#include "main/args.h"
+#include "main/args/args.h"
 #include "commons/globals/globals.h"
 #include "commons/const/const.h"
 #include "dblp/xml/parser/dblp_xml_parser.h"
@@ -15,6 +15,7 @@
 #define HIGHLIGHT_COLOR "#e24834"
 #define HIGHLIGHTED(term) "<b style='color: " HIGHLIGHT_COLOR "'>" + term + "</b>"
 
+STATIC_LOGGING(GuiElementDetails, true)
 LOGGING(GuiElementDetails, true)
 
 DblpElementXmlRetrieverHandler::~DblpElementXmlRetrieverHandler() {}
