@@ -1,4 +1,7 @@
 #!/bin/bash
-qmake -project -nopwd -o DblpSearcher.pri $PWD/src/
-grep -v INCLUDEPATH DblpSearcher.pri > DblpSearcher.pri.new
-mv DblpSearcher.pri.new DblpSearcher.pri
+
+BASEDIR=$(dirname "$0")
+
+qmake -project -nopwd -o - $BASEDIR/src/ > $BASEDIR/DblpSearcher.pri
+grep -v TARGET $BASEDIR/DblpSearcher.pri > $BASEDIR/DblpSearcher.pri.new
+mv $BASEDIR/DblpSearcher.pri.new $BASEDIR/DblpSearcher.pri
