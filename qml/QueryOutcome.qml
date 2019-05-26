@@ -53,16 +53,20 @@ ColumnLayout {
             clip: true
             anchors.fill: parent
             visible: MainWindow.queryStatus === MainWindow.Done
+            Keys.onUpPressed: queryOutcomeResultsScroll.increase()
+            Keys.onDownPressed: queryOutcomeResultsScroll.decrease()
+
             ScrollBar.vertical: ScrollBar {
+                id: queryOutcomeResultsScroll
                 active: true
-                policy: ScrollBar.AlwaysOn
-                minimumSize: 0.1
+                // policy: ScrollBar.AlwaysOn
+                // minimumSize: 0.1
             }
 
             // == QUERY MATCH ==
             delegate: Loader {
                 id: queryMatchLoader
-                source: "QueryMatch.qml"
+                source: "qrc:/qml/QueryMatch.qml"
 
                 Binding {
                     target: queryMatchLoader.item

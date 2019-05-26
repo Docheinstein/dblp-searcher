@@ -14,7 +14,7 @@ STATIC_LOGGING(Main, true)
 
 static const char * const HELP =
 R"#(NAME
-	dblp-searcher
+	dblp-searcher (0.1)
 
 SYNOPSIS
 	dblp-searcher <MODE> <INDEX_FOLDER_PATH> <INDEX_BASE_NAME> [OPTIONS]...
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 		parseArguments(argc, argv);
 		printArguments();
 
-		_ii("Hello, dblp searcher v" << VERSION << " there!");
+		_ii("Hello, dblp searcher v " << VERSION << " there!");
 
 		if (arguments.mode == DblpSearcherMode::Index) {
 			_ii("Starting in INDEX mode");

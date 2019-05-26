@@ -53,8 +53,14 @@ ColumnLayout {
         width: 60
         Layout.topMargin: 8
 
-        icon.source: "qrc:/img/back.png"
-        icon.color: "#3e4649"
+        Image   {
+            anchors.fill: parent
+            source: "qrc:/img/back.png"
+            fillMode: Image.PreserveAspectFit
+        }
+
+        // iconSource: "qrc:/img/.png"
+        // icon.color: "#3e4649"
 
         background: Rectangle {
             // In order to have a transparent background
@@ -169,15 +175,15 @@ ColumnLayout {
 
                 ScrollBar.vertical: ScrollBar {
                     active: true
-                    minimumSize: 0.1
-                    policy: ScrollBar.AsNeeded
+                    // minimumSize: 0.1
+                    // policy: ScrollBar.AsNeeded
                 }
 
                 clip: true
 
                 delegate: Loader {
                     id: elementDetailsXmlLineLoader
-                    source: "DblpXmlLine.qml"
+                    source: "qrc:/qml/DblpXmlLine.qml"
 
                     Binding {
                         target: elementDetailsXmlLineLoader.item
@@ -221,15 +227,15 @@ ColumnLayout {
 
                     ScrollBar.vertical: ScrollBar {
                         active: true
-                        minimumSize: 0.1
-                        policy: ScrollBar.AsNeeded
+                        // minimumSize: 0.1
+                        // policy: ScrollBar.AsNeeded
                     }
 
                     clip: true
 
                     delegate: Loader {
                         id: elementDetailsPublicationLineLoader
-                        source: "PublicationLine.qml"
+                        source: "qrc:/qml/PublicationLine.qml"
 
                         Binding {
                             target: elementDetailsPublicationLineLoader.item

@@ -47,7 +47,7 @@ ApplicationWindow {
 //            console.log("Element details opening required for: " + serial)
 //            console.log("Going to push:" + Qt.resolvedUrl("ElementDetails.qml"))
             mainStackView.push(
-                "ElementDetails.qml",
+                "qrc:/qml/ElementDetails.qml",
                 {
                     "elementSerial": serial
                 }
@@ -102,7 +102,7 @@ ApplicationWindow {
                 horizontalAlignment: Text.AlignLeft
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                font.pixelSize: 12
+                font.pixelSize: 14
                 placeholderText: "Submit a query..."
                 focus: true
                 Keys.onReturnPressed: doSearch()
@@ -111,7 +111,7 @@ ApplicationWindow {
                 Button {
                     id: mainSearchButton
                     width: 50
-                    spacing: 5
+                    // spacing: 5
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 0
                     anchors.top: parent.top
@@ -119,17 +119,27 @@ ApplicationWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: 0
 
-                    icon.source: "qrc:/img/search.png"
-                    icon.color: "white"
+                    Image   {
+                        anchors.fill: parent
+                        anchors.bottomMargin: 5
+                        anchors.topMargin: 5
+                        anchors.rightMargin: 5
+                        anchors.leftMargin: 5
+                        source: "qrc:/img/search.png"
+                        fillMode: Image.PreserveAspectFit
+                    }
 
                     MouseArea {
+                        hoverEnabled: true
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: doSearch()
+                        onEntered: { mainSearchButton.state = "hovering" }
+                        onExited: { mainSearchButton.state = "" }
                     }
 
                     background: Rectangle {
-                        color: mainSearchButton.hovered ? "#2d627b" : "#bf2d627b"
+                        color: mainSearchButton.state === "hovering" ? "#2d627b" : "#4e92b2"
                         radius: 10
                         border.width: 0
                     }
@@ -147,7 +157,7 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
             initialItem: Loader {
-                source: "QueryOutcome.qml"
+                source: "qrc:/qml/QueryOutcome.qml"
             }
         }
     }
