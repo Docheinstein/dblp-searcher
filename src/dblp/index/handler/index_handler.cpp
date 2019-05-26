@@ -44,8 +44,8 @@ const QMap<QString, IndexTermRef> IndexHandler::vocabulary() const
 
 bool IndexHandler::vocabularyTermRef(const QString &term, IndexTermRef &termRef) const
 {
-	auto termRefIt = mVocabulary.find(term);
-	if (termRefIt == mVocabulary.end())
+	const auto & termRefIt = mVocabulary.constFind(term);
+	if (termRefIt == mVocabulary.cend())
 		return false;
 	termRef = termRefIt.value();
 	return true;
@@ -60,8 +60,8 @@ const QHash<elem_serial, elem_serial> IndexHandler::crossrefs() const
 
 bool IndexHandler::crossref(elem_serial publicationSerial, elem_serial &venueSerial) const
 {
-	auto crossrefIt = mCrossrefs.find(publicationSerial);
-	if (crossrefIt == mCrossrefs.end())
+	const auto & crossrefIt = mCrossrefs.constFind(publicationSerial);
+	if (crossrefIt == mCrossrefs.cend())
 		return false;
 	venueSerial = crossrefIt.value();
 	return true;
@@ -75,8 +75,8 @@ const QHash<elem_serial, QVector<elem_serial> > IndexHandler::inverseCrossrefs()
 bool IndexHandler::inverseCrossref(elem_serial venueSerial,
 								   QVector<elem_serial> &publicationSerials) const
 {
-	auto inverseCrossrefIt = mInverseCrossrefs.find(venueSerial);
-	if (inverseCrossrefIt == mInverseCrossrefs.end())
+	const auto & inverseCrossrefIt = mInverseCrossrefs.constFind(venueSerial);
+	if (inverseCrossrefIt == mInverseCrossrefs.cend())
 		return false;
 	publicationSerials = inverseCrossrefIt.value();
 	return true;
@@ -171,7 +171,7 @@ bool IndexHandler::findMatches(const QStringList &tokens,
 	QStringList sanitizedTokens;
 
 	// Moreover, sanitize each term (lowercase, no punctuation, (trimmed))
-	for (auto it = tokens.begin(); it < tokens.end(); ++it) {
+	for (auto it = tokens.cbegin(); it < tokens.cend(); ++it) {
 		sanitizedTokens.append(Util::String::sanitizeTerm(*it));
 	}
 
@@ -280,7 +280,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 	// 1) For each term in the phrase, retrieve the associated posts
 	// and push those to an hash that maps <element,field> to <term,positions>
 
-	for (auto it = tokens.begin(); it != tokens.end(); ++it) {
+	for (auto it = tokens.cbegin(); it != tokens.cend(); ++it) {
 		// Retrieve the posts for the this term
 
 		const QString &term = *it;
@@ -308,7 +308,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 			// Take the termPositions, whether it is the existing one or
 			// the just inserted one
 
-			auto termsPosIt = categorizedTermsByElementField.find(ef);
+			const auto termsPosIt = categorizedTermsByElementField.find(ef);
 
 			ASSERT(termsPosIt != categorizedTermsByElementField.end(), "index_handling",
 					   "Elements retrieval failed");
@@ -327,7 +327,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 
 			// Take a reference to the term positions
 
-			auto termPosIt = termsPositions.find(term);
+			const auto termPosIt = termsPositions.find(term);
 
 			ASSERT(termPosIt != termsPositions.end(), "index_handling",
 					   "Elements retrieval failed");
@@ -504,7 +504,7 @@ bool IndexHandler::findPosts(const QString &term,
 	dd("Finding posts for " << term << " in field : " <<
 	   elementFieldTypeString(field));
 
-	auto refIt = mVocabulary.constFind(term);
+	const auto & refIt = mVocabulary.constFind(term);
 
 	if (refIt == mVocabulary.cend()) {
 		ww("Term '" << term << "' not found in vocabulary");
@@ -892,7 +892,7 @@ void IndexHandler::loadCrossrefs()
 		mCrossrefs.insert(pubElementSerial, venueElementSerial);
 
 		// Push the reverse crossref
-		auto inverseCrossrefIt = mInverseCrossrefs.find(venueElementSerial);
+		const auto & inverseCrossrefIt = mInverseCrossrefs.find(venueElementSerial);
 		if (inverseCrossrefIt == mInverseCrossrefs.end()) {
 			// Push for the first time
 			mInverseCrossrefs.insert(venueElementSerial, {pubElementSerial});

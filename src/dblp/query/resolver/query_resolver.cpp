@@ -296,20 +296,13 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 	#pragma omp parallel for reduction(checkCrossrefsReducer:crossrefCheckReductionContainer)
 	for (int i = 0; i < scoredPubsElements.size(); ++i) {
 
-		PROF_BEGIN4(crossrefsCheckPubs_1)
-
 		elem_serial scoredPubSerial = scoredPubsSerials.at(i);
 		const ScoredIndexElementMatches &scoredPub = scoredPubsElements.at(i);
 
 		// Push to the raw outcome's index matches
-		crossrefCheckReductionContainer.rawMatchesBySerial
-				.insert(scoredPubSerial, scoredPub.matches);
-
-		PROF_END(crossrefsCheckPubs_1)
+		crossrefCheckReductionContainer.rawMatchesBySerial.insert(scoredPubSerial, scoredPub.matches);
 
 		// PUB+VENUE match
-
-		PROF_BEGIN4(crossrefsCheckPubs_2)
 
 		// We have to meet two condition for declare a pub+venue, match
 		// first of all the crossref must exists
@@ -320,10 +313,6 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 
 		vv1("Checking crossref existence for element = " << scoredPubSerial);
 
-		PROF_END(crossrefsCheckPubs_2)
-
-		PROF_BEGIN4(crossrefsCheckPubs_3)
-
 		// Retrieve the crossref
 		if (mIrModel->index().crossref(scoredPubSerial, crossrefSerial)) {
 			// Crossref found, check if we have crossrefSerial among
@@ -331,10 +320,9 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 
 			dd2("Crossref found; " << scoredPubSerial << " => " << crossrefSerial);
 
-			auto crossrefVenueIt = scoredVenues.constFind(crossrefSerial);
+			const auto &crossrefVenueIt = scoredVenues.constFind(crossrefSerial);
 
 			if (crossrefVenueIt != scoredVenues.cend()) {
-				PROF_BEGIN5(crossrefsCheckPubs_31)
 
 				// We have both a publication and the crossreffed venue among
 				// our pub matches and venue matches, enhance the score
@@ -354,8 +342,6 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 				dd3("[" << scoredPubSerial << "] score = " << scoredPub.score);
 				dd3("[" << crossrefSerial << "] score = " << scoredVenueMatches.score);
 				dd3("Bonus factor = " << mIrModel->bonusFactorForPublicationVenueMatch());
-				PROF_END(crossrefsCheckPubs_31)
-				PROF_BEGIN5(crossrefsCheckPubs_32)
 
 				float enhancedScore =
 						(scoredPub.score + scoredVenueMatches.score) *
@@ -368,16 +354,12 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 							QueryMatch::forPublicationVenue(
 							   scoredPub.matches, scoredVenueMatches.matches,
 							   enhancedScore));
-
-				PROF_END(crossrefsCheckPubs_32)
 			}
 			// else: the crossreffed venue is not among the matched venues
 		}
 		// else: crossref not even found within the index
-		PROF_END(crossrefsCheckPubs_3)
 
 		// PUB match
-		PROF_BEGIN4(crossrefsCheckPubs_4)
 
 		if (!crossrefMatch) {
 			// Crossref not found, just push the publication to the matches
@@ -393,7 +375,6 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 						QueryMatch::forPublication(
 							scoredPub.matches, score));
 		}
-		PROF_END(crossrefsCheckPubs_4)
 	}
 
 	PROF_END(crossrefsCheckPubs)
