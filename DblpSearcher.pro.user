@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.9.0, 2019-05-26T10:51:54. -->
+<!-- Written by QtCreator 4.9.0, 2019-05-26T12:39:19. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -65,9 +65,9 @@
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Desktop Qt 5.11.2 GCC 64bit</value>
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">Desktop Qt 5.11.2 GCC 64bit</value>
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">qt.qt5.5112.gcc_64_kit</value>
-   <value type="int" key="ProjectExplorer.Target.ActiveBuildConfiguration">0</value>
+   <value type="int" key="ProjectExplorer.Target.ActiveBuildConfiguration">1</value>
    <value type="int" key="ProjectExplorer.Target.ActiveDeployConfiguration">0</value>
-   <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">2</value>
+   <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">4</value>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.BuildConfiguration.0">
     <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
     <valuemap type="QVariantMap" key="ProjectExplorer.BuildConfiguration.BuildStepList.0">
@@ -337,7 +337,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.1">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -403,7 +403,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.10">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -469,7 +469,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.11">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -535,7 +535,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.12">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -601,7 +601,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.13">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -667,7 +667,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.14">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -733,7 +733,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.15">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -799,7 +799,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.2">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -865,7 +865,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.3">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -931,7 +931,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.4">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -997,7 +997,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.5">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -1063,7 +1063,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.6">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -1129,7 +1129,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.7">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -1195,7 +1195,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.8">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -1261,7 +1261,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.9">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -1327,7 +1327,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/stefano/Develop/Qt/DblpSearcher/build</value>
    </valuemap>
    <value type="int" key="ProjectExplorer.Target.RunConfigurationCount">16</value>
   </valuemap>

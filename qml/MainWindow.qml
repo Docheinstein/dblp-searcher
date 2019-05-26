@@ -121,10 +121,10 @@ ApplicationWindow {
 
                     Image   {
                         anchors.fill: parent
-                        anchors.bottomMargin: 5
-                        anchors.topMargin: 5
-                        anchors.rightMargin: 5
-                        anchors.leftMargin: 5
+                        anchors.bottomMargin: 10
+                        anchors.topMargin: 10
+                        anchors.rightMargin: 10
+                        anchors.leftMargin: 10
                         source: "qrc:/img/search.png"
                         fillMode: Image.PreserveAspectFit
                     }

@@ -48,15 +48,19 @@ ColumnLayout {
     }
 
     Button {
+        property int backHeight: 24
+        property int backWidth: backHeight * 4 / 3
         id: elementDetailsBackButton
 
-        width: 60
+        width: backWidth
+        height: backHeight
         Layout.topMargin: 8
 
         Image   {
-            anchors.fill: parent
+            width: elementDetailsBackButton.backWidth
+            height: elementDetailsBackButton.backHeight
             source: "qrc:/img/back.png"
-            fillMode: Image.PreserveAspectFit
+            //            fillMode: Image.PreserveAspectFit
         }
 
         // iconSource: "qrc:/img/.png"
@@ -67,7 +71,9 @@ ColumnLayout {
         }
 
         MouseArea {
-            anchors.fill: parent
+//            anchors.fill: parent
+            width: elementDetailsBackButton.backWidth
+            height: elementDetailsBackButton.backHeight
             cursorShape: Qt.PointingHandCursor
             onClicked: MainWindow.popView()
         }
@@ -250,3 +256,24 @@ ColumnLayout {
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*##^## Designer {
+    D{i:3;anchors_height:24;anchors_width:32}
+}
+ ##^##*/

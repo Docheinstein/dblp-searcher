@@ -73,7 +73,7 @@ Rectangle {
                     visible: model.type === QueryMatchType.Publication ||
                              model.type === QueryMatchType.PublicationVenue
                     text: model.publicationElementType
-                    Layout.fillWidth: true
+                    // Layout.fillWidth: true
                     font.pointSize: 10
                     font.bold: true
                 }
@@ -83,7 +83,7 @@ Rectangle {
                     visible: model.type === QueryMatchType.Publication ||
                              model.type === QueryMatchType.PublicationVenue
                     text: model.publicationIdentifier
-                    Layout.fillWidth: true
+                    // Layout.fillWidth: true
                     color: linkColor
                     font.italic: true
                     font.underline: true
@@ -100,7 +100,7 @@ Rectangle {
                     visible: model.type === QueryMatchType.Venue ||
                              model.type === QueryMatchType.PublicationVenue
                     text: model.venueElementType
-                    Layout.fillWidth: true
+                    // Layout.fillWidth: true
                     font.pointSize: 10
                     font.bold: true
                 }
@@ -110,7 +110,7 @@ Rectangle {
                     visible: model.type === QueryMatchType.Venue ||
                              model.type === QueryMatchType.PublicationVenue
                     text: model.venueIdentifier
-                    Layout.fillWidth: true
+                    // Layout.fillWidth: true
                     color: linkColor
                     font.italic: true
                     font.underline: true

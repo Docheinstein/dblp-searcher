@@ -35,7 +35,34 @@ ColumnLayout {
         Layout.topMargin: 10
         Layout.fillWidth: true
     }
+//    ColumnLayout {
 
+//        Label {
+//            text: "CH" + queryOutcomeResults.contentHeight
+//            Layout.fillWidth: true
+
+//        }
+//        Label {
+//            text: "CY" + queryOutcomeResults.contentY
+//            Layout.fillWidth: true
+
+//        }
+//        Label {
+//            text: "H" + queryOutcomeResults.height
+//            Layout.fillWidth: true
+
+//        }
+//        Label {
+//            text: "IH" + queryOutcomeResults.implicitHeight
+//            Layout.fillWidth: true
+
+//        }
+//        Label {
+//            text: "Y" + queryOutcomeResults.y
+//            Layout.fillWidth: true
+
+//        }
+//    }
     Item {
         id: queryOutcomeResultsContainer
         Layout.fillHeight: true
@@ -53,15 +80,62 @@ ColumnLayout {
             clip: true
             anchors.fill: parent
             visible: MainWindow.queryStatus === MainWindow.Done
-            Keys.onUpPressed: queryOutcomeResultsScroll.increase()
-            Keys.onDownPressed: queryOutcomeResultsScroll.decrease()
+//             contentY: queryOutcomeResultsScroll.position * contentHeight
+            // Keys.onUpPressed: queryOutcomeResultsScroll.increase()
+            // Keys.onDownPressed: queryOutcomeResultsScroll.decrease()
+
+            // Custom scrollbar (for support Qt 5.7 and having a min size)
+//            Item {
+//                anchors.right: parent.right
+//                anchors.top: parent.top
+//                anchors.bottom: parent.bottom
+//                width: 8
+//                anchors.bottomMargin: 0
+//                anchors.rightMargin: 0
+//                anchors.topMargin: 0
+
+//                Rectangle {
+//                    property int indicatorSize: 60
+//                    x: 0
+//                    y: (parent.height - indicatorSize) * queryOutcomeResults.contentY /
+//                       (queryOutcomeResults.contentHeight - queryOutcomeResults.height)
+//                    anchors.right: parent.right
+//                    anchors.rightMargin: 0
+//                    color: "#606060"
+//                    width: parent.width
+//                    height: indicatorSize
+//                    radius: 6
+//                }
+//            }
 
             ScrollBar.vertical: ScrollBar {
-                id: queryOutcomeResultsScroll
+                visible: true
                 active: true
-                // policy: ScrollBar.AlwaysOn
-                // minimumSize: 0.1
+                orientation: Qt.Vertical
             }
+
+//            ScrollBar {
+//                readonly property real indicatorSize: 0.25
+//                id: queryOutcomeResultsScroll
+//                anchors.right: queryOutcomeResults.right
+//                anchors.top: queryOutcomeResults.top
+//                anchors.bottom: queryOutcomeResults.bottom
+//                visible: true
+//                hoverEnabled: true
+//                active: true
+//                size: indicatorSize
+//                position: (queryOutcomeResults.contentY /
+//                          (queryOutcomeResults.contentHeight - queryOutcomeResults.height))
+//                          * (1 - indicatorSize)
+//                orientation: Qt.Vertical
+
+//                contentItem: Rectangle {
+//                        implicitWidth: 6
+//                        implicitHeight: 100
+//                        radius: width / 2
+//                        color: control.pressed ? "#81e889" : "#c2f4c6"
+//                    }
+//            }
 
             // == QUERY MATCH ==
             delegate: Loader {
