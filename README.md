@@ -18,21 +18,23 @@ The following packages are needed in order to compile DBLP Searcher
 * qml
 * qml-module-qtquick2
 * qml-module-qtquick-layouts
+* qml-module-qtquick-controls2
+* qml-module-qtquick-templates2
 * qml-module-qtquick-window2
 
 ## COMPILE
 
 ```
-./build.sh
+./rebuild.sh
 ```
 
 Which actually does the following:
 
 ```
+./makepri.sh
 rm -rf build
 mkdir build
 cd build
-../makepri.sh
 qmake ../DblpSearcher.pro
 make -j8
 ```
@@ -104,15 +106,21 @@ First of all a valid dblp.xml file should be downloaded from the
 [DBLP page](https://dblp.uni-trier.de/xml/).
 
 Therefore starts the binary in index mode in order to index the dblp.xml file.
+e.g.
 
-e.g. ./DblpSearcher --index /tmp/dblp.xml /tmp/dblp-index/ myindex
+```
+./DblpSearcher --index /tmp/dblp.xml /tmp/dblp-index/ myindex
+```
 
 ### Searching
 
 After the creation of the indexes files, the application can be started in search
 mode.
+e.g.
 
-e.g. ./DblpSearcher --search /tmp/dblp-index/ myindex
+```
+./DblpSearcher --search /tmp/dblp-index/ myindex
+```
 
 The queries should be conform to the language expressed in the USAGE section.
 
