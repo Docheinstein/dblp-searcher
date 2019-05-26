@@ -87,18 +87,21 @@ QVariant GuiQueryMatches::data(const QModelIndex &index, int role) const
 		QString identifier;
 		if (match.matchType() == QueryMatchType::Publication ||
 			match.matchType() == QueryMatchType::PublicationVenue) {
+
 			if (mIrModel->index().identifier(
 					match.publication().elementSerial(), identifier))
 				return identifier;
+			else
+				return "<unknown>";
 		}
-		return "<unknown>";
+		return "<unacceptable>";
 	}
 	case GuiQueryMatchRolePublicationElementType:
 		if (match.matchType() == QueryMatchType::Publication ||
 			match.matchType() == QueryMatchType::PublicationVenue) {
 			return elementTypeString(match.publication().elementType());
 		}
-		return "<unknown>";
+		return "<unacceptable>";
 	case GuiQueryMatchRoleVenueSerial:
 		if (match.matchType() == QueryMatchType::Venue ||
 			match.matchType() == QueryMatchType::PublicationVenue) {
@@ -113,15 +116,17 @@ QVariant GuiQueryMatches::data(const QModelIndex &index, int role) const
 			if (mIrModel->index().identifier(
 					match.venue().elementSerial(), identifier))
 				return identifier;
+			else
+				return "<unknown>";
 		}
-		return "<unknown>";
+		return "<unacceptable>";
 	}
 	case GuiQueryMatchRoleVenueElementType:
 		if (match.matchType() == QueryMatchType::Venue ||
 			match.matchType() == QueryMatchType::PublicationVenue) {
 			return elementTypeString(match.venue().elementType());
 		}
-		return "<unknown>";
+		return "<unacceptable>";
 	case GuiQueryMatchRoleType:
 		switch (match.matchType()) {
 		case QueryMatchType::Publication:

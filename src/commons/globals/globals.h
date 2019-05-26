@@ -55,10 +55,10 @@
 
 // Asserts
 
-#define ASSERT_SELECT(_cond, _where, _8, _7, _6, _5, _4, _3, _2, _1, NAME, ...) NAME
+#define ASSERT_SELECT(_cond, _where, _9, _8, _7, _6, _5, _4, _3, _2, _1, NAME, ...) NAME
 #define ASSERT(...) ASSERT_SELECT(\
 		__VA_ARGS__, \
-		ASSERT8, ASSERT7, ASSERT6, ASSERT5, ASSERT4, ASSERT3, ASSERT2, ASSERT1 \
+		ASSERT9, ASSERT8, ASSERT7, ASSERT6, ASSERT5, ASSERT4, ASSERT3, ASSERT2, ASSERT1 \
 	)(__VA_ARGS__)
 
 #define ASSERT1(cond, where, what1) \
@@ -98,7 +98,7 @@
 	Q_ASSERT_X(cond, where, QString( \
 		QString(what1) + QString(what2) + \
 		QString(what3) + QString(what4) + \
-		QString(what5) + QString(what6) +\
+		QString(what5) + QString(what6) + \
 		QString(what7) \
 	).toStdString().c_str())
 
@@ -106,8 +106,17 @@
 	Q_ASSERT_X(cond, where, QString( \
 		QString(what1) + QString(what2) + \
 		QString(what3) + QString(what4) + \
-		QString(what5) + QString(what6) +\
+		QString(what5) + QString(what6) + \
 		QString(what7) + QString(what8) \
+	).toStdString().c_str())
+
+#define ASSERT9(cond, where, what1, what2, what3, what4, what5, what6, what7, what8, what9) \
+	Q_ASSERT_X(cond, where, QString( \
+		QString(what1) + QString(what2) + \
+		QString(what3) + QString(what4) + \
+		QString(what5) + QString(what6) + \
+		QString(what7) + QString(what8) + \
+		QString(what9) \
 	).toStdString().c_str())
 
 

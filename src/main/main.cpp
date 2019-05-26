@@ -14,7 +14,7 @@ STATIC_LOGGING(Main, true)
 
 static const char * const HELP =
 R"#(NAME
-	dblp-searcher (0.1)
+	dblp-searcher
 
 SYNOPSIS
 	dblp-searcher <MODE> <INDEX_FOLDER_PATH> <INDEX_BASE_NAME> [OPTIONS]...
@@ -71,11 +71,6 @@ Arguments arguments;
 
 int main(int argc, char *argv[])
 {
-//	QCoreApplication app (argc, argv);
-//	QtConcurrent::run(workerTests);
-//	workerTests();
-//	return 	app.exec();
-
 	PROF_FUNC_BEGIN
 
 	if (argc < 2) {
@@ -86,7 +81,7 @@ int main(int argc, char *argv[])
 		parseArguments(argc, argv);
 		printArguments();
 
-		_ii("Hello, dblp searcher v " << VERSION << " there!");
+		_ii("Hello, dblp searcher v. " << VERSION << " there!");
 
 		if (arguments.mode == DblpSearcherMode::Index) {
 			_ii("Starting in INDEX mode");

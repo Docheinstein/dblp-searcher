@@ -2,6 +2,7 @@
 
 #include <math.h>
 
+#include "commons/config/app_config.h"
 #include "commons/config/config.h"
 #include "commons/util/util.h"
 #include "commons/const/const.h"
@@ -27,8 +28,11 @@ const QVector<QString> IndexHandler::identifiers() const
 bool IndexHandler::identifier(elem_serial serial, QString &identifier) const
 {
 	int ix = INT(serial);
-	if (ix >= mIdentifiers.size())
+	if (ix >= mIdentifiers.size()) {
+		ww("Cannot retrieve identifier for element " << serial << " ( " << ix << " )" <<
+		   "; serial out of bound (" << ix << " > " << mIdentifiers.size() << ")");
 		return false;
+	}
 	identifier = mIdentifiers.at(ix);
 	return true;
 }
@@ -86,8 +90,11 @@ const QVector<elem_pos> IndexHandler::positions() const
 bool IndexHandler::positionRange(elem_serial serial, QPair<elem_pos, elem_pos> &range) const
 {
 	int ix = INT(serial);
-	if (ix >= mElementsPositions.size())
+	if (ix >= mElementsPositions.size()) {
+		ww("Cannot retrieve position for element " << serial << " ( " << ix << " )" <<
+		   "; serial out of bound (" << ix << " > " << mIdentifiers.size() << ")");
 		return false;
+	}
 
 	range.first = 0; // lower bound (default value: start of file)
 	range.second = mElementsPositions.at(ix); // upper bound
@@ -218,6 +225,13 @@ bool IndexHandler::findWordMatches(const QString &token,
 		match.fieldNumber = post.fieldNumber;
 		match.matchPosition = post.inFieldTermPosition;
 		matches.append(match);
+
+		ASSERT(post.elementSerial < Config::Index::PostingList::ELEMENT_SERIAL_THRESHOLD,
+			   "index_handling", "Loaded post has serial greater than maximum allowed");
+		ASSERT(post.fieldNumber < Config::Index::PostingList::FIELD_NUM_THRESHOLD,
+			   "index_handling", "Loaded post has field number than maximum allowed");
+//		ASSERT(post.inFieldTermPosition < Config::Index::PostingList::IN_FIELD_POS_THRESHOLD,
+//			   "index_handling", "Loaded post has in field term pos greater than maximum allowed");
 	}
 
 	PROF_FUNC_END
@@ -535,7 +549,7 @@ void IndexHandler::findPosts(const QMap<QString,
 
 	case ElementFieldType::IncollectionAuthor:
 		refPost = &ref.incollection.author;
-		multifield = false;
+		multifield = true;
 		break;
 	case ElementFieldType::IncollectionTitle:
 		refPost = &ref.incollection.title;
@@ -546,7 +560,7 @@ void IndexHandler::findPosts(const QMap<QString,
 
 	case ElementFieldType::InproceedingsAuthor:
 		refPost = &ref.inproceedings.author;
-		multifield = false;
+		multifield = true;
 		break;
 	case ElementFieldType::InproceedingsTitle:
 		refPost = &ref.inproceedings.title;
@@ -557,7 +571,7 @@ void IndexHandler::findPosts(const QMap<QString,
 
 	case ElementFieldType::PhdthesisAuthor:
 		refPost = &ref.phdthesis.author;
-		multifield = false;
+		multifield = true;
 		break;
 	case ElementFieldType::PhdthesisTitle:
 		refPost = &ref.phdthesis.title;
@@ -568,7 +582,7 @@ void IndexHandler::findPosts(const QMap<QString,
 
 	case ElementFieldType::MastersthesisAuthor:
 		refPost = &ref.mastersthesis.author;
-		multifield = false;
+		multifield = true;
 		break;
 	case ElementFieldType::MastersthesisTitle:
 		refPost = &ref.mastersthesis.title;
@@ -579,7 +593,7 @@ void IndexHandler::findPosts(const QMap<QString,
 
 	case ElementFieldType::BookAuthor:
 		refPost = &ref.book.author;
-		multifield = false;
+		multifield = true;
 		break;
 	case ElementFieldType::BookTitle:
 		refPost = &ref.book.title;
@@ -621,11 +635,14 @@ void IndexHandler::findPosts(const QMap<QString,
 
 	for (quint32 i = 0; i < refPost->count; ++i) {
 
+		quint32 K = Config::Index::PostingList::POST_BYTES_MULTIFIELD;
+
+#if MONOFIELD_SHRINK
+		if (!multifield)
+			K = Config::Index::PostingList::POST_BYTES_MONOFIELD;
+#endif
 		// Figure out the position of the posts in the posting list (of the first one)
-		qint64 postPos = ref.postingListPosition + refPost->offset +
-				(i * (multifield ?
-					 Config::Index::PostingList::POST_BYTES_MULTIFIELD :
-					 Config::Index::PostingList::POST_BYTES_MONOFIELD));
+		qint64 postPos = ref.postingListPosition + refPost->offset + (i * K);
 
 #if DEBUG
 		const QString &term = vocabularyEntry.key();
@@ -638,7 +655,9 @@ void IndexHandler::findPosts(const QMap<QString,
 		field_num fieldNumber;
 		term_pos inFieldPos;
 
+#if MONOFIELD_SHRINK
 		if (multifield) {
+#endif // MONOFIELD_SHRINK
 			// For multifield: read 5 bytes
 
 			quint32 P32;
@@ -649,6 +668,7 @@ void IndexHandler::findPosts(const QMap<QString,
 			elementSerial = P32 >> Config::Index::PostingList::FIELD_NUM_BITS;
 			fieldNumber = P32 & (~0u >> (32 - Config::Index::PostingList::FIELD_NUM_BITS));
 			inFieldPos = P8;
+#if MONOFIELD_SHRINK
 		} else {
 			// For monofield: read 4 bytes
 
@@ -659,7 +679,16 @@ void IndexHandler::findPosts(const QMap<QString,
 			elementSerial = P32 >> Config::Index::PostingList::IN_FIELD_POS_BITS;
 			fieldNumber = 0; // monofield
 			inFieldPos = P32 & (~0u >> (32 - Config::Index::PostingList::IN_FIELD_POS_BITS));
+
+			ASSERT(elementSerial < Config::Index::PostingList::ELEMENT_SERIAL_THRESHOLD,
+				   "index_handling",
+				   "Serial out of bound;",
+				   " P32: ", HEX(P32),
+				   " serial: ", DEC(elementSerial),
+				   " field num: ", DEC(fieldNumber),
+				   " fieldpos: ", DEC(inFieldPos));
 		}
+#endif // MONOFIELD_SHRINK
 
 		// Figure out element id, (field number) and field pos
 
@@ -699,8 +728,9 @@ void IndexHandler::loadIdentifiers()
 		emit identifiersLoadProgress(progress);
 	}
 
-	ii("Finished loading of identifiers file (" <<
-	   Util::File::humanSize(mIdentifiersStream.file) + ")");
+	ii("Finished loading of identifiers file " <<
+	   Util::File::humanSize(mIdentifiersStream.file) +
+	   " (" << mIdentifiers.size() << " identifiers)");
 
 	emit identifiersLoadEnded();
 }
@@ -775,7 +805,6 @@ void IndexHandler::loadVocabulary()
 		mVocabularyStream.stream >> ref.postingListPosition;
 		quint32 incrementalOffset = 0;
 
-
 		vv2("Starting position in posting list: " << ref.postingListPosition);
 
 		// <art.a> <art.t> <art.y>
@@ -787,8 +816,12 @@ void IndexHandler::loadVocabulary()
 		// <bok.a> <bok.t> <bok.y> <bok.p>
 		// <pro.t> <pro.y> <pro.p>
 
-		const int M = Config::Index::PostingList::POST_BYTES_MULTIFIELD;
-		const int S = Config::Index::PostingList::POST_BYTES_MONOFIELD;
+		quint32 M = Config::Index::PostingList::POST_BYTES_MULTIFIELD;
+		quint32 S = M;
+
+#if MONOFIELD_SHRINK
+		S = Config::Index::PostingList::POST_BYTES_MONOFIELD;
+#endif
 
 		incrementalOffset += loadIndexTermReference(ref.article.author, incrementalOffset) * M;
 		incrementalOffset += loadIndexTermReference(ref.article.title, incrementalOffset) * S;
@@ -832,8 +865,9 @@ void IndexHandler::loadVocabulary()
 		++i;
 	}
 
-	ii("Finished loading of vocabulary file (" <<
-	   Util::File::humanSize(mVocabularyStream.file) + ")");
+	ii("Finished loading of vocabulary file " <<
+	   Util::File::humanSize(mVocabularyStream.file) + " (" <<
+	   mVocabulary.size() << " terms)");
 
 	emit vocabularyLoadEnded();
 }
@@ -872,8 +906,9 @@ void IndexHandler::loadCrossrefs()
 		emit crossrefsLoadProgress(progress);
 	}
 
-	ii("Finished loading of crossrefs file (" <<
-	   Util::File::humanSize(mCrossrefsStream.file) + ")");
+	ii("Finished loading of crossrefs file " <<
+	   Util::File::humanSize(mCrossrefsStream.file) + " (" <<
+	   mCrossrefs.size() << " crossrefs)");
 
 	emit crossrefsLoadEnded();
 }
@@ -907,7 +942,9 @@ void IndexHandler::loadPositions()
 	}
 
 	ii("Finished loading of positions file (" <<
-	   Util::File::humanSize(mElementsPositionsStream.file) + ")");
+	   Util::File::humanSize(mElementsPositionsStream.file) + " (" <<
+	   mElementsPositions.size() << " positions)");
+
 
 	emit positionsLoadEnded();
 }

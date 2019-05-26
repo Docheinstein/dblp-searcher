@@ -199,9 +199,9 @@ void GuiMainWindow::searchFinished()
 
 	ii("Search done; # results = " << outcome.sortedQueryMatches.size());
 
-#if PROFILER
-	profPrint();
-#endif
+//#if PROFILER
+//	profPrint();
+//#endif
 
 	mMatches.addMatches(outcome.sortedQueryMatches);
 	mMatchesHash = outcome.indexMatchesBySerial;

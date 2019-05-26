@@ -19,7 +19,7 @@
 
 #define QML_REGISTRAR QML_URI, QML_VERSION_MAJOR, QML_REVISION
 
-#if DEBUG || INFO
+#if DEBUG || VERBOSE
 // Just for avoid warnings about unused vars
 STATIC_LOGGING(Main, true)
 #endif
@@ -167,8 +167,7 @@ void IndexLoadingWorkerHandler::onProgressChanged(double progress)
 
 void IndexLoadingWorkerHandler::onLoadingFinished(QueryResolver * resolver)
 {
-	_ii("Index loading finished");
-//	_dd("Index loading finished");
+	_dd("Index loading finished");
 
 	// Set the resolver
 	mMain.setResolver(resolver);
@@ -176,10 +175,8 @@ void IndexLoadingWorkerHandler::onLoadingFinished(QueryResolver * resolver)
 	// Hide splash, show main
 	mSplash.setShown(false);
 	mMain.setShown(true);
-	_vv("Going to hide splash and show main window on thread: "
+	_dd("Going to hide splash and show main window on thread: "
 		<< QThread::currentThreadId());
-//	_dd("Going to hide splash and show main window on thread: "
-//		<< QThread::currentThreadId());
 }
 
 IndexLoadingController::IndexLoadingController(GuiMainWindow &main,
@@ -237,6 +234,6 @@ IndexLoadingController::~IndexLoadingController()
 
 void IndexLoadingController::doIndexing()
 {
-	_ii("Hanging on thread: " << QThread::currentThreadId());
+	_dd("Hanging on thread: " << QThread::currentThreadId());
 	mWorkerThread->start();
 }

@@ -13,20 +13,21 @@
 
 // =============================================================================
 
+// Whether shrink the posts of monofield elements from 5 bytes to 4 bytes.
+// The settings affects both the indexing and the index handling.
+#define MONOFIELD_SHRINK 1
+
+// =============================================================================
 
 // =)
 #define EASTER_EGGS 1
 
-
 // =============================================================================
-
 
 // Set to 0 or 1 to enable/disable profiler
-#define PROFILER 0
-
+#define PROFILER 1
 
 // =============================================================================
-
 
 // Active log levels
 

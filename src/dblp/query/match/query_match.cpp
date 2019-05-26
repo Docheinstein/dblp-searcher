@@ -68,6 +68,9 @@ void QueryMatchComponent::finalize()
 	mSerial = matchesIt->elementSerial;
 	mType = elementTypeFromElementFieldType(matchesIt->fieldType);
 
+	ASSERT(mSerial < Config::Index::PostingList::ELEMENT_SERIAL_THRESHOLD,
+		   "index_handling", "Serial out of bound when creating query match component!");
+
 	// Ensure that every other matches have the same serial and type
 	matchesIt++;
 

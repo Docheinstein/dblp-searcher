@@ -2,6 +2,7 @@
 
 #include <QDir>
 
+#include "commons/config/app_config.h"
 #include "commons/const/const.h"
 #include "commons/config/config.h"
 #include "commons/util/util.h"
@@ -209,9 +210,9 @@ void Indexer::handleJournal(const DblpJournal &journal, qint64 pos)
 	// (to mVenueSerialByVenueIdentifier); if not we can handle it as any
 	// other element, otherwise we have to skip it.
 
-	auto journalIdentifierIt = mVenueSerialByVenueIdentifier.find(journal.name);
+	auto journalIdentifierIt = mVenueSerialByVenueIdentifier.constFind(journal.name);
 
-	if (journalIdentifierIt != mVenueSerialByVenueIdentifier.end()) {
+	if (journalIdentifierIt != mVenueSerialByVenueIdentifier.cend()) {
 		dd1("Skipping journal addition since already exists: " << journal.name);
 		// Already added, do not add again
 		return;
@@ -697,32 +698,40 @@ void Indexer::writePosts(const IndexPosts &posts, bool multifield)
 
 void Indexer::writePost(const IndexPost &post, bool multifield)
 {
-	dd4("Writing post: " << post << "(multifield: " << multifield << ")");
+	dd4("Writing post: " << post);
+
+#if !MONOFIELD_SHRINK
+	Q_UNUSED(multifield)
+else
+	dd("-> multifield: " << multifield);
+#endif
 
 	// Asserts
 	ASSERT(post.elementSerial < Config::Index::PostingList::ELEMENT_SERIAL_THRESHOLD,
 			 "indexing", "There are more elements than the index's allowed number");
 
 	ASSERT(post.fieldNumber < Config::Index::PostingList::FIELD_NUM_THRESHOLD,
-			 "indexing", "There are more equals fields per element than the index's allowed number");
+			"indexing", "There are more equals fields per element than the index's allowed number");
 
 	// Implicit since inFieldTermPosition type is exactly the same size of IN_FIELD_POS_THRESHOLD
-//	Q_ASSERT_X(post.inFieldTermPosition < Config::Index::PostingList::IN_FIELD_POS_THRESHOLD,
-//			 "indexing", "There are more terms per field than the index's allowed number");
+//	ASSERT(post.inFieldTermPosition < Config::Index::PostingList::IN_FIELD_POS_THRESHOLD,
+//			"indexing", "There are more terms per field than the index's allowed number");
 
-
+#if MONOFIELD_SHRINK
 	if (multifield) {
+#endif // MONOFIELD_SHRINK
 		quint32 P32 =  UINT32(
 				(post.elementSerial << Config::Index::PostingList::FIELD_NUM_BITS) |
 				post.fieldNumber
 		);
 
-		quint8 P8 =  UINT8(post.inFieldTermPosition);
+		quint8 P8 = post.inFieldTermPosition;
 
 		dd5("Writing P32 to posting list Hex: " << HEX(P32));
 		dd5("Writing P8 to posting list Hex: " << HEX(P8));
 
 		mPostingsStream.stream << P32 << P8;
+#if MONOFIELD_SHRINK
 	} else {
 		quint32 P32 = UINT32(
 			(post.elementSerial << Config::Index::PostingList::IN_FIELD_POS_BITS) |
@@ -732,7 +741,16 @@ void Indexer::writePost(const IndexPost &post, bool multifield)
 		dd5("Writing P32 to posting list Hex: " << HEX(P32));
 
 		mPostingsStream.stream << P32;
+
+		// Implicit...
+		ASSERT((P32 & 0x80000000) == 0, "indexing",
+			   "Left padding bit for monofield elements should be 0");
+
+		ASSERT((post.inFieldTermPosition & 0xFF) == post.inFieldTermPosition, "indexing",
+			   "inFieldTermPosition took more than 8 bits");
+
 	}
+#endif // MONOFIELD_SHRINK
 
 	dd5("New .plix buffer pos: " << mPostingsStream.filePosition());
 
@@ -778,9 +796,9 @@ void Indexer::writeCrossrefsFile()
 		elem_serial publicationSerial = it.key();
 		const QString &venueIdentifier = it.value();
 
-		auto venueSerialIt = mVenueSerialByVenueIdentifier.find(venueIdentifier);
+		auto venueSerialIt = mVenueSerialByVenueIdentifier.constFind(venueIdentifier);
 
-		if (venueSerialIt == mVenueSerialByVenueIdentifier.end()) {
+		if (venueSerialIt == mVenueSerialByVenueIdentifier.cend()) {
 			ww("Could not find the element id of the crossreffed venue: " << venueIdentifier);
 			continue; // ignore it...
 		}
