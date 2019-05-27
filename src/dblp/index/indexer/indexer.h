@@ -133,6 +133,9 @@ private:
 	 * of each element of the parsed dblp dump.
 	 * The order of the terms actually doesn't matter since those are referred
 	 * by the vocabulary.
+	 * Furthermore, for monofield elements, the <field_number> is omitted and
+	 * only 4 bytes are used instead of 5 (only 31 bits are used in this case,
+	 * with the lefter most bit = 0).
 	 *
 	 * <element_id> := 23 bit
 	 * <field_number> := 9 bit

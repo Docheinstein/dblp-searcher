@@ -207,72 +207,76 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 		QHash<elem_serial, ScoredIndexElementMatches> : \
 			computeElementsScoreCombiner(omp_out, omp_in))
 
-	auto computeElementsScore = [&](
-			const QVector<IndexMatch> &matches,
-			QHash<elem_serial, ScoredIndexElementMatches> &scoredMatches) {
+	#pragma omp parallel
+	{
+		auto computeElementsScore = [&](const QVector<IndexMatch> matches,
+					QHash<elem_serial, ScoredIndexElementMatches> &scoredMatches) {
 
-		#pragma omp parallel for reduction(computeElementsScoreReducer:scoredMatches)
-		for (int i = 0; i < matches.size(); ++i) {
-			const IndexMatch &match = matches.at(i);
+			// Compute publications and venues scores
+			#pragma omp for nowait reduction(computeElementsScoreReducer:scoredMatches)
+			for (int i = 0; i < matches.size(); ++i) {
+				const IndexMatch &match = matches.at(i);
 
-			// Retrieve the current score for this element, if it doesn't exist
-			// insert a new one
+				// Retrieve the current score for this element, if it doesn't exist
+				// insert a new one
 
-			if (!scoredMatches.contains(match.elementSerial)) {
-				dd4("Creating ScoredIndexMatches for element = " << match.elementSerial);
-				// With the no match (for now, than this efMatch will
-				// be pushed) and score = 0 (which will
-				// be increased later)
-				scoredMatches.insert(match.elementSerial, {{}, 0});
+				if (!scoredMatches.contains(match.elementSerial)) {
+					dd4("Creating ScoredIndexMatches for element = " << match.elementSerial);
+					// With the no match (for now, than this efMatch will
+					// be pushed) and score = 0 (which will
+					// be increased later)
+					scoredMatches.insert(match.elementSerial, {{}, 0});
+				}
+
+				auto scoredMatchIt = scoredMatches.find(match.elementSerial);
+
+				ASSERT(scoredMatchIt != scoredMatches.end(), "querying",
+					"ScoredIndexMatches not found; is this a programming error?");
+
+				ScoredIndexElementMatches &scoredElementMatches = scoredMatchIt.value();
+				float matchPartialScore = 0;
+
+				// Push this match
+				scoredElementMatches.matches.append(match);
+
+				// For each matched token inside this match, retrieve the ief
+				// and add it to the global score of the associated element
+				for (const QString &token : match.matchedTokens) {
+					float ief;
+					ief = mIrModel->termScore(token);
+					dd4("[e" << match.elementSerial << "] ief(" << token << ") = " << ief );
+					matchPartialScore += ief;
+				}
+
+				// Moreover, I would like to enhance the phrasal query, for this reason
+				// the score of a phrasal is the sum of the if.ief of its tokens plus a bonus
+				// defined as C^(len(tokens)), so that if the phrase contain more tokens
+				// the bonus increase
+
+				if (match.matchedTokens.size() > 1) {
+					float phraseBonus = pow(
+						mIrModel->bonusFactorPerPhraseTerm(),
+						FLOAT(match.matchedTokens.size() - 1) // -1 for avoid to bonus non phrasals
+					);
+
+					vv2("Giving bonus of " << phraseBonus
+					   << " to phrase: " << match.matchedTokens.join(" "));
+					matchPartialScore *= phraseBonus;
+				}
+
+				// Add the score to the this scoredMatches (for a single element)
+				scoredElementMatches.score += matchPartialScore;
+
+				dd3("[e" << DEC(match.elementSerial) + "] += " + FLT(matchPartialScore));
+				dd4("    = " + FLT(scoredElementMatches.score));
 			}
+		};
 
-			auto scoredMatchIt = scoredMatches.find(match.elementSerial);
+		computeElementsScore(publicationMatches, scoredPubs); // Invoked with nowait
+		computeElementsScore(venueMatches, scoredVenues);	  // Invoked with nowait
 
-			ASSERT(scoredMatchIt != scoredMatches.end(), "querying",
-				"ScoredIndexMatches not found; is this a programming error?");
-
-			ScoredIndexElementMatches &scoredElementMatches = scoredMatchIt.value();
-			float matchPartialScore = 0;
-
-			// Push this match
-			scoredElementMatches.matches.append(match);
-
-			// For each matched token inside this match, retrieve the ief
-			// and add it to the global score of the associated element
-			for (const QString &token : match.matchedTokens) {
-				float ief;
-				ief = mIrModel->termScore(token);
-				dd4("[e" << match.elementSerial << "] ief(" << token << ") = " << ief );
-				matchPartialScore += ief;
-			}
-
-			// Moreover, I would like to enhance the phrasal query, for this reason
-			// the score of a phrasal is the sum of the if.ief of its tokens plus a bonus
-			// defined as C^(len(tokens)), so that if the phrase contain more tokens
-			// the bonus increase
-
-			if (match.matchedTokens.size() > 1) {
-				float phraseBonus = pow(
-					mIrModel->bonusFactorPerPhraseTerm(),
-					FLOAT(match.matchedTokens.size() - 1) // -1 for avoid to bonus non phrasals
-				);
-
-				vv2("Giving bonus of " << phraseBonus
-				   << " to phrase: " << match.matchedTokens.join(" "));
-				matchPartialScore *= phraseBonus;
-			}
-
-			// Add the score to the this scoredMatches (for a single element)
-			scoredElementMatches.score += matchPartialScore;
-
-			dd3("[e" << DEC(match.elementSerial) + "] += " + FLT(matchPartialScore));
-			dd4("    = " + FLT(scoredElementMatches.score));
-		}
-	};
-
-	// Compute publications and venues scores
-	computeElementsScore(publicationMatches, scoredPubs);
-	computeElementsScore(venueMatches, scoredVenues);
+		// Implicit barrier
+	}
 
 	PROF_END(resolveQueryScoreComputing)
 
