@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.9.0, 2019-05-27T00:22:07. -->
+<!-- Written by QtCreator 4.9.0, 2019-05-28T22:14:03. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -67,7 +67,7 @@
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">qt.qt5.5112.gcc_64_kit</value>
    <value type="int" key="ProjectExplorer.Target.ActiveBuildConfiguration">1</value>
    <value type="int" key="ProjectExplorer.Target.ActiveDeployConfiguration">0</value>
-   <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">4</value>
+   <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">15</value>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.BuildConfiguration.0">
     <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">/home/stefano/Develop/Qt/DblpSearcher/build-dbg</value>
     <valuemap type="QVariantMap" key="ProjectExplorer.BuildConfiguration.BuildStepList.0">
@@ -790,7 +790,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">DblpSearcher</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">DblpSearcher_ProdMono</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/stefano/Develop/Qt/DblpSearcher/DblpSearcher.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Documents/DblpSearcher/index/ prodmono -X /home/stefano/Documents/DblpSearcher/xml/dblp.xml</value>
+    <value type="QString" key="RunConfiguration.Arguments">--search /home/stefano/Documents/DblpSearcher/index/ prod -X /home/stefano/Documents/DblpSearcher/xml/prod.shrink/dblp.xml</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>

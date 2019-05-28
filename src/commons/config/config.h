@@ -10,7 +10,7 @@ namespace Config {
 			const QString IDENTIFIERS = ".idix";
 			const QString POSTING_LIST = ".plix";
 			const QString VOCABULARY = ".vix";
-			const QString ELEMENTS_POS = ".epix";
+			const QString XML_POS = ".xpix";
 			const QString CROSSREFS = ".cix";
 		}
 

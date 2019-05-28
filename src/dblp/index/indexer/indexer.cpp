@@ -55,10 +55,10 @@ void Indexer::onParseStart()
 		QUIT(INDEX_CREATION_ERROR);
 
 	// Elements positions file
-	QString elementsPosPath = Util::Dblp::Index::indexFilePath(
-			mOutputPath, mBaseIndexName, Config::Index::Extensions::ELEMENTS_POS);
-	ii("Creating elements pos index file at: " << elementsPosPath);
-	if (!mElementsPositionsStream.openWrite(elementsPosPath))
+	QString xmlPosPath = Util::Dblp::Index::indexFilePath(
+			mOutputPath, mBaseIndexName, Config::Index::Extensions::XML_POS);
+	ii("Creating elements pos index file at: " << xmlPosPath);
+	if (!mXmlPositionsStream.openWrite(xmlPosPath))
 		QUIT(INDEX_CREATION_ERROR);
 
 	// Crossrefs file
@@ -91,7 +91,7 @@ void Indexer::onParseEnd()
 	mIdentifiersStream.close();
 	mVocabularyStream.close();
 	mPostingsStream.close();
-	mElementsPositionsStream.close();
+	mXmlPositionsStream.close();
 	mCrossrefsStream.close();
 
 	ii("Indexing finished");
@@ -683,7 +683,11 @@ void Indexer::writeTermFieldPostsCount(quint32 count)
 			// In order to distinguish this from the < 16 bit case, add a
 			// flag (1) to the left of the byte
 			(count | Config::Index::Vocabulary::REF_EXTENDED_FLAG);
+
+		++mStats.largeTermRefCount;
 	}
+
+	++mStats.termRefCount;
 }
 
 void Indexer::writePosts(const IndexPosts &posts, bool multifield)
@@ -700,12 +704,8 @@ void Indexer::writePost(const IndexPost &post, bool multifield)
 {
 	dd4("Writing post: " << post);
 
-#if !MONOFIELD_SHRINK
-	Q_UNUSED(multifield)
-else
-	dd("-> multifield: " << multifield);
-#endif
 
+	dd("-> multifield: " << multifield);
 	// Asserts
 	ASSERT(post.elementSerial < Config::Index::PostingList::ELEMENT_SERIAL_THRESHOLD,
 			 "indexing", "There are more elements than the index's allowed number");
@@ -717,9 +717,7 @@ else
 //	ASSERT(post.inFieldTermPosition < Config::Index::PostingList::IN_FIELD_POS_THRESHOLD,
 //			"indexing", "There are more terms per field than the index's allowed number");
 
-#if MONOFIELD_SHRINK
 	if (multifield) {
-#endif // MONOFIELD_SHRINK
 		quint32 P32 =  UINT32(
 				(post.elementSerial << Config::Index::PostingList::FIELD_NUM_BITS) |
 				post.fieldNumber
@@ -731,7 +729,6 @@ else
 		dd5("Writing P8 to posting list Hex: " << HEX(P8));
 
 		mPostingsStream.stream << P32 << P8;
-#if MONOFIELD_SHRINK
 	} else {
 		quint32 P32 = UINT32(
 			(post.elementSerial << Config::Index::PostingList::IN_FIELD_POS_BITS) |
@@ -750,7 +747,6 @@ else
 			   "inFieldTermPosition took more than 8 bits");
 
 	}
-#endif // MONOFIELD_SHRINK
 
 	dd5("New .plix buffer pos: " << mPostingsStream.filePosition());
 
@@ -774,7 +770,7 @@ void Indexer::writePositionsFile()
 	for (elem_pos pos : mPositions) {
 		vv2("Writing position for element = " << i << ": " << pos);
 
-		mElementsPositionsStream.stream << pos;
+		mXmlPositionsStream.stream << pos;
 
 		++i;
 	}
@@ -808,7 +804,24 @@ void Indexer::writeCrossrefsFile()
 		vv2("Writing crossref " << publicationSerial << " => " << venueSerial);
 
 		// We have everything, really write this pair of <pub> => <venue>
-		mCrossrefsStream.stream << publicationSerial << venueSerial;
+		// Since each serial is no more than 23 bit, write those using a 48 bit
+		// with the first two left bit 0 padded
+
+		static const quint32 CX_LSH = // 7
+				(32 - Config::Index::PostingList::ELEMENT_SERIAL_BITS) -
+				(48 - (Config::Index::PostingList::ELEMENT_SERIAL_BITS << 1));
+
+		static const quint32 CX_RSH = // 16
+				(32 - (Config::Index::PostingList::ELEMENT_SERIAL_BITS - CX_LSH));
+
+		quint32 C32 = (publicationSerial << CX_LSH | (venueSerial >> CX_RSH));
+
+		quint16 C16 = venueSerial & 0xFFFF; // Last 16
+
+		dd3("Writing C32: " << C32);
+		dd3("Writing C16: " << C16);
+
+		mCrossrefsStream.stream << C32 << C16;
 	}
 }
 
@@ -830,14 +843,18 @@ void Indexer::printStats()
 	ii("## Posts: " << mStats.postsCount);
 	ii("## Highest field num: " << mStats.highestFieldNumber);
 	ii("## Highest in field pos: " << mStats.highestInFieldPosition);
-
+	ii("## Total term ref: " << mStats.termRefCount);
+	ii("## Large term ref: " << mStats.largeTermRefCount);
+	ii("%% Large term ref: " <<
+	   DBLFIX(DOUBLE(mStats.largeTermRefCount) * 100 / mStats.termRefCount, 8)
+	   << "%");
 	// File sizes
 
 	ii("SZ .idix: " << Util::File::humanSize(mIdentifiersStream.file));
 	ii("SZ .plix: " << Util::File::humanSize(mPostingsStream.file));
 	ii("SZ .vix: " << Util::File::humanSize(mVocabularyStream.file));
-	ii("SZ .epix: " << Util::File::humanSize(mElementsPositionsStream.file));
 	ii("SZ .cix: " << Util::File::humanSize(mCrossrefsStream.file));
+	ii("SZ .xpix: " << Util::File::humanSize(mXmlPositionsStream.file));
 
 	// Other
 
@@ -854,5 +871,6 @@ void Indexer::printStats()
 
 	ii("MAX posts count belongs to term '" << maxPostsCountTerm << "' " <<
 	   " (" << maxPostCount << ")");
+
 #endif
 }

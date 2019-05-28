@@ -37,6 +37,8 @@
 #define HEX(x) QString::number(x, 16)
 #define FLT(x) QString::number(DOUBLE(x), 'g', 2)
 #define DBL(x) QString::number(x, 'g', 2)
+#define FLTFIX(x, n) QString::number(DOUBLE(x), 'f', n)
+#define DBLFIX(x, n) QString::number(x, 'f', n)
 
 // Handly cstring functions
 

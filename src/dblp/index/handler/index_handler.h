@@ -134,7 +134,7 @@ private:
 
 	TextStreamFile mIdentifiersStream;
 	DataStreamFile mVocabularyStream;
-	DataStreamFile mElementsPositionsStream;
+	DataStreamFile mXmlPositionsStream;
 	DataStreamFile mCrossrefsStream;
 	DataStreamFile mPostingsStream;
 
@@ -165,7 +165,7 @@ private:
 	QHash<elem_serial, QVector<elem_serial>> mInverseCrossrefs;
 
 	// Contains the elements positions in the original XML file, one for each element
-	QVector<elem_pos> mElementsPositions;
+	QVector<elem_pos> mXmlPositions;
 
 
 	// ====================

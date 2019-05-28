@@ -84,20 +84,20 @@ bool IndexHandler::inverseCrossref(elem_serial venueSerial,
 
 const QVector<elem_pos> IndexHandler::positions() const
 {
-	return mElementsPositions;
+	return mXmlPositions;
 }
 
 bool IndexHandler::positionRange(elem_serial serial, QPair<elem_pos, elem_pos> &range) const
 {
 	int ix = INT(serial);
-	if (ix >= mElementsPositions.size()) {
+	if (ix >= mXmlPositions.size()) {
 		ww("Cannot retrieve position for element " << serial << " ( " << ix << " )" <<
 		   "; serial out of bound (" << ix << " > " << mIdentifiers.size() << ")");
 		return false;
 	}
 
 	range.first = 0; // lower bound (default value: start of file)
-	range.second = mElementsPositions.at(ix); // upper bound
+	range.second = mXmlPositions.at(ix); // upper bound
 
 	// For find the lower bound we have to scan the vector backward in order
 	// to find a different position; this is not ideal but is not dramatic
@@ -113,10 +113,10 @@ bool IndexHandler::positionRange(elem_serial serial, QPair<elem_pos, elem_pos> &
 	for (int i = ix - 1; i >= 0 &&
 		differentPosCount < LB_DIFFERENT_POSITIONS_REQUIRED; i--) {
 
-		if (mElementsPositions.at(i) != lastDifferentPos) {
+		if (mXmlPositions.at(i) != lastDifferentPos) {
 			// Found a different position
 			differentPosCount++;
-			lastDifferentPos = mElementsPositions.at(i);
+			lastDifferentPos = mXmlPositions.at(i);
 		}
 	}
 
@@ -483,10 +483,10 @@ void IndexHandler::init()
 		QUIT(INDEX_READ_ERROR);
 
 	// Elements positions file
-	QString elementsPosPath = Util::Dblp::Index::indexFilePath(
-			mIndexPath, mBaseIndexName, Config::Index::Extensions::ELEMENTS_POS);
-	ii("Opening elements pos index file at: " << elementsPosPath);
-	if (!mElementsPositionsStream.openRead(elementsPosPath))
+	QString xmlPosPath = Util::Dblp::Index::indexFilePath(
+			mIndexPath, mBaseIndexName, Config::Index::Extensions::XML_POS);
+	ii("Opening elements pos index file at: " << xmlPosPath);
+	if (!mXmlPositionsStream.openRead(xmlPosPath))
 		QUIT(INDEX_READ_ERROR);
 
 	// Crossrefs file
@@ -637,10 +637,8 @@ void IndexHandler::findPosts(const QMap<QString,
 
 		quint32 K = Config::Index::PostingList::POST_BYTES_MULTIFIELD;
 
-#if MONOFIELD_SHRINK
 		if (!multifield)
 			K = Config::Index::PostingList::POST_BYTES_MONOFIELD;
-#endif
 		// Figure out the position of the posts in the posting list (of the first one)
 		qint64 postPos = ref.postingListPosition + refPost->offset + (i * K);
 
@@ -655,9 +653,7 @@ void IndexHandler::findPosts(const QMap<QString,
 		field_num fieldNumber;
 		term_pos inFieldPos;
 
-#if MONOFIELD_SHRINK
 		if (multifield) {
-#endif // MONOFIELD_SHRINK
 			// For multifield: read 5 bytes
 
 			quint32 P32;
@@ -665,10 +661,12 @@ void IndexHandler::findPosts(const QMap<QString,
 
 			mPostingsStream.stream >> P32 >> P8;
 
+			static const quint32 MULTI_FIELD_NUM_MASK =
+					(~0u >> (32 - Config::Index::PostingList::FIELD_NUM_BITS));
+
 			elementSerial = P32 >> Config::Index::PostingList::FIELD_NUM_BITS;
-			fieldNumber = P32 & (~0u >> (32 - Config::Index::PostingList::FIELD_NUM_BITS));
+			fieldNumber = P32 & MULTI_FIELD_NUM_MASK;
 			inFieldPos = P8;
-#if MONOFIELD_SHRINK
 		} else {
 			// For monofield: read 4 bytes
 
@@ -676,9 +674,12 @@ void IndexHandler::findPosts(const QMap<QString,
 
 			mPostingsStream.stream >> P32;
 
+			static const quint32 MONO_IN_FIELD_POS_MASK =
+					(~0u >> (32 - Config::Index::PostingList::IN_FIELD_POS_BITS));
+
 			elementSerial = P32 >> Config::Index::PostingList::IN_FIELD_POS_BITS;
 			fieldNumber = 0; // monofield
-			inFieldPos = P32 & (~0u >> (32 - Config::Index::PostingList::IN_FIELD_POS_BITS));
+			inFieldPos = P32 & MONO_IN_FIELD_POS_MASK;
 
 			ASSERT(elementSerial < Config::Index::PostingList::ELEMENT_SERIAL_THRESHOLD,
 				   "index_handling",
@@ -688,7 +689,6 @@ void IndexHandler::findPosts(const QMap<QString,
 				   " field num: ", DEC(fieldNumber),
 				   " fieldpos: ", DEC(inFieldPos));
 		}
-#endif // MONOFIELD_SHRINK
 
 		// Figure out element id, (field number) and field pos
 
@@ -816,12 +816,8 @@ void IndexHandler::loadVocabulary()
 		// <bok.a> <bok.t> <bok.y> <bok.p>
 		// <pro.t> <pro.y> <pro.p>
 
-		quint32 M = Config::Index::PostingList::POST_BYTES_MULTIFIELD;
-		quint32 S = M;
-
-#if MONOFIELD_SHRINK
-		S = Config::Index::PostingList::POST_BYTES_MONOFIELD;
-#endif
+		const quint32 M = Config::Index::PostingList::POST_BYTES_MULTIFIELD;
+		const quint32 S = Config::Index::PostingList::POST_BYTES_MONOFIELD;
 
 		incrementalOffset += loadIndexTermReference(ref.article.author, incrementalOffset) * M;
 		incrementalOffset += loadIndexTermReference(ref.article.title, incrementalOffset) * S;
@@ -880,11 +876,25 @@ void IndexHandler::loadCrossrefs()
 
 	const qint64 crossrefsFileSize = mCrossrefsStream.fileSize();
 
-	quint32 pubElementSerial;
-	quint32 venueElementSerial;
+	elem_serial pubElementSerial;
+	elem_serial venueElementSerial;
+	quint32 C32;
+	quint16 C16;
 
 	while (!mCrossrefsStream.stream.atEnd()) {
-		mCrossrefsStream.stream >> pubElementSerial >> venueElementSerial;
+		mCrossrefsStream.stream >> C32 >> C16;
+
+		static const quint32 CX_RSH1 = // 7
+				(32 - Config::Index::PostingList::ELEMENT_SERIAL_BITS) -
+				(48 - (Config::Index::PostingList::ELEMENT_SERIAL_BITS << 1));
+
+		static const quint32 CX_MSK = // Last 7 bit
+				(~0u >> (32 - CX_RSH1));
+
+		pubElementSerial = C32 >> CX_RSH1;
+		venueElementSerial = (C32 & CX_MSK) | C16
+
+//		mCrossrefsStream.stream >> pubElementSerial >> venueElementSerial;
 
 		vv1("Loaded crossref " << pubElementSerial << " => " << venueElementSerial);
 
@@ -929,21 +939,21 @@ void IndexHandler::loadPositions()
 
 	emit positionsLoadStarted();
 
-	const qint64 posFileSize = mElementsPositionsStream.fileSize();
+	const qint64 posFileSize = mXmlPositionsStream.fileSize();
 
-	while (!mElementsPositionsStream.stream.atEnd()) {
+	while (!mXmlPositionsStream.stream.atEnd()) {
 		elem_pos pos;
-		mElementsPositionsStream.stream >> pos;
-		mElementsPositions.append(pos);
+		mXmlPositionsStream.stream >> pos;
+		mXmlPositions.append(pos);
 
-		double progress = DOUBLE(mElementsPositionsStream.filePosition()) / posFileSize;
+		double progress = DOUBLE(mXmlPositionsStream.filePosition()) / posFileSize;
 		vv1("Positions file load progress: " << progress);
 		emit positionsLoadProgress(progress);
 	}
 
 	ii("Finished loading of positions file (" <<
-	   Util::File::humanSize(mElementsPositionsStream.file) + " (" <<
-	   mElementsPositions.size() << " positions)");
+	   Util::File::humanSize(mXmlPositionsStream.file) + " (" <<
+	   mXmlPositions.size() << " positions)");
 
 
 	emit positionsLoadEnded();

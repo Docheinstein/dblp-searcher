@@ -91,6 +91,8 @@ private:
 	struct {
 		QElapsedTimer timer;
 		quint64 postsCount = 0;
+		quint64 termRefCount = 0;
+		quint64 largeTermRefCount = 0;
 		quint32 highestFieldNumber = 0;
 		quint32 highestInFieldPosition = 0;
 	} mStats;
@@ -129,7 +131,7 @@ private:
 
 
 	/* Contains the posting list, which actually is just a succession
-	 * of <element_id><field_number><in_field_term_pos> for each term of each field
+	 * of <element_serial><field_number><in_field_term_pos> for each term of each field
 	 * of each element of the parsed dblp dump.
 	 * The order of the terms actually doesn't matter since those are referred
 	 * by the vocabulary.
@@ -137,7 +139,7 @@ private:
 	 * only 4 bytes are used instead of 5 (only 31 bits are used in this case,
 	 * with the lefter most bit = 0).
 	 *
-	 * <element_id> := 23 bit
+	 * <element_serial> := 23 bit
 	 * <field_number> := 9 bit
 	 * <in_field_term_pos> := 8 bit
 	 *
@@ -155,9 +157,9 @@ private:
 	 * e.g
 	 * <pos_el_0><pos_el_1><pos_el_2>
 	 *
-	 * File extension: .epix
+	 * File extension: .xpix
 	 */
-	DataStreamFile mElementsPositionsStream;
+	DataStreamFile mXmlPositionsStream;
 
 
 	/* Contains the vocabulary, which is a succession of the zero terminated
@@ -187,7 +189,9 @@ private:
 
 
 	/* Contains the crossrefs between the publications and the related venues
-	 * as a succession of <publication_id><venue_id>.
+	 * as a succession of <publication_serial><venue_serial>.
+	 * Since each serial is maximum 23 bit, we can store a pair using 46 bits,
+	 * thus 48 bits (6 byte) instead of 8.
 	 *
 	 * The available crossref are:
 	 *  incollection => book
