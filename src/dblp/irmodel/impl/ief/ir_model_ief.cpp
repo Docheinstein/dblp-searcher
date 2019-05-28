@@ -97,7 +97,7 @@ void IRModelIef::computeIefs()
 	// in set; at the end of the post list, the size of the set contains
 	// the number of elements that contain the term.
 
-	const QMap<QString, IndexTermRef> &vocabulary = mIndex.vocabulary();
+	const VOCABULARY_ADT<QString, IndexTermRef> &vocabulary = mIndex.vocabulary();
 
 	const qint64 vocabularySize = vocabulary.size();
 
@@ -140,7 +140,7 @@ float IRModelIef::computeIef(const QString &term)
 }
 
 
-float IRModelIef::computeIef(const QMap<QString,
+float IRModelIef::computeIef(const VOCABULARY_ADT<QString,
 							 IndexTermRef>::const_iterator &vocabularyEntry)
 {
 	vv("Computing ief for term: " << vocabularyEntry.key());

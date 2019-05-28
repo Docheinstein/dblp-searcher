@@ -36,7 +36,7 @@ protected:
 private:
 	void computeIefs();
 	float computeIef(const QString &term);
-	float computeIef(const QMap<QString, IndexTermRef>::const_iterator &vocabularyEntry);
+	float computeIef(const VOCABULARY_ADT<QString, IndexTermRef>::const_iterator &vocabularyEntry);
 
 	void printIefs() const;
 

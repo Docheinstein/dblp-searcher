@@ -37,7 +37,7 @@ bool IndexHandler::identifier(elem_serial serial, QString &identifier) const
 	return true;
 }
 
-const QMap<QString, IndexTermRef> IndexHandler::vocabulary() const
+const VOCABULARY_ADT<QString, IndexTermRef> IndexHandler::vocabulary() const
 {
 	return mVocabulary;
 }
@@ -517,7 +517,7 @@ bool IndexHandler::findPosts(const QString &term,
 	return true;
 }
 
-void IndexHandler::findPosts(const QMap<QString,
+void IndexHandler::findPosts(const VOCABULARY_ADT<QString,
 							 IndexTermRef>::const_iterator vocabularyEntry,
 							 ElementFieldType field,
 							 QVector<IndexPost> &posts)
@@ -719,6 +719,12 @@ void IndexHandler::loadIdentifiers()
 
 	const qint64 identifiersFileSize = mIdentifiersStream.fileSize();
 
+	// Reserve the an almost right amount of space
+	// (empirical observation of the average identifier length)
+	const int reservedSize = static_cast<int>(identifiersFileSize) / 23;
+	dd("Empirical vector space reservation: " << reservedSize);
+	mIdentifiers.reserve(reservedSize);
+
 	while (!mIdentifiersStream.stream.atEnd()) {
 		QString key = mIdentifiersStream.stream.readLine();
 		mIdentifiers.append({key});
@@ -743,6 +749,12 @@ void IndexHandler::loadVocabulary()
 	emit vocabularyLoadStarted();
 
 	const qint64 vocabularyFileSize = mVocabularyStream.fileSize();
+
+	// Reserve an almost right amount of space for avoid reallocations
+	// (empirical observation)
+	const int reservedSize = static_cast<int>(vocabularyFileSize) / 67;
+	dd("Empirical vocabulary space reservation: " << reservedSize);
+	mVocabulary.reserve(reservedSize);
 
 	// Read the count of posts for each term's field
 	// An unit of offset means 1 bytes in the posting list file
@@ -876,6 +888,12 @@ void IndexHandler::loadCrossrefs()
 
 	const qint64 crossrefsFileSize = mCrossrefsStream.fileSize();
 
+	// Reserve an almost right amount of space for avoid reallocations
+	// (empirical observation)
+	const int reservedSize = static_cast<int>(crossrefsFileSize / 5.5);
+	dd("Empirical crossref space reservation: " << reservedSize);
+	mCrossrefs.reserve(reservedSize);
+
 	elem_serial pubElementSerial;
 	elem_serial venueElementSerial;
 	quint32 C32;
@@ -940,6 +958,12 @@ void IndexHandler::loadPositions()
 	emit positionsLoadStarted();
 
 	const qint64 posFileSize = mXmlPositionsStream.fileSize();
+
+	// Reserve an almost right amount of space for avoid reallocations
+	// (empirical observation)
+	const int reservedSize = static_cast<int>(posFileSize / 3.5);
+	dd("Empirical xml positions space reservation: " << reservedSize);
+	mXmlPositions.reserve(reservedSize);
 
 	while (!mXmlPositionsStream.stream.atEnd()) {
 		elem_pos pos;

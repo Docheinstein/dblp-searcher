@@ -15,6 +15,20 @@
 #include "dblp/index/models/match/index_match.h"
 
 
+// Use an hash or a map depending on whether we are computing all the ief
+// at once or not.
+// A QHash would be enough, but since the iefs computation is done
+// scanning the vocabulary, its better if we store the terms in alphabetic
+// order and furthermore we have to keep the posts on the posting list
+// ordered alphabetically by terms.
+// In this way we can have some hope that the computation of the ief
+// uses the cache in a decent way while reading the posting list file.
+#ifdef LAZY_IEF
+#define VOCABULARY_ADT QHash
+#else
+#define VOCABULARY_ADT QMap
+#endif
+
 class IndexHandler : public QObject, protected Loggable
 {
 	Q_OBJECT
@@ -33,7 +47,7 @@ public:
 	const QVector<QString> identifiers() const;
 	bool identifier(elem_serial serial, QString &identifier) const;
 
-	const QMap<QString, IndexTermRef> vocabulary() const;
+	const VOCABULARY_ADT<QString, IndexTermRef> vocabulary() const;
 	bool vocabularyTermRef(const QString &term, IndexTermRef &termRef) const;
 
 	const QHash<elem_serial, elem_serial> crossrefs() const;
@@ -82,7 +96,7 @@ public:
 				   QVector<IndexPost> &posts);
 
 	// Use the ref already taken from the vocabulary
-	void findPosts(const QMap<QString, IndexTermRef>::const_iterator vocabularyEntry,
+	void findPosts(const VOCABULARY_ADT<QString, IndexTermRef>::const_iterator vocabularyEntry,
 				   ElementFieldType fieldType,
 				   QVector<IndexPost> &posts);
 
@@ -147,13 +161,8 @@ private:
 	// to their serial, which are equals to the in-list position)
 	QVector<QString> mIdentifiers;
 
-	// A QHash would be enough, but since the iefs computation is done
-	// scanning the vocabulary, its better if we store the terms in alphabetic
-	// order and furthermore we have to keep the posts on the posting list
-	// ordered alphabetically by terms.
-	// In this way we can have some hope that the computation of the ief
-	// uses the cache in a decent way while reading the posting list file.
-	QMap<QString, IndexTermRef> mVocabulary;
+	// Contains the terms and their reference to the post in the posting list.
+	VOCABULARY_ADT<QString, IndexTermRef> mVocabulary;
 
 	// Contains the crossrefs from publications to venues
 	// for inproc => proc, incollection => book, article => journal
