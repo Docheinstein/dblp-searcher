@@ -79,9 +79,12 @@ namespace Util {
 		}
 	}
 
-	namespace Qml {
-		QUrl resourceUrl(const QString &name) {
+	namespace Resources {
+		QUrl qmlUrl(const QString &name) {
 			return QUrl(QString("qrc:/qml/") + name + ".qml");
+		}
+		QUrl imageUrl(const QString &fullname) {
+			return QUrl(QString("qrc:/img/") + fullname);
 		}
 	}
 }

@@ -1,17 +1,18 @@
 <RCC>
     <qresource prefix="/qml">
-		<file alias="SplashWindow.qml">qml/SplashWindow.qml</file>
-		<file alias="MainWindow.qml">qml/MainWindow.qml</file>
-		<file alias="QueryOutcome.qml">qml/QueryOutcome.qml</file>
-		<file alias="QueryMatch.qml">qml/QueryMatch.qml</file>
-		<file alias="ElementDetails.qml">qml/ElementDetails.qml</file>
-		<file alias="DblpXmlLine.qml">qml/DblpXmlLine.qml</file>
-		<file alias="PublicationLine.qml">qml/PublicationLine.qml</file>
+        <file alias="SplashWindow.qml">qml/SplashWindow.qml</file>
+        <file alias="MainWindow.qml">qml/MainWindow.qml</file>
+        <file alias="QueryOutcome.qml">qml/QueryOutcome.qml</file>
+        <file alias="QueryMatch.qml">qml/QueryMatch.qml</file>
+        <file alias="ElementDetails.qml">qml/ElementDetails.qml</file>
+        <file alias="DblpXmlLine.qml">qml/DblpXmlLine.qml</file>
+        <file alias="PublicationLine.qml">qml/PublicationLine.qml</file>
     </qresource>
     <qresource prefix="/img">
         <file alias="search.png">res/images/search.png</file>
         <file alias="dblp-logo.png">res/images/dblp-logo.png</file>
         <file alias="splash.png">res/images/splash.png</file>
         <file alias="back.png">res/images/back.png</file>
+		<file alias="dblp-icon.png">res/images/dblp-icon.png</file>
     </qresource>
 </RCC>

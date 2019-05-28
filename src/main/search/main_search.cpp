@@ -1,10 +1,12 @@
 #include "main_search.h"
 
 #include <QGuiApplication>
+#include <QIcon>
 #include <QQmlEngine>
 #include <QThread>
 
 #include "main/args/args.h"
+#include "commons/util/util.h"
 #include "dblp/irmodel/impl/ief/ir_model_ief.h"
 #include "dblp/query/resolver/query_resolver.h"
 #include "gui/engine/gui_engine.h"
@@ -29,6 +31,8 @@ int startSearchMode() {
 
 	// Gui application (must be before everything else)
 	QGuiApplication guiApp(arguments.argc, arguments.argv);
+
+	guiApp.setWindowIcon(QIcon(":/img/dblp-icon.png"));
 
 	// Global qml engine
 	QQmlEngine *engine = new QQmlEngine;

@@ -14,7 +14,7 @@ GuiComponent::~GuiComponent() {}
 
 bool GuiComponent::create()
 {
-	QUrl qmlResource = Util::Qml::resourceUrl(qmlName());
+	QUrl qmlResource = Util::Resources::qmlUrl(qmlName());
 
 	vv("Going to create GUI component; resource: '" << qmlResource);
 

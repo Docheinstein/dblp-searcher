@@ -33,8 +33,9 @@ namespace Util {
 		QString sanitizeTerm(const QString &term);
 	}
 
-	namespace Qml {
-		QUrl resourceUrl(const QString &name);
+	namespace Resources {
+		QUrl qmlUrl(const QString &name);
+		QUrl imageUrl(const QString &fullname);
 	}
 }
 
