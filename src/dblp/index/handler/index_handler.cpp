@@ -902,17 +902,18 @@ void IndexHandler::loadCrossrefs()
 	while (!mCrossrefsStream.stream.atEnd()) {
 		mCrossrefsStream.stream >> C32 >> C16;
 
-		static const quint32 CX_RSH1 = // 7
+		static const quint32 CX_RSH = // 7
 				(32 - Config::Index::PostingList::ELEMENT_SERIAL_BITS) -
 				(48 - (Config::Index::PostingList::ELEMENT_SERIAL_BITS << 1));
 
+		static const quint32 CX_LSH = // 16
+				(32 - (Config::Index::PostingList::ELEMENT_SERIAL_BITS - CX_RSH));
+
 		static const quint32 CX_MSK = // Last 7 bit
-				(~0u >> (32 - CX_RSH1));
+				(~0u >> (32 - CX_RSH));
 
-		pubElementSerial = C32 >> CX_RSH1;
-		venueElementSerial = (C32 & CX_MSK) | C16
-
-//		mCrossrefsStream.stream >> pubElementSerial >> venueElementSerial;
+		pubElementSerial = C32 >> CX_RSH;
+		venueElementSerial = ((C32 & CX_MSK) << CX_LSH) | C16;
 
 		vv1("Loaded crossref " << pubElementSerial << " => " << venueElementSerial);
 

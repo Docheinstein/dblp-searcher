@@ -806,7 +806,6 @@ void Indexer::writeCrossrefsFile()
 		// We have everything, really write this pair of <pub> => <venue>
 		// Since each serial is no more than 23 bit, write those using a 48 bit
 		// with the first two left bit 0 padded
-
 		static const quint32 CX_LSH = // 7
 				(32 - Config::Index::PostingList::ELEMENT_SERIAL_BITS) -
 				(48 - (Config::Index::PostingList::ELEMENT_SERIAL_BITS << 1));
@@ -814,8 +813,7 @@ void Indexer::writeCrossrefsFile()
 		static const quint32 CX_RSH = // 16
 				(32 - (Config::Index::PostingList::ELEMENT_SERIAL_BITS - CX_LSH));
 
-		quint32 C32 = (publicationSerial << CX_LSH | (venueSerial >> CX_RSH));
-
+		quint32 C32 = ((publicationSerial << CX_LSH) | (venueSerial >> CX_RSH));
 		quint16 C16 = venueSerial & 0xFFFF; // Last 16
 
 		dd3("Writing C32: " << C32);

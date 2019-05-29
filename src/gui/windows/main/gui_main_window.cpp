@@ -203,8 +203,8 @@ void GuiMainWindow::searchFinished()
 //	profPrint();
 //#endif
 
-//	mMatches.addMatches(outcome.sortedQueryMatches);
-//	mMatchesHash = outcome.indexMatchesBySerial;
+	mMatches.addMatches(outcome.sortedQueryMatches);
+	mMatchesHash = outcome.indexMatchesBySerial;
 
 	emit matchesCountChanged();
 	setQueryStatus(QueryStatus::Done);
