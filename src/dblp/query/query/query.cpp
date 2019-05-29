@@ -61,7 +61,6 @@ Query::Query(const QString &queryString)
 	// the empty parts and skip those later, but we have to keep those to figure
 	// out if the position is even/odd
 
-
 	int i = 0;
 	for (auto it = macroTokens.begin(); it != macroTokens.end(); ++it, ++i) {
 		const QString &macroToken = *it;
@@ -104,7 +103,7 @@ Query::Query(const QString &queryString)
 	QueryBasePart * newQueryPart = nullptr;
 
 	// Safe way to add to currentQueryPart, initializing it if it's null
-	auto addTokenToQueryPart = [this](QueryBasePart *&part, const QString &token) {
+	auto addTokenToQueryPart = [](QueryBasePart *&part, const QString &token) {
 		if (!part) {
 			vv("--> initializing a new basic query part");
 			part = new QueryBasicPart();
@@ -318,13 +317,13 @@ QueryBasePart *Query::newQueryVenuePartFromToken(
 
 	QueryBasePart * part = nullptr;
 
-	// 1) Search pattern without a field (<publication>:) ?
+	// 1) Search pattern without a field (<venue>:) ?
 
 	if ((part = newQueryVenuePartFromToken(
 			 token, venueElement, nullptr)))
 		return part;
 
-	// 2) Search pattern with a field (<publication>.<field>*) ?
+	// 2) Search pattern with a field (<venue>.<field>*) ?
 
 	if ((part = newQueryVenuePartFromToken(
 			 token, venueElement,

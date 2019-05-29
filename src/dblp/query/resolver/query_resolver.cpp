@@ -287,6 +287,15 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 
 	CrossrefsCheckReductionContainer crossrefCheckReductionContainer;
 
+	// Try to guess the space to reserve, in order to prevent reallocation.
+	// If we had no pub+venue than the count would be exactly
+	// scoredPubs.size() + scoredVenues.size(),
+	// Since the pub+venue is not so common to have, that is our guess anyway
+	crossrefCheckReductionContainer.matches.reserve(
+				scoredPubs.size() + scoredVenues.size());
+	crossrefCheckReductionContainer.rawMatchesBySerial.reserve(
+				scoredPubs.size() + scoredVenues.size());
+
 	const QList<elem_serial> &scoredPubsSerials = scoredPubs.keys();
 	const QList<ScoredIndexElementMatches> &scoredPubsElements = scoredPubs.values();
 
@@ -304,7 +313,8 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 		const ScoredIndexElementMatches &scoredPub = scoredPubsElements.at(i);
 
 		// Push to the raw outcome's index matches
-		crossrefCheckReductionContainer.rawMatchesBySerial.insert(scoredPubSerial, scoredPub.matches);
+		crossrefCheckReductionContainer.rawMatchesBySerial.insert(
+					scoredPubSerial, scoredPub.matches);
 
 		// PUB+VENUE match
 
@@ -318,7 +328,7 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 		vv1("Checking crossref existence for element = " << scoredPubSerial);
 
 		// Retrieve the crossref
-		if (mIrModel->index().crossref(scoredPubSerial, crossrefSerial)) {
+		if (index.crossref(scoredPubSerial, crossrefSerial)) {
 			// Crossref found, check if we have crossrefSerial among
 			// our matches venues
 
@@ -393,6 +403,14 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 	// And now push the remaining venues as venue only
 
 	VenuesPushReductionContainer venuesReductionContainer;
+
+
+	// Try to guess the space to reserve, in order to prevent reallocation.
+	// If we had no pub+venue than the count would be exactly
+	// scoredPubs.size() + scoredVenues.size(),
+	// Since the pub+venue is not so common to have, that is our guess anyway
+	venuesReductionContainer.matches.reserve(scoredVenues.size());
+	venuesReductionContainer.rawMatchesBySerial.reserve(scoredVenues.size());
 
 	// VENUE matches (the venue not crossreferred yet)
 	const QList<elem_serial> &scoredVenuesSerials = scoredVenues.keys();
