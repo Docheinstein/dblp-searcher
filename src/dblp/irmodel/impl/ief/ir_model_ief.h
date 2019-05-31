@@ -22,6 +22,8 @@ public:
 	float bonusFactorForPublicationMatch() const override;
 	float bonusFactorForVenueMatch() const override;
 	float bonusFactorForPublicationVenueMatch() const override;
+	float bonusFactorForElementFieldFilter() const;
+	float bonusFactorForElementFilter() const;
 
 	IndexHandler * index();
 

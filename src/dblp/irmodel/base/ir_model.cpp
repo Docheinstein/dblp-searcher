@@ -24,6 +24,16 @@ float IRModel::bonusFactorForPublicationVenueMatch() const
 	return 1; // no bonus
 }
 
+float IRModel::bonusFactorForElementFieldFilter() const
+{
+	return 1; // no bonus
+}
+
+float IRModel::bonusFactorForElementFilter() const
+{
+	return 1; // no bonus
+}
+
 IndexHandler &IRModel::index()
 {
 	return mIndex;

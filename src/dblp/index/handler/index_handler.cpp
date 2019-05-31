@@ -271,9 +271,9 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 				// Term
 				QString,
 				// Term positions in element/field
-				QVector<term_pos> // tf_t
+				QSet<term_pos> // tf_t
 			>
-	> categorizedTermsByElementField;
+	> termsPositionsByElementField;
 
 	PROF_BEGIN6(findPhraseMatchesReal)
 
@@ -297,23 +297,23 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 			// Check if this field has already been found
 			ElementSerial_FieldNumber ef {post.elementSerial, post.fieldNumber};
 
-			if (!categorizedTermsByElementField.contains(ef)) {
+			if (!termsPositionsByElementField.contains(ef)) {
 				vv2("Inserting ef: " <<
 					"{" << ef.elementSerial << ", "<< ef.fieldNumber << "}" <<
 					" for the first time" );
 				// Push a new term to positions map, empty for now
-				categorizedTermsByElementField.insert(ef, {});
+				termsPositionsByElementField.insert(ef, {});
 			}
 
 			// Take the termPositions, whether it is the existing one or
 			// the just inserted one
 
-			const auto termsPosIt = categorizedTermsByElementField.find(ef);
+			const auto termsPosIt = termsPositionsByElementField.find(ef);
 
-			ASSERT(termsPosIt != categorizedTermsByElementField.end(), "index_handling",
+			ASSERT(termsPosIt != termsPositionsByElementField.end(), "index_handling",
 					   "Elements retrieval failed");
 
-			QHash<QString, QVector<term_pos>> &termsPositions = termsPosIt.value();
+			QHash<QString, QSet<term_pos>> &termsPositions = termsPosIt.value();
 
 			// Check if this term is already present for this element/field
 
@@ -334,8 +334,8 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 
 			// Push the position of the term in the post field's for this term
 
-			QVector<term_pos> &termPositions = termPosIt.value();
-			termPositions.append(post.inFieldTermPosition);
+			QSet<term_pos> &termPositions = termPosIt.value();
+			termPositions.insert(post.inFieldTermPosition);
 			vv2("Pushing term position: " << post.inFieldTermPosition <<
 				" (for term '" << term << "')");
 		}
@@ -355,12 +355,12 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 	//   positions lists and check that the position of the terms are sequential
 	//   according to the phrase order
 
-	for (auto it = categorizedTermsByElementField.begin();
-		it != categorizedTermsByElementField.end();
+	for (auto it = termsPositionsByElementField.begin();
+		it != termsPositionsByElementField.end();
 		++it) {
 
 		const ElementSerial_FieldNumber &ef = it.key();
-		const QHash<QString, QVector<term_pos>> &termsPositions = it.value();
+		const QHash<QString, QSet<term_pos>> &termsPositions = it.value();
 
 		// Potentially we have a match, but first check for consecutiveness
 		// of the phrase terms within the element/field
@@ -375,7 +375,7 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 			continue;  // go asap to the next ef
 		}
 
-		const QVector<term_pos> &ps0 = ps0It.value();
+		const QSet<term_pos> &ps0 = ps0It.value();
 
 		for (term_pos ps0_pos : ps0) {
 
@@ -398,17 +398,18 @@ bool IndexHandler::findPhraseMatches(const QStringList &tokens,
 
 				term_pos uti = UINT8(ti);
 
-				// Check if the current term exist at the right position
+				// Check if the current term exist within this element+field
 				auto psxIt = termsPositions.find(tokens.at(ti));
 				if (psxIt == termsPositions.end()) {
 					// term doesn't existing within this element/field
+					// we will never have a phrasal match...
 					abort = true; // go asap to the next ef
 					break;
 				}
 
-				// The term exists, check the position
+				// The term exists within this element+field, check the position
 
-				const QVector<term_pos> &psx = psxIt.value();
+				const QSet<term_pos> &psx = psxIt.value();
 
 				if (!psx.contains(ps0_pos + uti)) {
 					dd2("No partial match =(");

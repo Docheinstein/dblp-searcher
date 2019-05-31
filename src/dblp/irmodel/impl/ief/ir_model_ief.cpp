@@ -69,14 +69,23 @@ float IRModelIef::bonusFactorForPublicationMatch() const
 
 float IRModelIef::bonusFactorForVenueMatch() const
 {
-	// Consider the venues more important?
-	return 1.1f;
+	return 1;
 }
 
 float IRModelIef::bonusFactorForPublicationVenueMatch() const
 {
 	// For sure a pub+venue is more important..
-	return 1.3f;
+	return 1.25f;
+}
+
+float IRModelIef::bonusFactorForElementFieldFilter() const
+{
+	return 1.2f;
+}
+
+float IRModelIef::bonusFactorForElementFilter() const
+{
+	return 1.1f;
 }
 
 void IRModelIef::computeIefs()

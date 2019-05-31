@@ -6,11 +6,14 @@
 
 // Handler for the elements parsed by the DblpXmlParser
 
+class QFile;
+
 class DblpXmlParseHandler {
 public:
 	virtual ~DblpXmlParseHandler();
 
 	virtual void onParseStart() = 0;
+	virtual void onFileOpened(const QFile &file);
 	virtual void onParseEnd() = 0;
 
 	virtual bool onElement(const DblpXmlElement &element, qint64 pos) = 0;

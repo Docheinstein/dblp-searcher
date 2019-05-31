@@ -19,6 +19,7 @@ public:
 	void onParseStart() override;
 	void onParseEnd() override;
 	bool onElement(const DblpXmlElement &element, qint64 pos) override;
+	void onFileOpened(const QFile &file) override;
 
 protected:
 	LOGGING_OVERRIDE
@@ -95,6 +96,7 @@ private:
 		quint64 largeTermRefCount = 0;
 		quint32 highestFieldNumber = 0;
 		quint32 highestInFieldPosition = 0;
+		qint64 inputFileSize = 0;
 	} mStats;
 
 	// ===================

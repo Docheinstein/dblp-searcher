@@ -35,7 +35,7 @@
 #define BIN(x) QString::number(x, 2)
 #define DEC(x) QString::number(x)
 #define HEX(x) QString::number(x, 16)
-#define FLT(x) QString::number(DOUBLE(x), 'g', 2)
+#define FLT(x) QString::number(DOUBLE(x), 'f', 2)
 #define DBL(x) QString::number(x, 'g', 2)
 #define FLTFIX(x, n) QString::number(DOUBLE(x), 'f', n)
 #define DBLFIX(x, n) QString::number(x, 'f', n)

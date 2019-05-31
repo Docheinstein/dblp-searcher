@@ -248,6 +248,10 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 					matchPartialScore += ief;
 				}
 
+				// Eventually enhance the score if the match occurs using
+				// a specific filter (element or element+field)
+				// NOT SO EASY...
+
 				// Moreover, I would like to enhance the phrasal query, for this reason
 				// the score of a phrasal is the sum of the if.ief of its tokens plus a bonus
 				// defined as C^(len(tokens)), so that if the phrase contain more tokens

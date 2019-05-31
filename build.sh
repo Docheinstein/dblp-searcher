@@ -1,9 +1,17 @@
 #!/bin/bash
 
+echo "Creating project file (.pri)"
+
+./makepri.sh
+
+echo "==========================="
+echo "Eventually creating build folder"
+
+mkdir -p build
 cd build
 
 echo "==========================="
-echo "Creating Makefile"
+echo "Generating Makefile"
 
 qmake ../DblpSearcher.pro
 

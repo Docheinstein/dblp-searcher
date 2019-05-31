@@ -7,6 +7,7 @@
 
 #include "main/args/args.h"
 #include "commons/util/util.h"
+#include "commons/config/app_config.h"
 #include "dblp/irmodel/impl/ief/ir_model_ief.h"
 #include "dblp/query/resolver/query_resolver.h"
 #include "gui/engine/gui_engine.h"
@@ -32,6 +33,7 @@ int startSearchMode() {
 	// Gui application (must be before everything else)
 	QGuiApplication guiApp(arguments.argc, arguments.argv);
 
+	guiApp.setApplicationDisplayName(APPLICATION_NAME);
 	guiApp.setWindowIcon(QIcon(":/img/dblp-icon.png"));
 
 	// Global qml engine

@@ -18,6 +18,7 @@ namespace Util {
 	namespace File {
 		QString path(QStringList components);
 		QString humanSize(const QFile &file);
+		QString humanSize(qint64 filesize);
 	}
 
 	namespace Time {

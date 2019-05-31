@@ -169,7 +169,12 @@ bool Indexer::onElement(const DblpXmlElement &element, qint64 pos)
 
 	PROF_FUNC_END
 
-	return true; // always go ahead to the rescue!
+			return true; // always go ahead to the rescue!
+}
+
+void Indexer::onFileOpened(const QFile &file)
+{
+	mStats.inputFileSize = file.size();
 }
 
 void Indexer::handleArticle(const DblpArticle &article, qint64 pos)
@@ -832,30 +837,10 @@ void Indexer::printStats()
 	ii("==== INDEXING STATS ====");
 	ii("========================");
 
-	ii("Time: " << 	Util::Time::humanTime(INT(mStats.timer.elapsed())));
+	_ii_("");
+	ii("Indexing time: " << Util::Time::humanTime(INT(mStats.timer.elapsed())));
 
-	// Count
-
-	ii("## Elements: " <<  mCurrentSerial);
-	ii("## Terms: " << mIndexTerms.size());
-	ii("## Posts: " << mStats.postsCount);
-	ii("## Highest field num: " << mStats.highestFieldNumber);
-	ii("## Highest in field pos: " << mStats.highestInFieldPosition);
-	ii("## Total term ref: " << mStats.termRefCount);
-	ii("## Large term ref: " << mStats.largeTermRefCount);
-	ii("%% Large term ref: " <<
-	   DBLFIX(DOUBLE(mStats.largeTermRefCount) * 100 / mStats.termRefCount, 8)
-	   << "%");
-	// File sizes
-
-	ii("SZ .idix: " << Util::File::humanSize(mIdentifiersStream.file));
-	ii("SZ .plix: " << Util::File::humanSize(mPostingsStream.file));
-	ii("SZ .vix: " << Util::File::humanSize(mVocabularyStream.file));
-	ii("SZ .cix: " << Util::File::humanSize(mCrossrefsStream.file));
-	ii("SZ .xpix: " << Util::File::humanSize(mXmlPositionsStream.file));
-
-	// Other
-
+	// Counts
 	QString maxPostsCountTerm = "";
 	quint64 maxPostCount = 0;
 
@@ -867,8 +852,40 @@ void Indexer::printStats()
 		}
 	}
 
-	ii("MAX posts count belongs to term '" << maxPostsCountTerm << "' " <<
-	   " (" << maxPostCount << ")");
+	ii("Element count:                " <<  mCurrentSerial);
+	ii("Term count:                   " << mIndexTerms.size());
+	ii("Post count:                   " << mStats.postsCount);
+	ii("├- Highest term's post count: " << maxPostCount << " ('" << maxPostsCountTerm << "')");
+	ii("├- Highest field num:         " << mStats.highestFieldNumber);
+	ii("└- Highest in field pos:      " << mStats.highestInFieldPosition);
+	ii("Term ref count:               " << mStats.termRefCount);
+	ii("├- 2B term ref count:         " << mStats.termRefCount - mStats.largeTermRefCount);
+	ii("├- 4B term ref count:         " << mStats.largeTermRefCount);
+	ii("└- 4B term ref ratio:         " <<
+	   DBLFIX(DOUBLE(mStats.largeTermRefCount) * 100 / mStats.termRefCount, 8)
+	   << "%");
 
+
+
+	// File sizes
+
+	const qint64 idix = mIdentifiersStream.fileSize();
+	const qint64 plix = mPostingsStream.fileSize();
+	const qint64 vix = mVocabularyStream.fileSize();
+	const qint64 cix = mCrossrefsStream.fileSize();
+	const qint64 xpix = mXmlPositionsStream.fileSize();
+
+	_ii_("");
+	ii(".xml  size:         " << Util::File::humanSize(mStats.inputFileSize) << "");
+	ii(".idix size:         " << Util::File::humanSize(idix));
+	ii(".plix size:         " << Util::File::humanSize(plix));
+	ii(".vix  size:         " << Util::File::humanSize(vix));
+	ii(".cix  size:         " << Util::File::humanSize(cix));
+	ii(".xpix size:         " << Util::File::humanSize(xpix));
+
+	_ii_("");
+	ii("Total indexes size:              " << Util::File::humanSize(idix + plix + vix + cix + xpix));
+	ii("├- In memory indexes total size: " << Util::File::humanSize(plix));
+	ii("└- In disk indexes total size:   " << Util::File::humanSize(idix + vix + cix + xpix));
 #endif
 }

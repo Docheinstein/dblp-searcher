@@ -6,8 +6,13 @@
 #include "commons/const/const.h"
 #include "commons/globals/globals.h"
 
-#define KB 1024
-#define MB 1048576l
+//#define KB 1024
+//#define MB 1048576l
+//#define GB 1073741824
+
+#define KB 1000
+#define MB 1000000
+#define GB 1000000000
 
 #define MS_IN_SEC 1000
 #define MS_IN_MIN 60000
@@ -36,12 +41,17 @@ namespace Util {
 		}
 
 		QString humanSize(const QFile &file) {
-			qint64 sz = file.size();
-			if (sz >= MB)
-				return DEC(sz / MB) + "MB";
-			if (sz >= KB)
-				return DEC(sz / KB) + "KB";
-			return DEC(sz) + "B";
+			return humanSize(file.size());
+		}
+
+		QString humanSize(qint64 filesize) {
+			if (filesize >= GB)
+				return FLT(FLOAT(filesize) / GB) + "GB";
+			if (filesize >= MB)
+				return DEC(filesize / MB) + "MB";
+			if (filesize >= KB)
+				return DEC(filesize / KB) + "KB";
+			return DEC(filesize) + "B";
 		}
 	}
 

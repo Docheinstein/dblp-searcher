@@ -265,6 +265,8 @@ bool DblpXmlParser::setParserDeviceFile()
 	if (!mInput.open(QIODevice::ReadOnly))
 		return false;
 
+	mHandler.onFileOpened(mInput);
+
 	mReader.setDevice(&mInput);
 
 	return true;
@@ -276,6 +278,8 @@ bool DblpXmlParser::setParserDeviceBuffer()
 
 	if (!mInput.open(QIODevice::ReadOnly))
 		return false;
+
+	mHandler.onFileOpened(mInput);
 
 	// Read the file until a token that makes sense is read, then start the parse
 	// (can be useful for start in the middle of an XML without known the

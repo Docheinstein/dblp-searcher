@@ -21,6 +21,8 @@ public:
 	virtual float bonusFactorForPublicationMatch() const;
 	virtual float bonusFactorForVenueMatch() const;
 	virtual float bonusFactorForPublicationVenueMatch() const;
+	virtual float bonusFactorForElementFieldFilter() const;
+	virtual float bonusFactorForElementFilter() const;
 
 	IndexHandler & index();
 

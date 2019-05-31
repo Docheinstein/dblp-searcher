@@ -25,23 +25,20 @@ The following packages are needed in order to compile DBLP Searcher
 ## COMPILE
 
 ```
-./rebuild.sh
+./build.sh
 ```
 
 Which actually does the following:
 
 ```
 ./makepri.sh
-rm -rf build
-mkdir build
+mkdir -p build
 cd build
 qmake ../DblpSearcher.pro
 make -j8
 ```
 
 A binary file (`DblpSearcher`) will be created under the `build` directory.
-
-Copy the binary to your path or `cd` to `build` for follow the documentation.
 
 ## USAGE
 
@@ -109,7 +106,7 @@ Therefore starts the binary in index mode in order to index the dblp.xml file.
 e.g.
 
 ```
-./DblpSearcher --index /tmp/dblp.xml /tmp/dblp-index/ myindex
+./build/DblpSearcher --index /tmp/dblp.xml /tmp/dblp-index/ myindex
 ```
 
 ### Searching
@@ -119,14 +116,14 @@ mode.
 e.g.
 
 ```
-./DblpSearcher --search /tmp/dblp-index/ myindex
+./build/DblpSearcher --search /tmp/dblp-index/ myindex
 ```
 
 The queries should be conform to the language expressed in the USAGE section.
 
 ![Dblp Searcher Search](dblp-searcher-search.png)
 ![Dblp Searcher Element Details](dblp-searcher-element-details.png)
-
+![Dblp Searcher Publications](dblp-searcher-publications.png)
 ## LICENSE
 
 DblpSearcher is [MIT licensed](./LICENSE).

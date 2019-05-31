@@ -5,7 +5,12 @@
 // Contains all the config that changes the behaviour of the app at compile time
 // =============================================================================
 
-#define VERSION 0.9
+// Meta application's info
+
+#define APPLICATION_NAME "Dblp Searcher"
+#define APPLICATION_VERSION 0.9
+
+// =============================================================================
 
 // Whether precompute all the ief (slow init, but faster searches) or not
 // If set to 1, the ief are not precomputed
