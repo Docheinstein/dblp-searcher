@@ -8,9 +8,6 @@ QString elementTypeString(ElementType t)
 	case ElementType::Article:
 		return "Article";
 
-	case ElementType::Journal:
-		return "Journal";
-
 	case ElementType::Incollection:
 		return "Incollection";
 
@@ -22,6 +19,9 @@ QString elementTypeString(ElementType t)
 
 	case ElementType::Masterthesis:
 		return "Masterthesis";
+
+	case ElementType::Journal:
+		return "Journal";
 
 	case ElementType::Book:
 		return "Book";
@@ -46,9 +46,6 @@ ElementType elementTypeFromElementFieldType(ElementFieldType eft)
 	if ((ieft & INT(ElementFieldType::Article)) == ieft)
 		return ElementType::Article;
 
-	if ((ieft & INT(ElementFieldType::Journal)) == ieft)
-		return ElementType::Journal;
-
 	if ((ieft & INT(ElementFieldType::Incollection)) == ieft)
 		return ElementType::Incollection;
 
@@ -60,6 +57,9 @@ ElementType elementTypeFromElementFieldType(ElementFieldType eft)
 
 	if ((ieft & INT(ElementFieldType::Masterthesis)) == ieft)
 		return ElementType::Masterthesis;
+
+	if ((ieft & INT(ElementFieldType::Journal)) == ieft)
+		return ElementType::Journal;
 
 	if ((ieft & INT(ElementFieldType::Book)) == ieft)
 		return ElementType::Book;

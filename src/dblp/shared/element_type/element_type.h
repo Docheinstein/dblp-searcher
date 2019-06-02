@@ -8,12 +8,12 @@ enum class ElementType {
 	// Real
 
 	Article = 1,
-	Journal = Article << 1,
-	Incollection = Journal << 1,
+	Incollection = Article << 1,
 	Inproceedings = Incollection << 1,
 	Phdthesis = Inproceedings << 1,
 	Masterthesis = Phdthesis << 1,
-	Book = Masterthesis << 1,
+	Journal = Masterthesis << 1,
+	Book = Journal << 1,
 	Proceedings = Book << 1,
 
 	// Extra
@@ -21,7 +21,7 @@ enum class ElementType {
 	Publication = Article | Incollection | Inproceedings |
 				  Phdthesis | Masterthesis,
 
-	Venue = Book | Proceedings | Journal,
+	Venue = Journal | Book | Proceedings,
 };
 
 QString elementTypeString(ElementType et);

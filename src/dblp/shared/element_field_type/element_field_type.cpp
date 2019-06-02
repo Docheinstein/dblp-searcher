@@ -11,9 +11,6 @@ QString elementFieldTypeString(ElementFieldType t) {
 	case ElementFieldType::Article:
 		return "Article";
 
-	case ElementFieldType::Journal:
-		return "Journal";
-
 	case ElementFieldType::IncollectionAuthor:
 		return "IncollectionAuthor";
 	case ElementFieldType::IncollectionTitle:
@@ -49,6 +46,9 @@ QString elementFieldTypeString(ElementFieldType t) {
 		return "MasterthesisYear";
 	case ElementFieldType::Masterthesis:
 		return "Masterthesis";
+
+	case ElementFieldType::Journal:
+		return "Journal";
 
 	case ElementFieldType::BookAuthor:
 		return "BookAuthor";

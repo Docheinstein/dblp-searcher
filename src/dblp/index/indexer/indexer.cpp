@@ -169,7 +169,7 @@ bool Indexer::onElement(const DblpXmlElement &element, qint64 pos)
 
 	PROF_FUNC_END
 
-			return true; // always go ahead to the rescue!
+	return true; // always go ahead to the rescue!
 }
 
 void Indexer::onFileOpened(const QFile &file)
@@ -559,11 +559,11 @@ void Indexer::writePostingListAndVocabularyFiles()
 			// one for each field of the elements
 
 			// * <art.a> <art.t> <art.y>
-			// * <jou>
 			// * <inc.a> <inc.t> <inc.y>
 			// * <inp.a> <inp.t> <inp.y>
 			// * <phd.a> <phd.t> <phd.y>
 			// * <mas.a> <mas.t> <mas.y>
+			// * <jou>
 			// * <bok.a> <bok.t> <bok.y> <bok.p>
 			// * <pro.t> <pro.y> <pro.p>
 
@@ -577,10 +577,6 @@ void Indexer::writePostingListAndVocabularyFiles()
 			writeField(termEntity.article.author, true);
 			writeField(termEntity.article.title);
 			writeField(termEntity.article.year);
-
-			// journal
-
-			writeField(termEntity.journal.name);
 
 			// incollection
 			// - author
@@ -617,6 +613,10 @@ void Indexer::writePostingListAndVocabularyFiles()
 			writeField(termEntity.mastersthesis.author, true);
 			writeField(termEntity.mastersthesis.title);
 			writeField(termEntity.mastersthesis.year);
+
+			// journal
+
+			writeField(termEntity.journal.name);
 
 			// book
 			// - author

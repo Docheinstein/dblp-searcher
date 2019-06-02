@@ -30,10 +30,6 @@ public:
 	} article;
 
 	struct {
-		IndexTermRefPostMeta name;
-	} journal;
-
-	struct {
 		IndexTermRefPostMeta author;
 		IndexTermRefPostMeta title;
 		IndexTermRefPostMeta year;
@@ -56,6 +52,10 @@ public:
 		IndexTermRefPostMeta title;
 		IndexTermRefPostMeta year;
 	} mastersthesis;
+
+	struct {
+		IndexTermRefPostMeta name;
+	} journal;
 
 	struct {
 		IndexTermRefPostMeta author;

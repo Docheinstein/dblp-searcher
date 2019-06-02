@@ -27,6 +27,7 @@ QDebug operator<<(QDebug stream, const IndexTermRef &tr) {
 		  tr.mastersthesis.author << ",\t" <<
 		  tr.mastersthesis.title << ",\t" <<
 		  tr.mastersthesis.year << endl <<
+		"jou:\t" << tr.journal.name << endl <<
 		"bok (a, t, y, p):\t" <<
 		  tr.book.author << ",\t" <<
 		  tr.book.title << ",\t" <<

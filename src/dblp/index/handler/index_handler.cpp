@@ -544,10 +544,6 @@ void IndexHandler::findPosts(const VOCABULARY_ADT<QString,
 		refPost = &ref.article.year;
 		break;
 
-	case ElementFieldType::Journal:
-		refPost = &ref.journal.name;
-		break;
-
 	case ElementFieldType::IncollectionAuthor:
 		refPost = &ref.incollection.author;
 		multifield = true;
@@ -590,6 +586,10 @@ void IndexHandler::findPosts(const VOCABULARY_ADT<QString,
 		break;
 	case ElementFieldType::MastersthesisYear:
 		refPost = &ref.mastersthesis.year;
+		break;
+
+	case ElementFieldType::Journal:
+		refPost = &ref.journal.name;
 		break;
 
 	case ElementFieldType::BookAuthor:
@@ -821,11 +821,11 @@ void IndexHandler::loadVocabulary()
 		vv2("Starting position in posting list: " << ref.postingListPosition);
 
 		// <art.a> <art.t> <art.y>
-		// <jou>
 		// <inc.a> <inc.t> <inc.y>
 		// <inp.a> <inp.t> <inp.y>
 		// <phd.a> <phd.t> <phd.y>
 		// <mas.a> <mas.t> <mas.y>
+		// <jou>
 		// <bok.a> <bok.t> <bok.y> <bok.p>
 		// <pro.t> <pro.y> <pro.p>
 
@@ -835,8 +835,6 @@ void IndexHandler::loadVocabulary()
 		incrementalOffset += loadIndexTermReference(ref.article.author, incrementalOffset) * M;
 		incrementalOffset += loadIndexTermReference(ref.article.title, incrementalOffset) * S;
 		incrementalOffset += loadIndexTermReference(ref.article.year, incrementalOffset) * S;
-
-		incrementalOffset += loadIndexTermReference(ref.journal.name, incrementalOffset) * S;
 
 		incrementalOffset += loadIndexTermReference(ref.incollection.author, incrementalOffset) * M;
 		incrementalOffset += loadIndexTermReference(ref.incollection.title, incrementalOffset) * S;
@@ -853,6 +851,8 @@ void IndexHandler::loadVocabulary()
 		incrementalOffset += loadIndexTermReference(ref.mastersthesis.author, incrementalOffset) * M;
 		incrementalOffset += loadIndexTermReference(ref.mastersthesis.title, incrementalOffset) * S;
 		incrementalOffset += loadIndexTermReference(ref.mastersthesis.year, incrementalOffset) * S;
+
+		incrementalOffset += loadIndexTermReference(ref.journal.name, incrementalOffset) * S;
 
 		incrementalOffset += loadIndexTermReference(ref.book.author, incrementalOffset) * M;
 		incrementalOffset += loadIndexTermReference(ref.book.title, incrementalOffset) * S;
@@ -1029,7 +1029,7 @@ void IndexHandler::printPositions()
 #if VERBOSE
 	vv("==== POSITIONS ====");
 	elem_serial i = 0;
-	for (const elem_pos pos : mElementsPositions) {
+	for (const elem_pos pos : mXmlPositions) {
 		vv1("[" << i << "] : " << pos);
 		++i;
 	}

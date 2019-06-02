@@ -29,32 +29,38 @@ struct DblpVenue : DblpWork {
 
 // Entities
 
+// |_ Publications
+
 struct DblpArticle : DblpPublication {
 	QString journal; // -> journal
-};
-
-// Actually doesn't exists in dblp.xml,
-// but comes from articles' crossrefs
-struct DblpJournal {
-	QString name;
 };
 
 struct DblpIncollection :  DblpPublicationCrossref {
 	QString booktitle;
 }; 	// -> book
 
-struct DblpBook :  DblpVenue {
-	QVector<QString> authors;
-};
 
 struct DblpInproceedings :  DblpPublicationCrossref {
 	QString booktitle;
 }; // -> proceedings
 
-struct DblpProceedings :  DblpVenue {};
 
 struct DblpPhdThesis :  DblpPublication {};
 struct DblpMastersThesis :  DblpPublication {};
+
+// |_ Venues
+// Actually doesn't exists in dblp.xml,
+// but comes from articles' crossrefs
+
+struct DblpJournal {
+	QString name;
+};
+
+struct DblpBook :  DblpVenue {
+	QVector<QString> authors;
+};
+
+struct DblpProceedings :  DblpVenue {};
 
 //struct DblpPerson :
 

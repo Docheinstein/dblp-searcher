@@ -105,7 +105,7 @@ Query::Query(const QString &queryString)
 	// Safe way to add to currentQueryPart, initializing it if it's null
 	auto addTokenToQueryPart = [](QueryBasePart *&part, const QString &token) {
 		if (!part) {
-			vv("--> initializing a new basic query part");
+			_vv("--> initializing a new basic query part");
 			part = new QueryBasicPart();
 		}
 
