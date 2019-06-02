@@ -27,8 +27,11 @@ bool GuiComponent::create()
 		QEventLoop loop;
 
 		// Detect when the component has been created
-		QObject::connect(this, &GuiComponent::componentCreated,
-						 &loop, &QEventLoop::quit);
+		QObject::connect(this, &GuiComponent::componentCreationFinished,
+						 [&loop]() {
+			_dd1("Component creation finished, quitting loop");
+			loop.exit();
+		});
 
 		// Wait for QQmlComponent to load the qml file before create the component
 		QObject::connect(mComponent, &QQmlComponent::statusChanged,
@@ -37,7 +40,7 @@ bool GuiComponent::create()
 		if (mComponent->isError()) {
 			ee("Errors occurred while creating component '" << qmlName() << "'");
 			ee("Reason: " << mComponent->errorString());
-			emit componentCreated();
+			emit componentCreationFinished();
 		}
 		// Double check, just in case...
 		else if (!mComponent->isReady()) {
@@ -59,14 +62,14 @@ bool GuiComponent::create()
 void GuiComponent::createComponent()
 {
 	if (mComponent->isReady()) {
-		vv("Actually creating component '" << qmlName() << "'");
+		vv("Component ready, actually creating '" << qmlName() << "'");
 		mComponent->create();
-		emit componentCreated();
+		emit componentCreationFinished();
 	}
 	else if (mComponent->isError()) {
 		ee("Errors occurred while creating component '" << qmlName() << "'");
 		ee("Reason: " << mComponent->errorString());
-		emit componentCreated();
+		emit componentCreationFinished();
 	}
 }
 

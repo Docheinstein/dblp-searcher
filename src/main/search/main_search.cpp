@@ -33,6 +33,7 @@ int startSearchMode() {
 	// Gui application (must be before everything else)
 	QGuiApplication guiApp(arguments.argc, arguments.argv);
 
+	guiApp.setQuitOnLastWindowClosed(true);
 	guiApp.setApplicationDisplayName(APPLICATION_NAME);
 	guiApp.setWindowIcon(QIcon(":/img/dblp-icon.png"));
 
@@ -75,13 +76,13 @@ int startSearchMode() {
 	if (!guiMainWindow.create())
 		QUIT("Error occurred while creating SplashWindow");
 
-	guiMainWindow.setShown(false);
+	// guiMainWindow.setShown(false);
 	guiSplashWindow.setShown(true);
 
 	_dd("Created windows on thread: " << QThread::currentThreadId());
 
 	IndexLoadingController *controller = new IndexLoadingController(guiMainWindow, guiSplashWindow);
-	controller->doIndexing();
+	controller->doIndexLoading();
 
 	int execCode = guiApp.exec();
 
@@ -238,7 +239,7 @@ IndexLoadingController::~IndexLoadingController()
 //	delete mWorkerThread;
 }
 
-void IndexLoadingController::doIndexing()
+void IndexLoadingController::doIndexLoading()
 {
 	_dd("Hanging on thread: " << QThread::currentThreadId());
 	mWorkerThread->start();

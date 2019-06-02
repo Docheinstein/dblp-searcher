@@ -876,12 +876,12 @@ void Indexer::printStats()
 	const qint64 xpix = mXmlPositionsStream.fileSize();
 
 	_ii_("");
-	ii(".xml  size:         " << Util::File::humanSize(mStats.inputFileSize) << "");
-	ii(".idix size:         " << Util::File::humanSize(idix));
-	ii(".plix size:         " << Util::File::humanSize(plix));
-	ii(".vix  size:         " << Util::File::humanSize(vix));
-	ii(".cix  size:         " << Util::File::humanSize(cix));
-	ii(".xpix size:         " << Util::File::humanSize(xpix));
+	ii(".xml  size: " << Util::File::humanSize(mStats.inputFileSize) << "");
+	ii(".idix size: " << Util::File::humanSize(idix));
+	ii(".plix size: " << Util::File::humanSize(plix));
+	ii(".vix  size: " << Util::File::humanSize(vix));
+	ii(".cix  size: " << Util::File::humanSize(cix));
+	ii(".xpix size: " << Util::File::humanSize(xpix));
 
 	_ii_("");
 	ii("Total indexes size:              " << Util::File::humanSize(idix + plix + vix + cix + xpix));

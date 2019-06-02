@@ -33,7 +33,7 @@ protected:
 
 signals:
 	void shownChanged();
-	void componentCreated();
+	void componentCreationFinished();
 };
 
 #endif // GUI_COMPONENT_H

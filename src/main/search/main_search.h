@@ -44,7 +44,7 @@ public:
 						   GuiSplashWindow &splash);
 	~IndexLoadingController();
 
-	void doIndexing();
+	void doIndexLoading();
 
 private:
 	QThread * mWorkerThread;
