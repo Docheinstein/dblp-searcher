@@ -1,5 +1,5 @@
 /build/
 /build-dbg/
 /debris/
-.qmake.stash
+/.qmake.stash
 Makefile
