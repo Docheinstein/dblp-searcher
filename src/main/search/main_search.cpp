@@ -22,10 +22,7 @@
 
 #define QML_REGISTRAR QML_URI, QML_VERSION_MAJOR, QML_REVISION
 
-#if DEBUG || VERBOSE
-// Just for avoid warnings about unused vars
 STATIC_LOGGING(Main, true)
-#endif
 
 int startSearchMode() {
 	Q_ASSERT(arguments.mode == DblpSearcherMode::Search);

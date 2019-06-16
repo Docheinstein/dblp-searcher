@@ -62,8 +62,7 @@ SEARCH MODE LANGUAGE
 	2. "information retrieval"
 	3. article: data science
 	4. incollection.title: "database logic"
-	5. article: science venue.title: springer
-)#";
+	5. article: science venue.title: springer)#";
 
 Arguments arguments;
 

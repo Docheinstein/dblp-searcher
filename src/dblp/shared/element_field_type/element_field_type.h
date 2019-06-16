@@ -95,9 +95,8 @@ enum class ElementFieldType {
 
 	Publisher = BookPublisher | ProceedingsPublisher,
 
+	// Extra: extra
 	All = Publication | Venue,
-
-	// Extra
 };
 
 QString elementFieldTypeString(ElementFieldType t);

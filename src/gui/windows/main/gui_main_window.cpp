@@ -95,7 +95,7 @@ void GuiMainWindow::doSearch(const QString &query)
 	PROF_FUNC_BEGIN0
 
 #if EASTER_EGGS
-	// Easter egg for profiling
+	// Easter eggs for profiling
 
 	if (query == QLatin1String("profreset")) {
 		profReset();

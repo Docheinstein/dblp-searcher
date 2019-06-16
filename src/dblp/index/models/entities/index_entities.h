@@ -49,9 +49,9 @@ struct DblpPhdThesis :  DblpPublication {};
 struct DblpMastersThesis :  DblpPublication {};
 
 // |_ Venues
+
 // Actually doesn't exists in dblp.xml,
 // but comes from articles' crossrefs
-
 struct DblpJournal {
 	QString name;
 };
@@ -61,8 +61,6 @@ struct DblpBook :  DblpVenue {
 };
 
 struct DblpProceedings :  DblpVenue {};
-
-//struct DblpPerson :
 
 QDebug operator<<(QDebug stream, const DblpWork &entity);
 QDebug operator<<(QDebug stream, const DblpPublication &entity);

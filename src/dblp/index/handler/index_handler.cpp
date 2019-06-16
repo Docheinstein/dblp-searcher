@@ -51,8 +51,6 @@ bool IndexHandler::vocabularyTermRef(const QString &term, IndexTermRef &termRef)
 	return true;
 }
 
-
-
 const QHash<elem_serial, elem_serial> IndexHandler::crossrefs() const
 {
 	return mCrossrefs;
@@ -146,7 +144,6 @@ bool IndexHandler::findMatches(const QString &phrase,
 								ElementFieldTypes fieldTypes,
 							   QVector<IndexMatch> &matches)
 {
-
 	// If the phrase is actually a space separeted list of words,
 	// split those and use them as tokens for findElements();
 	QStringList tokens = phrase.split(

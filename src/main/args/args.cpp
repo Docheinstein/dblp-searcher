@@ -3,10 +3,7 @@
 #include "commons/log/loggable/loggable.h"
 #include "commons/globals/globals.h"
 
-#if VERBOSE
-// Just for avoid warnings about unused vars
 STATIC_LOGGING(Args, true)
-#endif
 
 void printArguments() {
 	_vv("==== ARGUMENTS ====");

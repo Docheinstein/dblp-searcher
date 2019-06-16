@@ -36,4 +36,3 @@ qint64 StreamFile::filePosition() const
 {
 	return file.pos();
 }
-

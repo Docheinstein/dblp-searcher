@@ -33,11 +33,11 @@ namespace Config {
 
 		namespace Vocabulary {
 			const quint32 REF_SHRINKED_BITS = 15u;
-			const quint32 REF_SHRINKED_THRESHOLD = 1u << REF_SHRINKED_BITS; // 3276832767
+			const quint32 REF_SHRINKED_THRESHOLD = 1u << REF_SHRINKED_BITS; // 32768
 			const quint32 REF_SHRINKED_FLAG = 1u << REF_SHRINKED_BITS;
 
 			const quint32 REF_EXTENDEND_BITS = 31;
-			const quint32 REF_EXTENDED_THRESHOLD = 1u << REF_EXTENDEND_BITS;
+			const quint32 REF_EXTENDED_THRESHOLD = 1u << REF_EXTENDEND_BITS; // 2147483648
 			const quint32 REF_EXTENDED_FLAG = 1u << REF_EXTENDEND_BITS;
 		}
 
