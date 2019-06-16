@@ -23,8 +23,7 @@ DESCRIPTION
 	Performs full-text searches over the dblp.xml dump of DBLP.
 	This program can be launched in two different mode:
 	1) Index creation: parses the dblp.xml and creates the index files from it
-	2) Search: open the GUI for perform searches over the previously created
-			   index files
+	2) Search: open the GUI for perform searches over the previously created indexes
 
 INDEX MODE
 	--index, -I <dblp_file_path> <index_folder_path> <index_base_name>

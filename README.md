@@ -124,6 +124,7 @@ The queries should be conform to the language expressed in the USAGE section.
 ![Dblp Searcher Search](dblp-searcher-search.png)
 ![Dblp Searcher Element Details](dblp-searcher-element-details.png)
 ![Dblp Searcher Publications](dblp-searcher-publications.png)
+
 ## LICENSE
 
 DblpSearcher is [MIT licensed](./LICENSE).

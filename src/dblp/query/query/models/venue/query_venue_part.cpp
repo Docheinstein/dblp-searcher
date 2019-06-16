@@ -17,12 +17,18 @@ void QueryVenuePart::computeTypes()
 			mTypes =
 					ElementFieldType::BookTitle |
 					ElementFieldType::ProceedingsTitle |
+
+					// Technically this should be excluded, but we alllow
+					// venue.title for a query with an article filter
+					// and treat it as the journal name
 					ElementFieldType::Journal;
 
 		else if (mField == QueryVenueFieldType::PUBLISHER)
 			mTypes =
 					ElementFieldType::BookPublisher |
 					ElementFieldType::ProceedingsPublisher;
+
+					// We haven't any publishers info for the journals
 
 		else
 			// We should never come here

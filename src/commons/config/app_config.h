@@ -8,7 +8,7 @@
 // Meta application's info
 
 #define APPLICATION_NAME "Dblp Searcher"
-#define APPLICATION_VERSION 0.9
+#define APPLICATION_VERSION 1.0
 
 // =============================================================================
 
@@ -19,12 +19,12 @@
 // =============================================================================
 
 // =)
-#define EASTER_EGGS 1
+#define EASTER_EGGS 0
 
 // =============================================================================
 
 // Set to 0 or 1 to enable/disable profiler
-#define PROFILER 1
+#define PROFILER 0
 
 // =============================================================================
 
