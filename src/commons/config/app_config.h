@@ -8,7 +8,7 @@
 // Meta application's info
 
 #define APPLICATION_NAME "Dblp Searcher"
-#define APPLICATION_VERSION 1.0
+#define APPLICATION_VERSION "1.0"
 
 // =============================================================================
 
