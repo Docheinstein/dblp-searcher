@@ -70,11 +70,49 @@ static void computeElementsScoreCombiner(
 static void checkCrossrefsCombiner(
 		CrossrefsCheckReductionContainer &out,
 		const CrossrefsCheckReductionContainer &in) {
-	_dd4("Combiner: matches was " << out.matches.size() << ", will be "
+	PROF_FUNC_BEGIN6
+
+	_dd5("Started combiner [" << INT(omp_get_thread_num()) << "]");
+
+	_dd5("Was " << out.matches.size() << " matches, will be "
 		 << out.matches.size() + in.matches.size());
+
+	_dd5("out.matches.capacity: " << INT(out.matches.capacity()));
+	_dd5("out.matches.size: " << INT(out.matches.size()));
+
+	_dd5("in.matches.capacity: " << INT(in.matches.capacity()));
+	_dd5("in.matches.size: " << INT(in.matches.size()));
+
+	PROF_BEGIN7(matchesAppend);
 	out.matches.append(in.matches);
+	PROF_END(matchesAppend);
+
+	_dd5("");
+	_dd5("out.crossrefVenues.capacity: " << INT(out.crossrefVenues.capacity()));
+	_dd5("out.crossrefVenues.size: " << INT(out.crossrefVenues.size()));
+
+	_dd5("in.crossrefVenues.capacity: " << INT(in.crossrefVenues.capacity()));
+	_dd5("in.crossrefVenues.size: " << INT(in.crossrefVenues.size()));
+
+	PROF_BEGIN7(crossrefVenuesUnite);
 	out.crossrefVenues.unite(in.crossrefVenues);
+	PROF_END(crossrefVenuesUnite);
+
+	_dd5("");
+	_dd5("out.rawMatchesBySerial.capacity: " << INT(out.rawMatchesBySerial.capacity()));
+	_dd5("out.rawMatchesBySerial.size: " << INT(out.rawMatchesBySerial.size()));
+
+	_dd5("in.rawMatchesBySerial.capacity: " << INT(in.rawMatchesBySerial.capacity()));
+	_dd5("in.rawMatchesBySerial.size: " << INT(in.rawMatchesBySerial.size()));
+
+	PROF_BEGIN7(rawMatchesBySerialUnite);
 	out.rawMatchesBySerial.unite(in.rawMatchesBySerial);
+	PROF_END(rawMatchesBySerialUnite);
+
+	_dd5("Finished combiner [" << INT(omp_get_thread_num()) << "]");
+	_dd5("");
+
+	PROF_FUNC_END
 }
 
 static void venuesPushCombiner(
@@ -394,6 +432,8 @@ QueryOutcome QueryResolver::resolveQuery(const Query &query) {
 							scoredPub.matches, score));
 		}
 	}
+
+//	checkCrossrefsCombiner()
 
 	PROF_END(crossrefsCheckPubs)
 
